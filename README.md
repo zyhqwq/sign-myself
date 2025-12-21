@@ -25,7 +25,7 @@
 
 | Secret 名称 | 说明 | 必填 |
 |------------|------|------|
-| `SKLAND_TOKEN` | 森空岛token，多个用逗号分隔 | 是 |
+| `TOKEN` | 森空岛token，多个用逗号分隔 | 是 |
 | `WECHAT_WEBHOOK_URL` | 企业微信Webhook地址（可选） | 否 |
 | `DEVICE_MODE` | 设备ID模式：smart, random, shumei（可选） | 否 |
 | `FIXED_DEVICE_ID` | 固定设备ID（可选） | 否 |
@@ -60,7 +60,7 @@ Actions 会自动启用。您也可以手动触发：
 ## 常见问题
 
 ### Q: 如何添加多个账号？
-A: 在 `SKLAND_TOKEN` 中用逗号分隔多个 token。
+A: 在 `TOKEN` 中用逗号分隔多个 token。
 
 ### Q: 签到失败了怎么办？
 A: 检查 Actions 日志，通常是因为 token 失效或网络问题。

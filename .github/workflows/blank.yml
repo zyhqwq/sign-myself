@@ -1,23 +1,65 @@
-# .github/workflows/verify-token.yml
-name: Verify Token Access
+name: Skland Auto Signin
 
 on:
+  # 定时触发，每天UTC时间0:10运行（北京时间8:10）
+  schedule:
+    - cron: '10 0 * * *'
+  # 支持手动触发
   workflow_dispatch:
+  # 当推送到main分支时也运行（可选）
+  push:
+    branches: [ main ]
+  # 当创建PR时运行（可选）
+  pull_request:
+    branches: [ main ]
+
+env:
+  # 设置Python版本
+  PYTHON_VERSION: '3.9'
 
 jobs:
-  verify:
+  signin:
     runs-on: ubuntu-latest
-    environment: Configure TOKEN
+    environment: Configure TOKEN  # 指定环境名称
     
     steps:
-      - name: Check if TOKEN is accessible
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: |
-          echo "Token length: ${#TOKEN}"
-          if [ -n "$TOKEN" ]; then
-            echo "✅ TOKEN is accessible"
-          else
-            echo "❌ TOKEN is empty or not accessible"
-            exit 1
-          fi
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests cryptography
+        
+    - name: Run Skland Signin
+      env:
+        # 从GitHub Secrets读取token
+        TOKEN: ${{ secrets.TOKEN }}  # ← 修改这里
+        # 企业微信Webhook（可选）
+        WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+        # 设备ID模式：fixed, random, smart
+        DEVICE_MODE: ${{ secrets.DEVICE_MODE || 'smart' }}
+        # 固定设备ID（如果使用fixed模式）
+        FIXED_DEVICE_ID: ${{ secrets.FIXED_DEVICE_ID }}
+      run: python skland_signin.py
+        
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: signin-logs
+        path: logs/
+        
+    - name: Send notification on failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: "森空岛签到失败，请检查日志"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

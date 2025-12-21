@@ -20,6 +20,7 @@ env:
 jobs:
   signin:
     runs-on: ubuntu-latest
+    environment: Configure TOKEN  # 添加这一行，指定环境名称
     
     steps:
     - name: Checkout repository

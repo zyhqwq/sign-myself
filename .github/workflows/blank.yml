@@ -20,7 +20,7 @@ env:
 jobs:
   signin:
     runs-on: ubuntu-latest
-    environment: Configure TOKEN  # 添加这一行，指定环境名称
+    environment: Configure TOKEN  # 指定环境名称
     
     steps:
     - name: Checkout repository
@@ -39,7 +39,7 @@ jobs:
     - name: Run Skland Signin
       env:
         # 从GitHub Secrets读取token
-        TOKEN: ${{ secrets.SKLAND_TOKEN }}
+        TOKEN: ${{ secrets.TOKEN }}  # ← 修改这里
         # 企业微信Webhook（可选）
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
         # 设备ID模式：fixed, random, smart

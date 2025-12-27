@@ -40,4 +40,4 @@ jobs:
         SKLAND_TOKEN: ${{ secrets.SKLAND_TOKEN }}
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
       run: |
-        python skland_simple.py
+        python skland_github.py

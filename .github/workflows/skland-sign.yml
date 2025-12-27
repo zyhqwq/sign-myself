@@ -30,10 +30,3 @@ jobs:
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
       run: |
         python skland_github.py
-    
-    - name: Upload token file (optional)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: skland-token
-        path: token.json

@@ -22,11 +22,22 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install requests
+    
+    - name: Debug environment variables
+      run: |
+        echo "检查环境变量..."
+        echo "SKLAND_TOKEN is set: ${{ secrets.SKLAND_TOKEN != '' }}"
+        echo "WECHAT_WEBHOOK_URL is set: ${{ secrets.WECHAT_WEBHOOK_URL != '' }}"
+        echo "SKLAND_TOKEN length: ${#SKLAND_TOKEN}"
+        echo "WECHAT_WEBHOOK_URL preview: ${WECHAT_WEBHOOK_URL:0:20}..."
+      env:
+        SKLAND_TOKEN: ${{ secrets.SKLAND_TOKEN }}
+        WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
     
     - name: Run Skland Sign
       env:
         SKLAND_TOKEN: ${{ secrets.SKLAND_TOKEN }}
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
       run: |
-        python skland_github.py
+        python skland_simple.py

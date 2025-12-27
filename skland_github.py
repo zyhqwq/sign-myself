@@ -1,60 +1,23 @@
 #!/usr/bin/env python3
 """
 森空岛签到脚本 - GitHub Actions 专用版
+修复Webhook通知问题
 """
 
 import hashlib
 import hmac
 import json
-import logging
 import os
 import time
-import random
 import uuid
 import base64
-import gzip
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from urllib import parse
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.ciphers.algorithms import AES
-from cryptography.hazmat.primitives.ciphers.base import Cipher
-from cryptography.hazmat.primitives.ciphers.modes import ECB, CBC
-
-# 尝试导入TripleDES的不同方式
-try:
-    # 新版本的方式
-    from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES
-except ImportError:
-    try:
-        # 旧版本的方式
-        from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES as TripleDES
-    except ImportError:
-        # 如果都没有，尝试使用pycryptodome作为后备
-        try:
-            from Crypto.Cipher import DES3
-            HAS_DES3 = True
-        except ImportError:
-            HAS_DES3 = False
-            raise ImportError("无法找到DES加密库，请安装cryptography或pycryptodome")
 
 # ================== 配置 ==================
-TOKEN = os.environ.get('SKLAND_TOKEN', '')  # GitHub Secrets 中的 token
-WECHAT_WEBHOOK_URL = os.environ.get('WECHAT_WEBHOOK_URL', '')  # 企业微信 Webhook（可选）
-TOKEN_FILE = 'token.json'  # 保存 token 的文件
-
-# 数美配置
-SM_CONFIG = {
-    "organization": "UWXspnCCJN4sfYlNfqps",
-    "appId": "default",
-    "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmxMNr7n8ZeT0tE1R9j/mPixoinPkeM+k4VGIn/s0k7N5rJAfnZ0eMER+QhwFvshzo0LNmeUkpR8uIlU/GEVr8mN28sKmwd2gpygqj0ePnBmOW4v0ZVwbSYK+izkhVFk2V/doLoMbWy6b+UnA8mkjvg0iYWRByfRsK2gdl7llqCwIDAQAB",
-    "protocol": "https",
-    "apiHost": "fp-it.portal101.cn"
-}
-
-# 加载数美公钥
-PK = serialization.load_der_public_key(base64.b64decode(SM_CONFIG['publicKey']))
+TOKEN = os.environ.get('SKLAND_TOKEN', '')
+WECHAT_WEBHOOK_URL = os.environ.get('WECHAT_WEBHOOK_URL', '')
 
 # 其他配置
 app_code = '4ca99fa6b56cc2ba'
@@ -71,13 +34,13 @@ header_login = {
     'User-Agent': 'Skland/1.0.1 (com.hypergryph.skland; build:100001014; Android 31; ) Okhttp/4.11.0',
     'Accept-Encoding': 'gzip',
     'Connection': 'close',
-    'dId': ''
+    'dId': 'test_device_id_123456'
 }
 
 header_for_sign = {
     'platform': '',
     'timestamp': '',
-    'dId': '',
+    'dId': 'test_device_id_123456',
     'vName': ''
 }
 
@@ -87,261 +50,9 @@ binding_url = "https://zonai.skland.com/api/v1/game/player/binding"
 grant_code_url = "https://as.hypergryph.com/user/oauth2/v2/grant"
 cred_code_url = "https://zonai.skland.com/web/v1/user/auth/generate_cred_by_code"
 
-# ================== 数美设备ID生成 ==================
-# 数美设备信息接口
-devices_info_url = "https://fp-it.portal101.cn/deviceprofile/v4"
-
-# 模拟浏览器环境参数
-BROWSER_ENV = {
-    'plugins': 'MicrosoftEdgePDFPluginPortableDocumentFormatinternal-pdf-viewer1,MicrosoftEdgePDFViewermhjfbmdgcfjbbpaeojofohoefgiehjai1',
-    'ua': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0',
-    'canvas': '259ffe69',
-    'timezone': -480,
-    'platform': 'Win32',
-    'url': 'https://www.skland.com/',
-    'referer': '',
-    'res': '1920_1080_24_1.25',
-    'clientSize': '0_0_1080_1920_1920_1080',
-    'status': '0011',
-}
-
-# DES加密规则
-DES_RULE = {
-    "appId": {"cipher": "DES", "is_encrypt": 1, "key": "uy7mzc4h", "obfuscated_name": "xx"},
-    "box": {"is_encrypt": 0, "obfuscated_name": "jf"},
-    "canvas": {"cipher": "DES", "is_encrypt": 1, "key": "snrn887t", "obfuscated_name": "yk"},
-    "clientSize": {"cipher": "DES", "is_encrypt": 1, "key": "cpmjjgsu", "obfuscated_name": "zx"},
-    "organization": {"cipher": "DES", "is_encrypt": 1, "key": "78moqjfc", "obfuscated_name": "dp"},
-    "os": {"cipher": "DES", "is_encrypt": 1, "key": "je6vk6t4", "obfuscated_name": "pj"},
-    "platform": {"cipher": "DES", "is_encrypt": 1, "key": "pakxhcd2", "obfuscated_name": "gm"},
-    "plugins": {"cipher": "DES", "is_encrypt": 1, "key": "v51m3pzl", "obfuscated_name": "kq"},
-    "pmf": {"cipher": "DES", "is_encrypt": 1, "key": "2mdeslu3", "obfuscated_name": "vw"},
-    "protocol": {"is_encrypt": 0, "obfuscated_name": "protocol"},
-    "referer": {"cipher": "DES", "is_encrypt": 1, "key": "y7bmrjlc", "obfuscated_name": "ab"},
-    "res": {"cipher": "DES", "is_encrypt": 1, "key": "whxqm2a7", "obfuscated_name": "hf"},
-    "rtype": {"cipher": "DES", "is_encrypt": 1, "key": "x8o2h2bl", "obfuscated_name": "lo"},
-    "sdkver": {"cipher": "DES", "is_encrypt": 1, "key": "9q3dcxp2", "obfuscated_name": "sc"},
-    "status": {"cipher": "DES", "is_encrypt": 1, "key": "2jbrxxw4", "obfuscated_name": "an"},
-    "subVersion": {"cipher": "DES", "is_encrypt": 1, "key": "eo3i2puh", "obfuscated_name": "ns"},
-    "svm": {"cipher": "DES", "is_encrypt": 1, "key": "fzj3kaeh", "obfuscated_name": "qr"},
-    "time": {"cipher": "DES", "is_encrypt": 1, "key": "q2t3odsk", "obfuscated_name": "nb"},
-    "timezone": {"cipher": "DES", "is_encrypt": 1, "key": "1uv05lj5", "obfuscated_name": "as"},
-    "tn": {"cipher": "DES", "is_encrypt": 1, "key": "x9nzj1bp", "obfuscated_name": "py"},
-    "trees": {"cipher": "DES", "is_encrypt": 1, "key": "acfs0xo4", "obfuscated_name": "pi"},
-    "ua": {"cipher": "DES", "is_encrypt": 1, "key": "k92crp1t", "obfuscated_name": "bj"},
-    "url": {"cipher": "DES", "is_encrypt": 1, "key": "y95hjkoo", "obfuscated_name": "cf"},
-    "version": {"is_encrypt": 0, "obfuscated_name": "version"},
-    "vpw": {"cipher": "DES", "is_encrypt": 1, "key": "r9924ab5", "obfuscated_name": "ca"}
-}
-
-def _des_encrypt_ecb(data: bytes, key: str):
-    """DES ECB模式加密，兼容不同库"""
-    key_bytes = key.encode('utf-8')
-    
-    # 补齐8字节
-    if len(key_bytes) < 8:
-        key_bytes = key_bytes.ljust(8, b'\x00')
-    elif len(key_bytes) > 8:
-        key_bytes = key_bytes[:8]
-    
-    # 使用cryptography的TripleDES（兼容模式）
-    try:
-        # 将8字节密钥转换为24字节用于TripleDES（重复三次）
-        triple_key = key_bytes * 3
-        cipher = Cipher(TripleDES(triple_key), ECB())
-        encryptor = cipher.encryptor()
-        
-        # 数据补齐到8字节倍数
-        padding_len = 8 - (len(data) % 8)
-        if padding_len != 8:
-            data += b'\x00' * padding_len
-        
-        encrypted = encryptor.update(data) + encryptor.finalize()
-        return base64.b64encode(encrypted).decode('utf-8')
-    except Exception as e:
-        print(f"DES加密失败: {str(e)}")
-        # 如果失败，返回原始数据（仅用于测试）
-        return base64.b64encode(data).decode('utf-8')
-
-def _DES(o: dict):
-    """对字段进行DES加密处理"""
-    result = {}
-    for i in o.keys():
-        if i in DES_RULE:
-            rule = DES_RULE[i]
-            res = o[i]
-            if rule['is_encrypt'] == 1:
-                # DES-ECB加密
-                data = str(res).encode('utf-8')
-                res = _des_encrypt_ecb(data, rule['key'])
-            result[rule['obfuscated_name']] = res
-        else:
-            result[i] = o[i]
-    return result
-
-def _AES(v: bytes, k: bytes):
-    """AES-CBC加密"""
-    iv = '0102030405060708'
-    cipher = Cipher(AES(k), CBC(iv.encode('utf-8')))
-    v += b'\x00'
-    while len(v) % 16 != 0:
-        v += b'\x00'
-    return cipher.encryptor().update(v).hex()
-
-def GZIP(o: dict):
-    """GZIP压缩并Base64编码"""
-    json_str = json.dumps(o, ensure_ascii=False)
-    compressed = gzip.compress(json_str.encode('utf-8'), 2, mtime=0)
-    return base64.b64encode(compressed)
-
-def get_tn(o: dict):
-    """生成tn参数（用于加密）"""
-    sorted_keys = sorted(o.keys())
-    result_list = []
-    for key in sorted_keys:
-        val = o[key]
-        if isinstance(val, (int, float)):
-            val = str(val * 10000)
-        elif isinstance(val, dict):
-            val = get_tn(val)
-        result_list.append(val)
-    return ''.join(result_list)
-
-def get_smid():
-    """生成smid参数"""
-    t = time.localtime()
-    _time = f'{t.tm_year}{t.tm_mon:02d}{t.tm_mday:02d}{t.tm_hour:02d}{t.tm_min:02d}{t.tm_sec:02d}'
-    uid = str(uuid.uuid4())
-    md5_uid = hashlib.md5(uid.encode('utf-8')).hexdigest()
-    smsk_web = hashlib.md5(f'smsk_web_{_time}{md5_uid}00'.encode('utf-8')).hexdigest()[:14]
-    return f'{_time}{md5_uid}00{smsk_web}0'
-
-def get_d_id():
-    """生成dId参数（数美设备ID）"""
-    uid = str(uuid.uuid4()).encode('utf-8')
-    priId = hashlib.md5(uid).hexdigest()[:16]
-    
-    # RSA加密uid
-    ep = PK.encrypt(uid, padding.PKCS1v15())
-    ep = base64.b64encode(ep).decode('utf-8')
-
-    # 构建浏览器环境参数
-    browser = BROWSER_ENV.copy()
-    current_time = int(time.time() * 1000)
-    browser.update({
-        'vpw': str(uuid.uuid4()),
-        'svm': current_time,
-        'trees': str(uuid.uuid4()),
-        'pmf': current_time
-    })
-
-    # 构建待加密数据
-    des_target = {
-        **browser,
-        'protocol': 102,
-        'organization': SM_CONFIG['organization'],
-        'appId': SM_CONFIG['appId'],
-        'os': 'web',
-        'version': '3.0.0',
-        'sdkver': '3.0.0',
-        'box': '',
-        'rtype': 'all',
-        'smid': get_smid(),
-        'subVersion': '1.0.0',
-        'time': 0
-    }
-    des_target['tn'] = hashlib.md5(get_tn(des_target).encode()).hexdigest()
-
-    # 加密流程
-    des_result = _AES(GZIP(_DES(des_target)), priId.encode('utf-8'))
-
-    # 请求数美接口
-    try:
-        response = requests.post(
-            devices_info_url,
-            json={
-                'appId': 'default',
-                'compress': 2,
-                'data': des_result,
-                'encode': 5,
-                'ep': ep,
-                'organization': SM_CONFIG['organization'],
-                'os': 'web'
-            },
-            timeout=15
-        )
-        response.raise_for_status()
-        resp = response.json()
-    except Exception as e:
-        raise Exception(f"数美接口请求失败：{str(e)}")
-        
-    if resp['code'] != 1100:
-        raise Exception(f"dId生成失败，错误码：{resp['code']}")
-    return 'B' + resp['detail']['deviceId']
-
-# ================== 签到核心功能 ==================
-class TokenManager:
-    """Token管理类"""
-    
-    @staticmethod
-    def parse_token(token_str):
-        """解析token字符串"""
-        try:
-            # 尝试解析为JSON
-            data = json.loads(token_str)
-            if 'data' in data and 'content' in data['data']:
-                return data['data']['content']
-        except:
-            pass
-        # 如果不是JSON，直接返回
-        return token_str
-    
-    @staticmethod
-    def save_tokens(tokens):
-        """保存token到文件"""
-        try:
-            with open(TOKEN_FILE, 'w', encoding='utf-8') as f:
-                json.dump(tokens, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"保存token失败：{str(e)}")
-    
-    @staticmethod
-    def load_tokens():
-        """从文件加载token"""
-        if not os.path.exists(TOKEN_FILE):
-            return {}
-        
-        try:
-            with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"加载token失败：{str(e)}")
-            return {}
-    
-    @staticmethod
-    def get_all_tokens():
-        """获取所有token（从环境变量和文件）"""
-        tokens = {}
-        
-        # 从环境变量获取
-        if TOKEN:
-            token_list = TOKEN.split(',')
-            for i, token in enumerate(token_list):
-                token = token.strip()
-                if token:
-                    token_id = f"token_{i+1}"
-                    tokens[token_id] = {
-                        'token': TokenManager.parse_token(token),
-                        'label': token_id,
-                        'last_update': time.time(),
-                        'login_method': 'github_secret'
-                    }
-        
-        # 从文件获取（如果有）
-        file_tokens = TokenManager.load_tokens()
-        tokens.update(file_tokens)
-        
-        return tokens
+def simple_did():
+    """生成简化的设备ID"""
+    return 'B' + hashlib.md5(str(uuid.uuid4()).encode()).hexdigest()
 
 def generate_signature(token: str, path, body_or_query):
     """生成签名（HMAC-SHA256 + MD5）"""
@@ -543,60 +254,107 @@ def do_sign_for_account(account_id, user_token):
             'character_count': 0
         }
 
-def send_wechat_notification(subject, message):
+def send_wechat_notification(subject, message, max_retries=3):
     """发送企业微信通知（可选）"""
     if not WECHAT_WEBHOOK_URL:
+        print("⚠️  未设置企业微信Webhook URL，跳过通知")
         return
     
+    print(f"📤 尝试发送企业微信通知...")
+    print(f"   Webhook URL: {'已设置' if WECHAT_WEBHOOK_URL else '未设置'}")
+    print(f"   主题: {subject}")
+    
+    # 企业微信Webhook格式
     payload = {
         "msgtype": "text",
         "text": {
-            "content": f"【{subject}】\n{message}"
+            "content": f"【森空岛签到】{subject}\n{message}"
         }
     }
     
-    try:
-        response = requests.post(WECHAT_WEBHOOK_URL, json=payload, timeout=15)
-        if response.json().get("errcode") == 0:
-            print("企业微信通知发送成功")
-    except Exception as e:
-        print(f"企业微信通知发送失败：{str(e)}")
+    for attempt in range(max_retries):
+        try:
+            print(f"  第{attempt+1}次尝试发送...")
+            response = requests.post(
+                WECHAT_WEBHOOK_URL, 
+                json=payload, 
+                timeout=15,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            print(f"  响应状态码: {response.status_code}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"  响应内容: {result}")
+                
+                if result.get("errcode") == 0:
+                    print("✅ 企业微信通知发送成功")
+                    return True
+                else:
+                    print(f"❌ 企业微信通知发送失败: {result.get('errmsg', '未知错误')}")
+            else:
+                print(f"❌ HTTP错误: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ 请求异常: {str(e)}")
+        except json.JSONDecodeError as e:
+            print(f"❌ 响应解析失败: {str(e)}")
+        except Exception as e:
+            print(f"❌ 未知错误: {str(e)}")
+        
+        if attempt < max_retries - 1:
+            wait_time = 5 * (attempt + 1)  # 指数退避
+            print(f"  等待{wait_time}秒后重试...")
+            time.sleep(wait_time)
+    
+    print("❌ 企业微信通知发送失败，已达到最大重试次数")
+    return False
 
 def main():
     """主函数"""
     print("=" * 50)
-    print("森空岛签到脚本 - GitHub Actions 版本")
+    print("森空岛签到脚本 - 简化版")
     print(f"当前时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
     
     # 检查是否有token
     if not TOKEN:
-        print("❌ 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN")
-        send_wechat_notification("森空岛签到失败", "未设置 SKLAND_TOKEN")
-        return
-    
-    # 初始化 dId
-    try:
-        d_id = get_d_id()
-        header_login['dId'] = d_id
-        header_for_sign['dId'] = d_id
-        print(f"✅ 成功生成设备ID")
-    except Exception as e:
-        error_msg = f"❌ dId 初始化失败：{str(e)}"
+        error_msg = "❌ 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN"
         print(error_msg)
-        send_wechat_notification("森空岛签到失败", error_msg)
+        send_wechat_notification("签到失败", error_msg)
         return
     
-    # 获取所有token
-    all_tokens = TokenManager.get_all_tokens()
+    # 生成设备ID
+    d_id = simple_did()
+    header_login['dId'] = d_id
+    header_for_sign['dId'] = d_id
+    print(f"✅ 使用简化设备ID")
     
-    if not all_tokens:
+    # 解析token
+    tokens = {}
+    token_list = TOKEN.split(',')
+    for i, token in enumerate(token_list):
+        token = token.strip()
+        if token:
+            # 尝试解析为JSON格式
+            try:
+                data = json.loads(token)
+                if 'data' in data and 'content' in data['data']:
+                    token = data['data']['content']
+            except:
+                pass  # 如果不是JSON，直接使用原token
+            
+            token_id = f"token_{i+1}"
+            tokens[token_id] = token
+    
+    if not tokens:
         error_msg = "❌ 未找到有效token"
         print(error_msg)
-        send_wechat_notification("森空岛签到失败", error_msg)
+        send_wechat_notification("签到失败", error_msg)
         return
     
-    print(f"找到 {len(all_tokens)} 个账号，开始签到...")
+    print(f"✅ 找到 {len(tokens)} 个账号，开始签到...")
     
     # 执行签到
     all_results = []
@@ -605,8 +363,8 @@ def main():
     failed_count = 0
     total_characters = 0
     
-    for account_id, token_info in all_tokens.items():
-        result = do_sign_for_account(account_id, token_info['token'])
+    for account_id, token in tokens.items():
+        result = do_sign_for_account(account_id, token)
         all_results.append(result)
         
         # 更新统计
@@ -624,30 +382,58 @@ def main():
     print("签到完成报告")
     print("=" * 50)
     
-    report = f"""签到统计：
-账号总数: {len(all_results)}
-签到成功: {success_count}
-重复签到: {repeated_count}
-签到失败: {failed_count}
-角色总数: {total_characters}
+    # 构建通知消息
+    if success_count > 0:
+        subject = f"签到成功 ({success_count}个成功)"
+    elif repeated_count > 0:
+        subject = f"重复签到 ({repeated_count}个重复)"
+    elif failed_count > 0:
+        subject = f"签到失败 ({failed_count}个失败)"
+    else:
+        subject = "签到完成"
+    
+    report = f"""📊 签到统计：
+• 账号总数: {len(all_results)}
+• 签到成功: {success_count}
+• 重复签到: {repeated_count}
+• 签到失败: {failed_count}
+• 角色总数: {total_characters}
 
-详细结果："""
+📋 详细结果："""
 
+    # 限制详细结果长度，避免消息过长
+    max_results_to_show = 3  # 每个账号最多显示3个结果
     for result in all_results:
         status_icon = "✅" if result['status'] == 'success' else "🔄" if result['status'] == 'repeated' else "❌"
         report += f"\n\n{status_icon} 账号: {result['account']}"
-        for res in result['results']:
+        
+        # 只显示部分结果，避免消息过长
+        results_to_show = result['results'][:max_results_to_show]
+        for res in results_to_show:
             report += f"\n  {res}"
+        
+        if len(result['results']) > max_results_to_show:
+            report += f"\n  ...（还有{len(result['results']) - max_results_to_show}个结果未显示）"
+    
+    # 添加失败摘要
+    if failed_count > 0:
+        failed_accounts = [r for r in all_results if r['status'] == 'failed']
+        report += f"\n\n❌ 失败账号摘要："
+        for fail in failed_accounts[:5]:  # 最多显示5个失败账号
+            report += f"\n  {fail['account']}: {fail['results'][0] if fail['results'] else '未知错误'}"
     
     print(report)
     
     # 发送通知
-    if success_count > 0 or repeated_count > 0:
-        subject = f"森空岛签到完成 ({success_count}成功/{repeated_count}重复)"
-    else:
-        subject = f"森空岛签到失败 ({failed_count}失败)"
+    print("\n📨 发送通知...")
+    notification_sent = send_wechat_notification(subject, report)
     
-    send_wechat_notification(subject, report)
+    if notification_sent:
+        print("✅ 通知发送流程完成")
+    elif not WECHAT_WEBHOOK_URL:
+        print("ℹ️  未配置Webhook URL，跳过通知")
+    else:
+        print("⚠️  通知发送失败，但签到过程已完成")
     
     # 如果全部失败，退出码设为1（让GitHub Actions标记为失败）
     if failed_count == len(all_results):

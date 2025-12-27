@@ -21,7 +21,7 @@
 获取 token 的方法：
 1. 登录森空岛官网
 2. 按 F12 打开开发者工具
-3. 进入 Application → Local Storage → https://web-api.skland.com
+3. 进入 Application → Local Storage → https://web-api.skland.com/account/info/hg
 4. 找到 `SK_OFFICIAL_UID` 和 `SK_OFFICIAL_TOKEN`，格式如下：
 {"code":0,"message":"OK","data":{"content":"你的token","uid":"你的uid"}}
 

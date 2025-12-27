@@ -1,73 +1,60 @@
-# 森空岛自动签到脚本 (GitHub Actions 版本)
+# 森空岛签到 GitHub Actions 版
 
-自动执行森空岛签到任务，支持多账号和多种通知方式。
+自动在 GitHub Actions 上运行森空岛每日签到。
 
-## 功能特性
-
-- ✅ 自动签到森空岛账号
-- ✅ 支持多个账号同时签到
-- ✅ 动态设备ID生成（防止被封）
-- ✅ 数美设备ID支持
-- ✅ 企业微信通知
-- ✅ GitHub Actions 摘要
-- ✅ 定时执行（每天 UTC 0:10，北京时间 8:10）
-- ✅ 支持手动触发
-
-## 使用方法
+## 配置步骤
 
 ### 1. Fork 本仓库
 
-点击右上角的 Fork 按钮，将仓库复制到自己的账户下。
+点击右上角的 Fork 按钮。
 
 ### 2. 配置 Secrets
 
-在仓库的 Settings > Secrets and variables > Actions 中添加以下 Secrets：
+在 Fork 的仓库中：
+1. 进入 Settings → Secrets and variables → Actions
+2. 点击 New repository secret
+3. 添加以下 Secrets：
 
-| Secret 名称 | 说明 | 必填 |
-|------------|------|------|
-| `TOKEN` | 森空岛token，多个用逗号分隔 | 是 |
-| `WECHAT_WEBHOOK_URL` | 企业微信Webhook地址（可选） | 否 |
-| `DEVICE_MODE` | 设备ID模式：smart, random, shumei（可选） | 否 |
-| `FIXED_DEVICE_ID` | 固定设备ID（可选） | 否 |
+#### SKLAND_TOKEN
+你的森空岛 token，可以设置多个（用逗号分隔）。
 
-### 3. 获取森空岛 Token
+获取 token 的方法：
+1. 登录森空岛官网
+2. 按 F12 打开开发者工具
+3. 进入 Application → Local Storage → https://web-api.skland.com
+4. 找到 `SK_OFFICIAL_UID` 和 `SK_OFFICIAL_TOKEN`，格式如下：
+{"code":0,"message":"OK","data":{"content":"你的token","uid":"你的uid"}}
 
-1. 登录森空岛网页版
-2. 打开开发者工具 (F12)
-3. 访问：https://web-api.skland.com/account/info/hg
-4. 复制返回的 JSON 中的 `content` 字段值
 
-### 4. 启用 Actions
+#### WECHAT_WEBHOOK_URL（可选）
+企业微信 Webhook URL，用于接收签到通知。
 
-Actions 会自动启用。您也可以手动触发：
+### 3. 启用 Actions
+
+默认情况下 Actions 是启用的。如需手动启用：
 1. 进入 Actions 标签页
-2. 选择 "Skland Auto Signin"
-3. 点击 "Run workflow"
+2. 点击绿色按钮启用
 
-## 配置说明
+### 4. 运行签到
 
-### 设备ID模式
+- **自动运行**：每天北京时间早上6点自动运行
+- **手动运行**：在 Actions 页面点击 "Run workflow"
 
-- `smart`: 智能模式（默认），70%随机ID，30%数美ID
-- `random`: 只使用随机ID
-- `shumei`: 只使用数美ID
-- 固定ID：设置 `FIXED_DEVICE_ID` 环境变量
+## 文件说明
 
-### 定时任务
+- `skland_github.py` - 主程序
+- `requirements.txt` - Python 依赖
+- `.github/workflows/skland-sign.yml` - GitHub Actions 工作流
+- `token.json` - 自动生成的 token 缓存文件（可选）
 
-默认每天 UTC 时间 0:10（北京时间 8:10）执行。修改 `.github/workflows/skland-signin.yml` 中的 cron 表达式调整时间。
+## 多账号支持
 
-## 常见问题
+在 Secrets 中设置多个 token，用英文逗号分隔：
+token1,token2,token3
 
-### Q: 如何添加多个账号？
-A: 在 `TOKEN` 中用逗号分隔多个 token。
+## 注意事项
 
-### Q: 签到失败了怎么办？
-A: 检查 Actions 日志，通常是因为 token 失效或网络问题。
-
-### Q: 可以修改签到时间吗？
-A: 可以，编辑 `.github/workflows/skland-signin.yml` 中的 `cron` 表达式。
-
-## 免责声明
-
-本脚本仅供学习交流使用，请勿用于商业用途。使用本脚本造成的任何问题，作者不承担责任。
+1. GitHub Actions 有免费额度限制，每月 2000 分钟
+2. 建议只在需要时启用
+3. token 可能过期，需要定期更新
+4. 代码仅供参考，使用风险自负

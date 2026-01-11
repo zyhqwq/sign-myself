@@ -32,10 +32,11 @@ FEISHU_WEBHOOK_URL = os.environ.get('FEISHU_WEBHOOK_URL', '')  # 飞书 Webhook
 BARK_URL = os.environ.get('BARK_URL', '')  # Bark 通知 URL
 PUSHPLUS_TOKEN = os.environ.get('PUSHPLUS_TOKEN', '')  # PushPlus Token
 SERVER_CHAN_KEY = os.environ.get('SERVER_CHAN_KEY', '')  # Server酱 KEY
+CUSTOM_WEBHOOK_URL = os.environ.get('CUSTOM_WEBHOOK_URL', '')  # 你的自定义 Webhook URL
 
 TOKEN_FILE = 'token.json'  # 保存 token 的文件
 
-# 数美配置
+# ================== 数美配置 ==================
 SM_CONFIG = {
     "organization": "UWXspnCCJN4sfYlNfqps",
     "appId": "default",
@@ -270,9 +271,17 @@ class NotificationManager:
     """通知管理器，支持多种通知方式"""
     
     @staticmethod
-    def send_all_notifications(subject, message, success_count=0, failed_count=0, total_count=0):
+    def send_all_notifications(subject, message, success_count=0, failed_count=0, total_count=0, detailed_results=None):
         """发送所有配置的通知"""
         results = []
+        
+        # 自定义Webhook
+        if CUSTOM_WEBHOOK_URL:
+            try:
+                result = NotificationManager.send_custom_webhook(subject, message, success_count, failed_count, total_count, detailed_results)
+                results.append(("自定义Webhook", result))
+            except Exception as e:
+                results.append(("自定义Webhook", f"发送失败: {str(e)}"))
         
         # 企业微信
         if WECHAT_WEBHOOK_URL:
@@ -333,6 +342,95 @@ class NotificationManager:
         return results
     
     @staticmethod
+    def send_custom_webhook(subject, message, success_count, failed_count, total_count, detailed_results=None):
+        """发送到自定义Webhook"""
+        print(f"\n📤 尝试发送到自定义Webhook: {CUSTOM_WEBHOOK_URL}")
+        
+        # 构建详细的JSON数据
+        webhook_data = {
+            "event": "skland_sign",
+            "timestamp": datetime.now().isoformat(),
+            "success": success_count > 0,
+            "summary": {
+                "total_accounts": total_count,
+                "success_count": success_count,
+                "failed_count": failed_count,
+                "subject": subject,
+                "message": message
+            },
+            "detailed_results": detailed_results if detailed_results else [],
+            "source": "github_actions",
+            "action_id": os.environ.get('GITHUB_RUN_ID', 'unknown'),
+            "repository": os.environ.get('GITHUB_REPOSITORY', 'unknown')
+        }
+        
+        # 尝试多种格式发送
+        
+        # 格式1: JSON格式（推荐）
+        try:
+            print("  尝试发送JSON格式...")
+            headers = {'Content-Type': 'application/json'}
+            response = requests.post(
+                CUSTOM_WEBHOOK_URL,
+                json=webhook_data,
+                timeout=15,
+                headers=headers
+            )
+            
+            print(f"  响应状态码: {response.status_code}")
+            print(f"  响应内容: {response.text[:100]}...")
+            
+            if response.status_code in [200, 201, 202, 204]:
+                return f"✅ JSON格式发送成功 (状态码: {response.status_code})"
+        except Exception as e:
+            print(f"  JSON格式发送失败: {str(e)}")
+        
+        # 格式2: 纯文本格式（备用）
+        try:
+            print("  尝试发送纯文本格式...")
+            text_data = f"森空岛签到\n{subject}\n\n{message}"
+            response = requests.post(
+                CUSTOM_WEBHOOK_URL,
+                data=text_data,
+                timeout=15,
+                headers={'Content-Type': 'text/plain'}
+            )
+            
+            print(f"  响应状态码: {response.status_code}")
+            print(f"  响应内容: {response.text[:100]}...")
+            
+            if response.status_code in [200, 201, 202, 204]:
+                return f"✅ 纯文本格式发送成功 (状态码: {response.status_code})"
+        except Exception as e:
+            print(f"  纯文本格式发送失败: {str(e)}")
+        
+        # 格式3: Form格式（备用）
+        try:
+            print("  尝试发送Form格式...")
+            form_data = {
+                "subject": subject,
+                "message": message,
+                "success_count": str(success_count),
+                "failed_count": str(failed_count),
+                "total_count": str(total_count)
+            }
+            response = requests.post(
+                CUSTOM_WEBHOOK_URL,
+                data=form_data,
+                timeout=15
+            )
+            
+            print(f"  响应状态码: {response.status_code}")
+            print(f"  响应内容: {response.text[:100]}...")
+            
+            if response.status_code in [200, 201, 202, 204]:
+                return f"✅ Form格式发送成功 (状态码: {response.status_code})"
+        except Exception as e:
+            print(f"  Form格式发送失败: {str(e)}")
+        
+        return "❌ 所有格式尝试均失败"
+    
+    @staticmethod
     def send_wechat_notification(subject, message, max_retries=3):
         """发送企业微信通知"""
         payload = {
@@ -371,11 +469,10 @@ class NotificationManager:
     @staticmethod
     def send_discord_notification(subject, message):
         """发送Discord通知"""
-        # Discord支持markdown
         content = f"## 森空岛签到\n**{subject}**\n\n{message}"
         
         payload = {
-            "content": content[:2000],  # Discord限制2000字符
+            "content": content[:2000],
             "embeds": [{
                 "title": subject,
                 "description": message[:2000],
@@ -395,7 +492,6 @@ class NotificationManager:
         """发送Telegram通知"""
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         
-        # Telegram支持HTML格式
         html_message = f"<b>森空岛签到</b>\n<b>{subject}</b>\n\n{message}"
         html_message = html_message.replace("\n", "\n")
         
@@ -435,11 +531,9 @@ class NotificationManager:
     @staticmethod
     def send_bark_notification(subject, message):
         """发送Bark通知"""
-        # Bark通知URL格式：https://api.day.app/{key}/{title}/{body}
         title = f"森空岛签到 - {subject}"
-        body = message.replace("\n", "\\n")[:100]  # 简化和缩短
+        body = message.replace("\n", "\\n")[:100]
         
-        # 构建Bark URL
         bark_url = f"{BARK_URL.rstrip('/')}/{title}/{body}"
         
         try:
@@ -489,6 +583,11 @@ class NotificationManager:
         """检查Webhook配置状态"""
         status = []
         
+        if CUSTOM_WEBHOOK_URL:
+            status.append("✅ 自定义 Webhook 已配置")
+        else:
+            status.append("❌ 自定义 Webhook 未配置")
+            
         if WECHAT_WEBHOOK_URL:
             status.append("✅ 企业微信 Webhook 已配置")
         else:
@@ -910,7 +1009,8 @@ def main():
         report,
         success_count,
         failed_count,
-        len(all_results)
+        len(all_results),
+        all_results  # 传递详细结果给自定义webhook
     )
     
     # 显示通知发送结果

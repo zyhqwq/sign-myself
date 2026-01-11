@@ -36,6 +36,7 @@ jobs:
         echo "BARK_URL is set: ${{ secrets.BARK_URL != '' }}"
         echo "PUSHPLUS_TOKEN is set: ${{ secrets.PUSHPLUS_TOKEN != '' }}"
         echo "SERVER_CHAN_KEY is set: ${{ secrets.SERVER_CHAN_KEY != '' }}"
+        echo "CUSTOM_WEBHOOK_URL is set: ${{ secrets.CUSTOM_WEBHOOK_URL != '' }}"
       env:
         SKLAND_TOKEN: ${{ secrets.SKLAND_TOKEN }}
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
@@ -46,6 +47,7 @@ jobs:
         BARK_URL: ${{ secrets.BARK_URL }}
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
+        CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
     
     - name: Run Skland Sign
       env:
@@ -58,5 +60,6 @@ jobs:
         BARK_URL: ${{ secrets.BARK_URL }}
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
+        CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
       run: |
         python skland_github.py

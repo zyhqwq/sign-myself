@@ -73,7 +73,7 @@
 - `requirements.txt`：Python 依赖列表。
 
 ## 🤝致谢与参考
-本脚本参考了 ![skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign) 的思路，特此感谢。
+本脚本参考了 [skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign) 的思路，特此感谢。
 
 请勿将本脚本用于任何商业或盈利目的。
 

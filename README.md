@@ -19,14 +19,15 @@
 
 1.  **获取 Token**:
     *   在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
-    *   按 `F12` 打开开发者工具，切换到 **网络 (Network)** 标签页。
-    *   刷新页面，在请求列表中找到一个名称包含 `grant` 的请求。
-    *   点击该请求，在右侧的 **响应 (Response)** 或 **载荷 (Payload)** 中找到 `token` 字段，复制其长字符串值（形如 `eyJ...`）。
+    *   按 F12 打开开发者工具
+    *   进入 https://web-api.skland.com/account/info/hg
+    *   格式如下：{"code":0,"data":{"content":"****"},"msg":"接口会返回您的鹰角网络通行证账号的登录凭证，此凭证可以用于鹰角网络账号系统校验您登录的有效性。泄露登录凭证属于极度危险操作，为了您的账号安全，请勿将此凭证以任何形式告知他人！"}
+    *   找到 `{"content":"****"}`，复制 `****"` 中的内容，并保存。
 
 2.  **添加 Secret**:
-    *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
-    *   点击 `New repository secret`。
-    *   **名称** 填写 `SKLAND_TOKEN`，**值** 粘贴你刚才复制的 Token。
+    *   进入你 Fork 的仓库，点击 `Settings` -> `Environments` -> `New environment`创建一个环境名称。
+    *   进入你创建的环境名称 `Add environment variable`。
+    *   **Name** 填写 `SKLAND_TOKEN`，**Value** 粘贴你刚才复制的 Token。
     *   如果你有多个账号，可以将多个 Token 用英文逗号 `,` 连接起来，作为一个值填入。
 
 ### 3. 启用 GitHub Actions
@@ -38,13 +39,15 @@
 
 如果你希望签到后收到通知，可以按需添加以下 Secret。添加方法与添加 `SKLAND_TOKEN` 相同。
 
-| 通知平台 | Secret 名称 | 说明 |
+| 通知平台 | Secret 名称 | 说明与获取提示 |
 | :--- | :--- | :--- |
-| **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信机器人的 Webhook 地址。 |
-| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要同时填写 Bot Token 和接收消息的聊天 ID。 |
-| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道的 Webhook 地址。 |
-| **Bark** | `BARK_URL` | 填写 Bark App 提供的推送 URL。 |
-| **PushPlus** | `PUSHPLUS_TOKEN` | 填写 PushPlus 的令牌。 |
+| **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 |
+| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 |
+| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。 |
+| **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 |
+| **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 |
+| **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 |
+| **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 |
 
 ## 常见问题
 

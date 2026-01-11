@@ -19,8 +19,7 @@
 
 1.  **获取 Token**:
     *   在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
-    *   按 F12 打开开发者工具
-    *   进入 https://web-api.skland.com/account/info/hg
+    *   登录后进入 https://web-api.skland.com/account/info/hg
     *   格式如下：`{"code":0,"data":{"content":"****"},"msg":"接口会返回您的鹰角网络通行证账号的登录凭证，此凭证可以用于鹰角网络账号系统校验您登录的有效性。泄露登录凭证属于极度危险操作，为了您的账号安全，请勿将此凭证以任何形式告知他人！"}`
     *   找到 `{"content":"****"}`，复制 `****"` 中的内容，并保存。
 
@@ -52,22 +51,30 @@
 ## 常见问题
 
 **Q：Token 会过期吗？需要经常换吗？**
+
 **A：** 通常不会。`SKLAND_TOKEN` 有效期很长，一般只有在你长时间未使用或修改密码后才会失效。如果脚本运行失败并提示 Token 错误，再按上述步骤重新获取一次即可。
 
 **Q：签到失败或收不到通知怎么办？**
+
 **A：** 请按以下步骤排查：
 1.  去仓库的 `Actions` 标签页，查看最近一次运行的详细日志，通常会有明确的错误信息。
 2.  检查你配置的 Secret（Token 和通知地址）是否填写正确，特别是注意不要有多余的空格。
 3.  确认你配置的通知渠道（如 Telegram Bot）本身工作正常。
 
 **Q：可以修改签到时间吗？**
+
 **A：** 可以。编辑仓库目录下的 `.github/workflows/sign.yml` 文件，找到 `cron: ‘0 0 * * *’` 这一行。这是 UTC 时间，如果你想在北京时间早上 7 点运行，可以改为 `cron: ‘0 23 * * *’`（即 UTC 前一天的 23 点）。
 
-## 文件说明
+## 📁文件说明
 
 - `skland_github.py`：主程序脚本。
 - `.github/workflows/sign.yml`：GitHub Actions 工作流配置文件。
 - `requirements.txt`：Python 依赖列表。
+
+## 🤝致谢与参考
+本脚本参考了 ![skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign) 的思路，特此感谢。
+
+请勿将本脚本用于任何商业或盈利目的。
 
 ## 最后
 

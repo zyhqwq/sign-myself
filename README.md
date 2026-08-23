@@ -122,7 +122,7 @@
 
 **Q：可以修改签到时间吗？**
 
-**A：** 可以。编辑对应的 `.github/workflows/` 下的工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。
+**A：** 可以。编辑对应的 `.github/workflows/` 下的工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8，所以 UTC = 北京时间 - 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。推荐使用 [crontab.guru](https://crontab.guru/) 在线生成和验证 cron 表达式。
 
 **Q：终末地签到提示"未经授权"怎么办？**
 

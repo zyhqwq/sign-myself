@@ -56,6 +56,8 @@
     | `BILI_DEDEUSERID` | B 站用户 ID（必需） |
     | `BILI_JCT` | CSRF Token（可选） |
 
+    支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
+
 ### 4. 启用 GitHub Actions
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。

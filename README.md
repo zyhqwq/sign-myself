@@ -82,7 +82,7 @@
 | **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
 | **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 | 正在测试 |
 | **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
-| **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址。 | 正在测试 |
+| **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 | 正在测试 |
 
 ## 常见问题
 

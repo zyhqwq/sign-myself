@@ -78,14 +78,14 @@
 
 | 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
 | :--- | :--- | :--- | :--- |
-| [**企业微信**](https://work.weixin.qq.com/) | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
-| [**Discord**](https://discord.com/) | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
-| [**Telegram**](https://telegram.org/) | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。详见下方步骤。 | ✓ |
-| [**飞书**](https://www.feishu.cn/) | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
-| [**钉钉**](https://www.dingtalk.com/) | `DINGTALK_WEBHOOK_URL` | 填写钉钉群自定义机器人的 Webhook 地址。详见下方步骤。 | 待测试 |
-| [**Bark**](https://github.com/Finb/Bark) | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
-| [**PushPlus**](https://www.pushplus.plus/) | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。关注 PushPlus 微信服务号后，通知会推送到个人微信。<br>**注意：** PushPlus 于 2024 年 8 月 1 日起实行网站实名制，需完成实名认证后才能发送消息。认证时手机号与身份证信息须保持一致（需支付认证费用）。 | 正在测试 |
-| [**Server酱**](https://sct.ftqq.com/) | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
+| <a href="https://work.weixin.qq.com/" target="_blank">**企业微信**</a> | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
+| <a href="https://discord.com/" target="_blank">**Discord**</a> | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
+| <a href="https://telegram.org/" target="_blank">**Telegram**</a> | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。详见下方步骤。 | ✓ |
+| <a href="https://www.feishu.cn/" target="_blank">**飞书**</a> | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
+| <a href="https://www.dingtalk.com/" target="_blank">**钉钉**</a> | `DINGTALK_WEBHOOK_URL` | 填写钉钉群自定义机器人的 Webhook 地址。详见下方步骤。 | 待测试 |
+| <a href="https://github.com/Finb/Bark" target="_blank">**Bark**</a> | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
+| <a href="https://www.pushplus.plus/" target="_blank">**PushPlus**</a> | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。关注 PushPlus 微信服务号后，通知会推送到个人微信。<br>**注意：** PushPlus 于 2024 年 8 月 1 日起实行网站实名制，需完成实名认证后才能发送消息。认证时手机号与身份证信息须保持一致（需支付认证费用）。 | 正在测试 |
+| <a href="https://sct.ftqq.com/" target="_blank">**Server酱**</a> | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 | 正在测试 |
 
 ### Telegram 机器人创建步骤

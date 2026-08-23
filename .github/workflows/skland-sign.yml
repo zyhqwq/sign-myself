@@ -62,4 +62,4 @@ jobs:
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
         CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
       run: |
-        python skland_github.py
+        python arknight_github.py

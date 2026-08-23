@@ -329,11 +329,14 @@ def get_endfield_characters(cred_resp):
 
         if app_code == 'endfield':
             for char in binding_list:
-                print(f"    终末地角色数据: {json.dumps(char, ensure_ascii=False, indent=6)}")
+                default_role = char.get('defaultRole') or {}
+                roles = char.get('roles', [])
+                role = default_role or (roles[0] if roles else {})
                 characters.append({
-                    'uid': char.get('uid', ''),
-                    'nickName': char.get('nickName', '') or '未知角色',
-                    'channelMasterId': char.get('channelMasterId', ''),
+                    'roleId': role.get('roleId', ''),
+                    'nickName': role.get('nickname', '') or char.get('nickName', '') or '未知角色',
+                    'serverId': role.get('serverId', char.get('channelMasterId', '')),
+                    'level': role.get('level', 0),
                 })
     return characters
 
@@ -426,11 +429,11 @@ def main():
 
             for char in characters:
                 name = char['nickName']
-                uid = char['uid']
-                server_id = char['channelMasterId']
+                role_id = char['roleId']
+                server_id = char['serverId']
 
-                print(f"  签到角色: {name} (uid={uid})")
-                result = do_endfield_sign(sign_token, cred, uid, server_id)
+                print(f"  签到角色: {name} (roleId={role_id}, LV{char['level']})")
+                result = do_endfield_sign(sign_token, cred, role_id, server_id)
 
                 if result.get('repeated'):
                     print(f"    今天已经签到过了")

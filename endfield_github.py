@@ -22,6 +22,8 @@ from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.base import Cipher
 from cryptography.hazmat.primitives.ciphers.modes import ECB, CBC
 
+from notify import send_notification
+
 # ================== 配置 ==================
 TOKEN = os.environ.get('SKLAND_TOKEN', '')
 
@@ -294,7 +296,6 @@ def get_cred(grant):
 
 
 def refresh_token(cred):
-    """刷新 token"""
     refresh_url = "https://zonai.skland.com/api/v1/auth/refresh"
     response = requests.get(refresh_url, headers={**header, 'cred': cred}, timeout=10)
     resp = response.json()
@@ -305,7 +306,6 @@ def refresh_token(cred):
 
 # ================== 终末地核心功能 ==================
 def get_endfield_characters(cred_resp):
-    """获取绑定的终末地角色列表"""
     sign_token = cred_resp['token']
     cred = cred_resp['cred']
 
@@ -319,16 +319,10 @@ def get_endfield_characters(cred_resp):
     if resp['code'] != 0:
         raise Exception(f"获取角色列表失败：{resp['message']}")
 
-    print(f"  绑定的游戏列表:")
     characters = []
     for entry in resp['data']['list']:
-        app_code = entry.get('appCode', '')
-        app_name = entry.get('appName', '')
-        binding_list = entry.get('bindingList', [])
-        print(f"    appCode={app_code}, appName={app_name}, 角色数={len(binding_list)}")
-
-        if app_code == 'endfield':
-            for char in binding_list:
+        if entry.get('appCode') == 'endfield':
+            for char in entry.get('bindingList', []):
                 default_role = char.get('defaultRole') or {}
                 roles = char.get('roles', [])
                 role = default_role or (roles[0] if roles else {})
@@ -342,19 +336,15 @@ def get_endfield_characters(cred_resp):
 
 
 def do_endfield_sign(sign_token, cred, role_id, server_id):
-    """执行终末地签到"""
     current_header = header.copy()
     current_header['cred'] = cred
 
     final_header = get_sign_header(endfield_sign_url, 'post', None, current_header, sign_token)
     final_header['Content-Type'] = 'application/json'
-    game_role = f"3_{role_id}_{server_id}"
-    final_header['sk-game-role'] = game_role
+    final_header['sk-game-role'] = f"3_{role_id}_{server_id}"
 
-    print(f"    sk-game-role: {game_role}")
     response = requests.post(endfield_sign_url, headers=final_header, timeout=15)
     resp = response.json()
-    print(f"    签到响应: {json.dumps(resp, ensure_ascii=False)}")
 
     if resp['code'] == 0:
         data = resp['data']
@@ -364,45 +354,39 @@ def do_endfield_sign(sign_token, cred, role_id, server_id):
             info = resource_map.get(award_id.get('id', ''), {})
             name = info.get('name', '未知物品')
             count = info.get('count', 0)
-            awards.append(f"{name}×{count}")
+            awards.append(f"{name}x{count}")
         return {'success': True, 'awards': awards}
     else:
         msg = resp.get('message', '未知错误')
         if '已签到' in msg or 'repeat' in msg.lower():
             return {'success': True, 'awards': [], 'repeated': True}
-        return {'success': False, 'error': msg, 'code': resp.get('code')}
+        return {'success': False, 'error': msg}
 
 
 def main():
-    print("=" * 50)
-    print("明日方舟：终末地 签到脚本")
-    print(f"当前时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 50)
+    print(f"[终末地签到] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     if not TOKEN:
-        print("错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN")
+        print("错误: 未设置 SKLAND_TOKEN")
         sys.exit(1)
 
-    # 初始化 dId
     try:
         d_id = get_d_id()
         header_login['dId'] = d_id
         header_for_sign['dId'] = d_id
-        print("设备ID生成成功")
     except Exception as e:
-        print(f"dId 初始化失败：{str(e)}")
+        print(f"dId 初始化失败: {str(e)}")
+        send_notification("终末地签到失败", f"dId 初始化失败: {str(e)}")
         sys.exit(1)
 
     token_list = TOKEN.split(',')
+    results = []
     all_success = True
 
     for idx, raw_token in enumerate(token_list):
         raw_token = raw_token.strip()
         if not raw_token:
             continue
-
-        token_id = f"账号_{idx + 1}"
-        print(f"\n--- 处理 {token_id} ---")
 
         try:
             token = parse_token(raw_token)
@@ -414,44 +398,46 @@ def main():
 
             try:
                 sign_token = refresh_token(cred)
-                print("  Token刷新成功")
-            except Exception as e:
-                print(f"  Token刷新失败（继续使用原始token）: {str(e)}")
+            except Exception:
+                pass
 
             characters = get_endfield_characters(cred_resp)
 
             if not characters:
-                print("  未找到终末地角色，请确认已在森空岛绑定终末地账号")
+                results.append("未找到终末地角色")
                 all_success = False
                 continue
-
-            print(f"  找到 {len(characters)} 个终末地角色")
 
             for char in characters:
                 name = char['nickName']
                 role_id = char['roleId']
                 server_id = char['serverId']
 
-                print(f"  签到角色: {name} (roleId={role_id}, LV{char['level']})")
                 result = do_endfield_sign(sign_token, cred, role_id, server_id)
 
                 if result.get('repeated'):
-                    print(f"    今天已经签到过了")
+                    line = f"{name}: 今天已签到"
                 elif result['success']:
                     award_str = ', '.join(result['awards']) if result['awards'] else '无奖励'
-                    print(f"    签到成功，获得: {award_str}")
+                    line = f"{name}: 签到成功 - {award_str}"
                 else:
-                    print(f"    签到失败: {result['error']}")
+                    line = f"{name}: 签到失败 - {result['error']}"
                     all_success = False
 
+                results.append(line)
+                print(line)
+
         except Exception as e:
-            print(f"  {token_id} 处理失败: {str(e)}")
+            results.append(f"账号_{idx + 1}: 处理失败 - {str(e)}")
             all_success = False
 
-    if all_success:
-        print("\n签到任务完成")
-    else:
-        print("\n部分账号签到失败")
+    report = "\n".join(results)
+    title = "终末地签到成功" if all_success else "终末地签到 - 存在失败"
+    print(f"\n{report}")
+
+    send_notification(title, report)
+
+    if not all_success:
         sys.exit(1)
 
 

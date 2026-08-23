@@ -29,5 +29,14 @@ jobs:
         BILI_SESSDATA: ${{ secrets.BILI_SESSDATA }}
         BILI_JCT: ${{ secrets.BILI_JCT }}
         BILI_DEDEUSERID: ${{ secrets.BILI_DEDEUSERID }}
+        WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        BARK_URL: ${{ secrets.BARK_URL }}
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
+        CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
       run: |
         python bilibili_login.py

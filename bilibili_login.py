@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Bilibili 每日登录脚本 - 通过 GitHub Actions 自动登录领取硬币"""
 
-import json
 import os
 import sys
 import requests
+from datetime import datetime
+
+from notify import send_notification
 
 # ================== 配置 ==================
 SESSDATA = os.environ.get('BILI_SESSDATA', '')
@@ -47,28 +49,35 @@ def daily_login() -> dict:
 
 
 def main():
-    print("=" * 40)
-    print("Bilibili 每日登录")
-    print("=" * 40)
+    print(f"[B站登录] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     if not SESSDATA or not DEDEUSERID:
-        print("错误: 请在 GitHub Secrets 中设置 BILI_SESSDATA 和 BILI_DEDEUSERID")
+        print("错误: 未设置 BILI_SESSDATA / BILI_DEDEUSERID")
         sys.exit(1)
 
     result = daily_login()
 
     if result.get("error"):
-        print(f"登录失败: {result['error']} (code={result['code']})")
+        msg = f"登录失败: {result['error']} (code={result['code']})"
+        print(msg)
+        send_notification("B站登录失败", msg)
         sys.exit(1)
 
     if result["success"]:
-        print(f"用户: {result['uname']}")
-        print(f"硬币: {result['money']}")
-        print(f"等级: LV{result['level']}")
-        print(f"大会员: {'是' if result['vip_status'] else '否'}")
-        print("登录成功，每日硬币已领取")
+        lines = [
+            f"用户: {result['uname']}",
+            f"硬币: {result['money']}",
+            f"等级: LV{result['level']}",
+            f"大会员: {'是' if result['vip_status'] else '否'}",
+            "每日硬币已领取",
+        ]
+        report = "\n".join(lines)
+        print(report)
+        send_notification("B站每日登录", report)
     else:
-        print("登录失败: Cookie 可能已过期，请重新获取")
+        msg = "登录失败: Cookie 可能已过期，请重新获取"
+        print(msg)
+        send_notification("B站登录失败", msg)
         sys.exit(1)
 
 

@@ -73,16 +73,16 @@
 
 如果你希望签到后收到通知，可以按需添加以下 Secret。添加方法与添加 `SKLAND_TOKEN` 相同。所有脚本共享同一套通知配置。
 
-| 通知平台 | Secret 名称 | 说明与获取提示 |
-| :--- | :--- | :--- |
-| **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 |
-| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 |
-| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。 |
-| **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 |
-| **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 |
-| **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 |
-| **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 |
-| **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址。 |
+| 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
+| :--- | :--- | :--- | :--- |
+| **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
+| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | 正在测试 |
+| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。 | 正在测试 |
+| **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | 正在测试 |
+| **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
+| **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 | 正在测试 |
+| **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
+| **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址。 | 正在测试 |
 
 ## 常见问题
 

@@ -47,7 +47,7 @@
         *   `bili_jct`（可选）
 
 2.  **添加 Secret**:
-    *   进入仓库 `Settings` -> `Environments` -> 创建或选择一个环境（如 `bilibili`）。
+    *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
     *   分别添加以下三个 Secret：
 
     | Secret 名称 | 说明 |

@@ -118,7 +118,7 @@
 
 4.  **添加 Secret**
     - `TELEGRAM_BOT_TOKEN` → 第 1 步的 Token
-    - `TELEGRAM_CHAT_ID` → 第 2 步的数字
+    - `TELEGRAM_CHAT_ID` → 第 2 步的 Chat ID（数字）
 
 ### 钉钉机器人创建步骤
 

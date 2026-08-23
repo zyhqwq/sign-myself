@@ -69,7 +69,7 @@
 *   点击 `I understand my workflows, go ahead and enable them`。
 *   完成！各脚本将按照以下时间自动运行：
 
-| 任务 | [运行时间（北京时间）](#modify-time) | 工作流文件 |
+| 任务 | [运行时间（北京时间）可修改](#modify-time) | 工作流文件 |
 | :--- | :--- | :--- |
 | 明日方舟签到 | 每天 06:00 | `skland-sign.yml` |
 | Bilibili 登录 | 每天 08:00 | `bilibili-login.yml` |

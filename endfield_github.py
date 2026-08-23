@@ -293,6 +293,16 @@ def get_cred(grant):
     return resp['data']
 
 
+def refresh_token(cred):
+    """刷新 token"""
+    refresh_url = "https://zonai.skland.com/api/v1/auth/refresh"
+    response = requests.get(refresh_url, headers={**header, 'cred': cred}, timeout=10)
+    resp = response.json()
+    if resp.get('code') != 0:
+        raise Exception(f"刷新token失败：{resp.get('message')}")
+    return resp['data']['token']
+
+
 # ================== 终末地核心功能 ==================
 def get_endfield_characters(cred_resp):
     """获取绑定的终末地角色列表"""
@@ -309,13 +319,20 @@ def get_endfield_characters(cred_resp):
     if resp['code'] != 0:
         raise Exception(f"获取角色列表失败：{resp['message']}")
 
+    print(f"  绑定的游戏列表:")
     characters = []
     for entry in resp['data']['list']:
-        if entry.get('appCode') == 'endfield':
-            for char in entry.get('bindingList', []):
+        app_code = entry.get('appCode', '')
+        app_name = entry.get('appName', '')
+        binding_list = entry.get('bindingList', [])
+        print(f"    appCode={app_code}, appName={app_name}, 角色数={len(binding_list)}")
+
+        if app_code == 'endfield':
+            for char in binding_list:
+                print(f"    终末地角色数据: {json.dumps(char, ensure_ascii=False, indent=6)}")
                 characters.append({
                     'uid': char.get('uid', ''),
-                    'nickName': char.get('nickName', '未知角色'),
+                    'nickName': char.get('nickName', '') or '未知角色',
                     'channelMasterId': char.get('channelMasterId', ''),
                 })
     return characters
@@ -328,10 +345,13 @@ def do_endfield_sign(sign_token, cred, role_id, server_id):
 
     final_header = get_sign_header(endfield_sign_url, 'post', None, current_header, sign_token)
     final_header['Content-Type'] = 'application/json'
-    final_header['sk-game-role'] = f"3_{role_id}_{server_id}"
+    game_role = f"3_{role_id}_{server_id}"
+    final_header['sk-game-role'] = game_role
 
+    print(f"    sk-game-role: {game_role}")
     response = requests.post(endfield_sign_url, headers=final_header, timeout=15)
     resp = response.json()
+    print(f"    签到响应: {json.dumps(resp, ensure_ascii=False)}")
 
     if resp['code'] == 0:
         data = resp['data']
@@ -347,7 +367,7 @@ def do_endfield_sign(sign_token, cred, role_id, server_id):
         msg = resp.get('message', '未知错误')
         if '已签到' in msg or 'repeat' in msg.lower():
             return {'success': True, 'awards': [], 'repeated': True}
-        return {'success': False, 'error': msg}
+        return {'success': False, 'error': msg, 'code': resp.get('code')}
 
 
 def main():
@@ -385,6 +405,16 @@ def main():
             token = parse_token(raw_token)
             grant_code = get_grant_code(token)
             cred_resp = get_cred(grant_code)
+
+            sign_token = cred_resp['token']
+            cred = cred_resp['cred']
+
+            try:
+                sign_token = refresh_token(cred)
+                print("  Token刷新成功")
+            except Exception as e:
+                print(f"  Token刷新失败（继续使用原始token）: {str(e)}")
+
             characters = get_endfield_characters(cred_resp)
 
             if not characters:
@@ -393,9 +423,6 @@ def main():
                 continue
 
             print(f"  找到 {len(characters)} 个终末地角色")
-
-            sign_token = cred_resp['token']
-            cred = cred_resp['cred']
 
             for char in characters:
                 name = char['nickName']

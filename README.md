@@ -78,12 +78,32 @@
 | :--- | :--- | :--- | :--- |
 | **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
 | **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
-| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。 | 正在测试 |
+| **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。详见下方步骤。 | ✓ |
 | **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | 正在测试 |
 | **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
 | **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 | 正在测试 |
 | **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 | 正在测试 |
+
+### Telegram 机器人创建步骤
+
+1.  **创建机器人，获取 Token**
+    - 在 Telegram 搜索 `@BotFather`，打开对话
+    - 发送 `/newbot`
+    - 按提示输入机器人名称（显示名）和用户名（必须以 `bot` 结尾，如 `my_sign_notify_bot`）
+    - 创建成功后会返回 Token，格式如：`7123456789:AAH1bC2dE3fG4hI5jK6lM7nO8pQ9rS0tU`
+
+2.  **获取 Chat ID**
+    - 搜索 `@userinfobot`，打开对话
+    - 发送 `/start`，它会回复你的 Chat ID（一串数字，如 `123456789`）
+
+3.  **先给你的机器人发一条消息**
+    - 搜索你刚创建的机器人用户名，打开对话
+    - 发送任意消息（必须发一条，否则机器人没权限给你发消息）
+
+4.  **添加 Secret**
+    - `TELEGRAM_BOT_TOKEN` → 第 1 步的 Token
+    - `TELEGRAM_CHAT_ID` → 第 2 步的数字
 
 ## 常见问题
 

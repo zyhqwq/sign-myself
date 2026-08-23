@@ -79,6 +79,7 @@ def main():
 
     if not TOKEN:
         print("错误: 未设置 SKLAND_TOKEN")
+        send_notification("终末地签到失败", "未设置 SKLAND_TOKEN")
         sys.exit(1)
 
     try:

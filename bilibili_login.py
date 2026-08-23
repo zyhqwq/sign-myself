@@ -52,7 +52,9 @@ def main():
     print(f"[B站登录] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     if not SESSDATA or not DEDEUSERID:
-        print("错误: 未设置 BILI_SESSDATA / BILI_DEDEUSERID")
+        msg = "错误: 未设置 BILI_SESSDATA / BILI_DEDEUSERID"
+        print(msg)
+        send_notification("B站登录失败", msg)
         sys.exit(1)
 
     result = daily_login()

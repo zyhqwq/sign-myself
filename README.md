@@ -77,7 +77,7 @@
 | 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
 | :--- | :--- | :--- | :--- |
 | **企业微信** | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
-| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | 正在测试 |
+| **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
 | **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。 | 正在测试 |
 | **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | 正在测试 |
 | **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |

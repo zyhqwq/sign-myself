@@ -69,7 +69,7 @@
 *   点击 `I understand my workflows, go ahead and enable them`。
 *   完成！各脚本将按照以下时间自动运行：
 
-| 任务 | 运行时间（北京时间） | 工作流文件 |
+| 任务 | [运行时间（北京时间）](#modify-time) | 工作流文件 |
 | :--- | :--- | :--- |
 | 明日方舟签到 | 每天 06:00 | `skland-sign.yml` |
 | Bilibili 登录 | 每天 08:00 | `bilibili-login.yml` |
@@ -166,6 +166,8 @@
 1.  去仓库的 `Actions` 标签页，查看最近一次运行的详细日志，通常会有明确的错误信息。
 2.  检查你配置的 Secret（Token 和通知地址）是否填写正确，特别是注意不要有多余的空格。
 3.  确认你配置的通知渠道（如 Telegram Bot）本身工作正常。
+
+<a id="modify-time"></a>
 
 **Q：可以修改签到时间吗？**
 

@@ -214,8 +214,10 @@ def main():
         init_did()
         print(f"\n✅ 成功生成设备ID")
     except Exception as e:
+        import traceback
         error_msg = f"❌ dId 初始化失败：{str(e)}"
         print(f"\n{error_msg}")
+        print(f"\n详细错误信息：\n{traceback.format_exc()}")
         send_notification("签到失败", error_msg)
         return
 

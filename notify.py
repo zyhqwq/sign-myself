@@ -23,6 +23,7 @@ BARK_URL = os.environ.get('BARK_URL', '')
 PUSHPLUS_TOKEN = os.environ.get('PUSHPLUS_TOKEN', '')
 SERVER_CHAN_KEY = os.environ.get('SERVER_CHAN_KEY', '')
 CUSTOM_WEBHOOK_URL = os.environ.get('CUSTOM_WEBHOOK_URL', '')
+DEBUG_NOTIFY = os.environ.get('DEBUG_NOTIFY', '').lower() in ('true', '1', 'yes')
 
 
 def _debug(verbose, tag, **info):
@@ -230,6 +231,7 @@ def _send_serverchan(title, message, verbose=False):
 
 def send_notification(title: str, message: str, extra_data=None, verbose=False):
     """发送通知到所有已配置的渠道"""
+    verbose = verbose or DEBUG_NOTIFY
     results = []
 
     if CUSTOM_WEBHOOK_URL:

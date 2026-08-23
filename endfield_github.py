@@ -85,7 +85,9 @@ def main():
     try:
         init_did()
     except Exception as e:
+        import traceback
         print(f"dId 初始化失败: {str(e)}")
+        print(f"\n详细错误信息：\n{traceback.format_exc()}")
         send_notification("终末地签到失败", f"dId 初始化失败: {str(e)}")
         sys.exit(1)
 

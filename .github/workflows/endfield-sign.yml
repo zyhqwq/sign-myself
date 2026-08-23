@@ -37,5 +37,6 @@ jobs:
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
         CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
+        DEBUG_NOTIFY: ${{ secrets.DEBUG_NOTIFY }}
       run: |
         python endfield_github.py

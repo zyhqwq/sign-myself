@@ -106,7 +106,7 @@
     - 在 Telegram 搜索 `@BotFather`，打开对话
     - 发送 `/newbot`
     - 按提示输入机器人名称（显示名）和用户名（必须以 `bot` 结尾，如 `my_sign_notify_bot`）
-    - 创建成功后会返回 Token，格式如：`7123456789:AAH1bC2dE3fG4hI5jK6lM7nO8pQ9rS0tU`
+    - 创建成功后会返回 Token，格式如：`5892341765:ABCxY9zW8vU7tS6rQ5pO4nM3lK2jI1hG0f`
 
 2.  **获取 Chat ID**
     - 搜索 `@userinfobot`，打开对话

@@ -1,4 +1,8 @@
-# 森空岛自动签到脚本
+# sign-myself
+
+> **声明：本项目仅供学习与交流使用。**
+>
+> 本项目代码由 AI 生成，使用者应自行审查代码内容并承担一切使用风险（包括但不限于账号封禁、数据丢失等）。请勿将本脚本用于任何商业或盈利目的。如相关平台或服务提供商认为本工具侵犯了您的权益，请联系作者删除。
 
 一个用于森空岛（Skland）平台的自动签到工具，支持通过 GitHub Actions 全自动运行，并可通过多种渠道接收通知。
 
@@ -27,7 +31,7 @@
     *   找到 `{"content":"****"}`，复制 `****` 中的内容，并保存。
 
 2.  **添加 Secret**:
-    *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`（或 `Environments` 中对应环境）。
+    *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Environments`。
     *   点击 `New repository secret`。
     *   **Name** 填写 `SKLAND_TOKEN`，**Value** 粘贴你刚才复制的 Token。
     *   如果你有多个账号，可以将多个 Token 用英文逗号 `,` 连接起来，作为一个值填入。
@@ -119,6 +123,7 @@
 
 - 森空岛签到逻辑参考了 [skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign)
 - 终末地签到逻辑参考了 [nonebot-plugin-skland](https://github.com/FrostN0v0/nonebot-plugin-skland)
+- Bilibili 每日登录思路参考了 [BiliBiliToolPro](https://github.com/RayWangQvQ/BiliBiliToolPro)、[BILIBILI-HELPER](https://github.com/JunzhouLiu/BILIBILI-HELPER) 等开源项目
 
 请勿将本脚本用于任何商业或盈利目的。
 

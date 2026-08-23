@@ -13,6 +13,7 @@ DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
 FEISHU_WEBHOOK_URL = os.environ.get('FEISHU_WEBHOOK_URL', '')
+DINGTALK_WEBHOOK_URL = os.environ.get('DINGTALK_WEBHOOK_URL', '')
 BARK_URL = os.environ.get('BARK_URL', '')
 PUSHPLUS_TOKEN = os.environ.get('PUSHPLUS_TOKEN', '')
 SERVER_CHAN_KEY = os.environ.get('SERVER_CHAN_KEY', '')
@@ -155,6 +156,19 @@ def _send_feishu(title, message, verbose=False):
         return str(e)
 
 
+def _send_dingtalk(title, message, verbose=False):
+    try:
+        payload = {"msgtype": "text", "text": {"content": f"【{title}】\n\n{message}"}}
+        _debug(verbose, "dingtalk", url=DINGTALK_WEBHOOK_URL)
+        resp = requests.post(DINGTALK_WEBHOOK_URL, json=payload, timeout=15)
+        result = resp.json()
+        _debug(verbose, "dingtalk", status=resp.status_code, body=resp.text)
+        return "OK" if result.get("errcode") == 0 else f"errcode={result.get('errcode')}: {result.get('errmsg', 'failed')}"
+    except Exception as e:
+        _debug(verbose, "dingtalk", exception=traceback.format_exc())
+        return str(e)
+
+
 def _send_bark(title, message, verbose=False):
     try:
         body = message.replace("\n", "\\n")[:100]
@@ -210,6 +224,8 @@ def send_notification(title: str, message: str, extra_data=None, verbose=False):
         results.append(("Telegram", _send_telegram(title, message, verbose)))
     if FEISHU_WEBHOOK_URL:
         results.append(("飞书", _send_feishu(title, message, verbose)))
+    if DINGTALK_WEBHOOK_URL:
+        results.append(("钉钉", _send_dingtalk(title, message, verbose)))
     if BARK_URL:
         results.append(("Bark", _send_bark(title, message, verbose)))
     if PUSHPLUS_TOKEN:
@@ -229,6 +245,7 @@ def get_webhook_status():
         (DISCORD_WEBHOOK_URL, "Discord Webhook"),
         (TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, "Telegram Bot"),
         (FEISHU_WEBHOOK_URL, "飞书 Webhook"),
+        (DINGTALK_WEBHOOK_URL, "钉钉 Webhook"),
         (BARK_URL, "Bark"),
         (PUSHPLUS_TOKEN, "PushPlus"),
         (SERVER_CHAN_KEY, "Server酱"),

@@ -82,6 +82,7 @@
 | **Discord** | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
 | **Telegram** | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。详见下方步骤。 | ✓ |
 | **飞书** | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
+| **钉钉** | `DINGTALK_WEBHOOK_URL` | 填写钉钉群自定义机器人的 Webhook 地址。详见下方步骤。 | 待测试 |
 | **Bark** | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
 | **PushPlus** | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。 | 正在测试 |
 | **Server酱** | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SCKEY。 | 正在测试 |
@@ -106,6 +107,25 @@
 4.  **添加 Secret**
     - `TELEGRAM_BOT_TOKEN` → 第 1 步的 Token
     - `TELEGRAM_CHAT_ID` → 第 2 步的数字
+
+### 钉钉机器人创建步骤
+
+1.  **创建机器人**
+    - 打开钉钉，进入想接收通知的**群聊**
+    - 点击右上角 **群设置** → **机器人** → **添加机器人**
+    - 选择 **自定义（通过 Webhook 接入自定义服务）**
+    - 填写机器人名称（如"签到通知"）
+    - **安全设置**选择 **自定义关键词**，填写 `签到`（消息内容必须包含此关键词才能发送成功）
+    - 点击 **完成**，会生成一个 Webhook 地址，格式如：
+      ```
+      https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxxxxxx
+      ```
+    - 复制这个地址
+
+2.  **添加 Secret**
+    - 到 GitHub 仓库 `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+    - Name: `DINGTALK_WEBHOOK_URL`
+    - Value: 粘贴上面的 Webhook 地址
 
 ## 常见问题
 

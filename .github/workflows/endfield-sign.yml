@@ -31,6 +31,7 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
         BARK_URL: ${{ secrets.BARK_URL }}
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}

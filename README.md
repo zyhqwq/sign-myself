@@ -108,9 +108,10 @@
 ## 文件说明
 
 ```
-├── skland_github.py              # 明日方舟签到脚本
+├── arknight_github.py             # 明日方舟签到脚本
 ├── endfield_github.py            # 终末地签到脚本
 ├── bilibili_login.py             # Bilibili 每日登录脚本
+├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
 ├── notify.py                     # 共享通知模块
 ├── requirements.txt              # Python 依赖列表
 └── .github/workflows/

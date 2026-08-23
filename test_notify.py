@@ -15,10 +15,11 @@ def main():
     for status in get_webhook_status():
         print(f"  {status}")
 
-    print("\n📨 发送测试通知...")
+    print("\n📨 发送测试通知（verbose 模式）...")
     results = send_notification(
         "通知测试",
-        f"这是一条测试消息\n时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n来源: GitHub Actions"
+        f"这是一条测试消息\n时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n来源: GitHub Actions",
+        verbose=True,
     )
 
     if not results:
@@ -29,9 +30,10 @@ def main():
     ok = 0
     fail = 0
     for name, result in results:
-        icon = "✅" if result == "OK" else "❌"
+        is_ok = result == "OK" or result.startswith("OK")
+        icon = "✅" if is_ok else "❌"
         print(f"  {icon} {name}: {result}")
-        if result == "OK":
+        if is_ok:
             ok += 1
         else:
             fail += 1

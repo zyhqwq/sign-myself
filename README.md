@@ -31,7 +31,7 @@
     *   找到 `{"content":"****"}`，复制 `****` 中的内容，并保存。
 
 2.  **添加 Secret**:
-    *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Environments`。
+    *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
     *   点击 `New repository secret`。
     *   **Name** 填写 `SKLAND_TOKEN`，**Value** 粘贴你刚才复制的 Token。
     *   如果你有多个账号，可以将多个 Token 用英文逗号 `,` 连接起来，作为一个值填入。
@@ -64,14 +64,15 @@
 | 任务 | 运行时间（北京时间） | 工作流文件 |
 | :--- | :--- | :--- |
 | 明日方舟签到 | 每天 06:00 | `skland-sign.yml` |
-| Bilibili 登录 | 每天 06:00 | `bilibili-login.yml` |
+| Bilibili 登录 | 每天 08:00 | `bilibili-login.yml` |
 | 终末地签到 | 每天 13:00 | `endfield-sign.yml` |
+| 通知测试 | 手动触发 | `test-notify.yml` |
 
 你也可以在 Actions 页面手动触发任意工作流。
 
 ## 配置通知（可选）
 
-如果你希望签到后收到通知，可以按需添加以下 Secret。添加方法与添加 `SKLAND_TOKEN` 相同。所有脚本共享同一套通知配置。
+如果你希望签到后收到通知，可以按需添加以下 Secret。进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret` 添加。所有脚本共享同一套通知配置。
 
 | 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
 | :--- | :--- | :--- | :--- |
@@ -111,13 +112,15 @@
 ├── arknight_github.py             # 明日方舟签到脚本
 ├── endfield_github.py            # 终末地签到脚本
 ├── bilibili_login.py             # Bilibili 每日登录脚本
+├── test_notify.py                # 通知渠道测试脚本
 ├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
 ├── notify.py                     # 共享通知模块
 ├── requirements.txt              # Python 依赖列表
 └── .github/workflows/
     ├── skland-sign.yml           # 明日方舟签到工作流
     ├── endfield-sign.yml         # 终末地签到工作流
-    └── bilibili-login.yml        # Bilibili 登录工作流
+    ├── bilibili-login.yml        # Bilibili 登录工作流
+    └── test-notify.yml           # 通知测试工作流
 ```
 
 ## 致谢与参考

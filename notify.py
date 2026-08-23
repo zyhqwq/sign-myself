@@ -4,7 +4,11 @@
 import os
 import time
 import json
+import hmac
+import hashlib
+import base64
 import traceback
+import urllib.parse
 import requests
 from datetime import datetime
 
@@ -14,6 +18,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
 FEISHU_WEBHOOK_URL = os.environ.get('FEISHU_WEBHOOK_URL', '')
 DINGTALK_WEBHOOK_URL = os.environ.get('DINGTALK_WEBHOOK_URL', '')
+DINGTALK_SECRET = os.environ.get('DINGTALK_SECRET', '')
 BARK_URL = os.environ.get('BARK_URL', '')
 PUSHPLUS_TOKEN = os.environ.get('PUSHPLUS_TOKEN', '')
 SERVER_CHAN_KEY = os.environ.get('SERVER_CHAN_KEY', '')
@@ -159,8 +164,21 @@ def _send_feishu(title, message, verbose=False):
 def _send_dingtalk(title, message, verbose=False):
     try:
         payload = {"msgtype": "text", "text": {"content": f"【{title}】\n\n{message}"}}
-        _debug(verbose, "dingtalk", url=DINGTALK_WEBHOOK_URL)
-        resp = requests.post(DINGTALK_WEBHOOK_URL, json=payload, timeout=15)
+        url = DINGTALK_WEBHOOK_URL
+
+        if DINGTALK_SECRET:
+            timestamp = str(round(time.time() * 1000))
+            string_to_sign = f'{timestamp}\n{DINGTALK_SECRET}'
+            hmac_code = hmac.new(
+                DINGTALK_SECRET.encode('utf-8'),
+                string_to_sign.encode('utf-8'),
+                digestmod=hashlib.sha256
+            ).digest()
+            sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
+            url = f'{url}&timestamp={timestamp}&sign={sign}'
+
+        _debug(verbose, "dingtalk", url=url, signed=bool(DINGTALK_SECRET))
+        resp = requests.post(url, json=payload, timeout=15)
         result = resp.json()
         _debug(verbose, "dingtalk", status=resp.status_code, body=resp.text)
         return "OK" if result.get("errcode") == 0 else f"errcode={result.get('errcode')}: {result.get('errmsg', 'failed')}"

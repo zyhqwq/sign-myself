@@ -89,7 +89,7 @@
 | :--- | :--- | :--- | :--- |
 | [**企业微信**](https://work.weixin.qq.com/) | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
 | [**飞书**](https://www.feishu.cn/) | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
-| [**钉钉**](https://www.dingtalk.com/) | `DINGTALK_WEBHOOK_URL` | 填写钉钉群自定义机器人的 Webhook 地址。详见下方步骤。 | 待测试 |
+| [**钉钉**](https://www.dingtalk.com/) | `DINGTALK_WEBHOOK_URL`<br>（可选）`DINGTALK_SECRET` | 填写钉钉群自定义机器人的 Webhook 地址。若安全设置选择"加签"，需额外填写 `DINGTALK_SECRET`。详见下方步骤。 | 待测试 |
 | [**Bark**](https://github.com/Finb/Bark) | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
 | [**PushPlus**](https://www.pushplus.plus/) | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。关注 PushPlus 微信服务号后，通知会推送到个人微信。<br>**注意：** PushPlus 于 2024 年 8 月 1 日起实行网站实名制，需完成实名认证后才能发送消息。认证时手机号与身份证信息须保持一致（需支付认证费用）。 | 正在测试 |
 | [**Server酱**](https://sct.ftqq.com/) | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SendKey。<br>关注 Server酱官方微信服务号，可推送到个人微信，每天免费 5 条消息。 | ✓ |
@@ -128,10 +128,9 @@
     - 选择 **自定义（通过 Webhook 接入自定义服务）**，点击 **添加**
     - 配置机器人信息：
       - **机器人名字**：填写名称（如"签到通知"）
-      - **安全设置**（三选一）：
+      - **安全设置**（二选一）：
         - **自定义关键词**：消息中必须包含该关键词才能发送成功，如填写 `签到`
-        - **加签**：使用签名加密，安全性更高（需额外配置 Secret）
-        - **IP 地址（段）**：只允许指定 IP 的请求
+        - **加签**：使用签名加密，安全性更高。选择后会生成一个 `SEC` 开头的密钥，复制保存
     - 勾选服务条款，点击 **完成**
     - 复制生成的 Webhook 地址，格式如：
       ```
@@ -140,10 +139,14 @@
 
 2.  **添加 Secret**
     - 到 GitHub 仓库 `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-    - Name: `DINGTALK_WEBHOOK_URL`
-    - Value: 粘贴上面的 Webhook 地址
+    - 添加 Webhook 地址：
+      - Name: `DINGTALK_WEBHOOK_URL`
+      - Value: 粘贴上面的 Webhook 地址
+    - 如果安全设置选择了"加签"，还需额外添加：
+      - Name: `DINGTALK_SECRET`
+      - Value: 粘贴 `SEC` 开头的密钥
 
-> **提示**：如果安全设置选择"自定义关键词"，请确保关键词与消息内容匹配。本项目通知标题包含"签到"、"登录"等关键词，建议设置 `签到` 作为关键词。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
+> **说明**：代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
 
 ## 常见问题
 

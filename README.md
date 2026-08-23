@@ -89,7 +89,7 @@
 | :--- | :--- | :--- | :--- |
 | [**企业微信**](https://work.weixin.qq.com/) | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
 | [**飞书**](https://www.feishu.cn/) | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
-| [**钉钉**](https://www.dingtalk.com/) | `DINGTALK_WEBHOOK_URL`<br>`DINGTALK_SECRET`（可选） | 填写钉钉群自定义机器人的 Webhook 地址。若安全设置选择"加签"，需额外填写 `DINGTALK_SECRET`。<br>若选择"自定义关键词"，建议设置 `通知`（所有消息均包含此关键词）。详见下方步骤。 | 待测试 |
+| [**钉钉**](https://www.dingtalk.com/) | `DINGTALK_WEBHOOK_URL`<br>`DINGTALK_SECRET`（可选） | 填写钉钉群自定义机器人的 Webhook 地址。若安全设置选择"加签"，需额外填写 `DINGTALK_SECRET`。<br>若选择"自定义关键词"，建议设置 `通知`（所有消息均包含此关键词）。详见下方步骤。 | ✓ |
 | [**Bark**](https://github.com/Finb/Bark) | `BARK_URL` | 填写 Bark App 为你生成的推送 URL。 | 正在测试 |
 | [**PushPlus**](https://www.pushplus.plus/) | `PUSHPLUS_TOKEN` | 在 PushPlus 官网申请 Token。关注 PushPlus 微信服务号后，通知会推送到个人微信。<br>**注意：** PushPlus 于 2024 年 8 月 1 日起实行网站实名制，需完成实名认证后才能发送消息。认证时手机号与身份证信息须保持一致（需支付认证费用）。 | 正在测试 |
 | [**Server酱**](https://sct.ftqq.com/) | `SERVER_CHAN_KEY` | 在 Server酱官网申请 SendKey。<br>关注 Server酱官方微信服务号，可推送到个人微信，每天免费 5 条消息。 | ✓ |

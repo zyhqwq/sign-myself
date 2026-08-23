@@ -7,7 +7,7 @@ import time
 import requests
 from datetime import datetime
 
-from notify import send_notification, get_webhook_status
+from notify import send_notification, get_webhook_status, print_notify_results
 from skland_common import (
     HEADER, init_did, login, get_sign_header,
     BINDING_URL, ARK_SIGN_URL,
@@ -207,7 +207,7 @@ def main():
     if not TOKEN:
         error_msg = "❌ 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN"
         print(f"\n{error_msg}")
-        send_notification("签到失败", error_msg)
+        print_notify_results(send_notification("签到失败", error_msg))
         return
 
     try:
@@ -218,7 +218,7 @@ def main():
         error_msg = f"❌ dId 初始化失败：{str(e)}"
         print(f"\n{error_msg}")
         print(f"\n详细错误信息：\n{traceback.format_exc()}")
-        send_notification("签到失败", error_msg)
+        print_notify_results(send_notification("签到失败", error_msg))
         return
 
     all_tokens = TokenManager.get_all_tokens()
@@ -226,7 +226,7 @@ def main():
     if not all_tokens:
         error_msg = "❌ 未找到有效token"
         print(f"\n{error_msg}")
-        send_notification("签到失败", error_msg)
+        print_notify_results(send_notification("签到失败", error_msg))
         return
 
     print(f"✅ 找到 {len(all_tokens)} 个账号，开始签到...")
@@ -298,14 +298,7 @@ def main():
     print(report)
 
     print("\n📨 开始发送通知...")
-    notification_results = send_notification(subject, report)
-
-    if notification_results:
-        print("\n📊 通知发送结果：")
-        for platform, result in notification_results:
-            print(f"  {platform}: {result}")
-    else:
-        print("ℹ️  未配置任何Webhook，跳过通知")
+    print_notify_results(send_notification(subject, report))
 
     if failed_count == len(all_results):
         print("\n❌ 所有账号签到失败")

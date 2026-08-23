@@ -256,6 +256,25 @@ def send_notification(title: str, message: str, extra_data=None, verbose=False):
     return results
 
 
+def print_notify_results(results):
+    """打印通知结果摘要"""
+    if not results:
+        print("\n⚠️ 未配置任何通知渠道")
+        return
+
+    print("\n📬 通知发送结果：")
+    has_failure = False
+    for name, status in results:
+        if status == "OK":
+            print(f"  ✅ {name}: 成功")
+        else:
+            print(f"  ❌ {name}: {status}")
+            has_failure = True
+
+    if has_failure:
+        print("\n💡 提示：设置 DEBUG_NOTIFY=true 可查看详细的请求/响应信息")
+
+
 def get_webhook_status():
     """检查Webhook配置状态"""
     status = []

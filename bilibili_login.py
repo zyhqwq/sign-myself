@@ -6,7 +6,7 @@ import sys
 import requests
 from datetime import datetime
 
-from notify import send_notification
+from notify import send_notification, print_notify_results
 
 NAV_URL = "https://api.bilibili.com/x/web-interface/nav"
 HEADERS = {
@@ -53,7 +53,7 @@ def main():
     if not raw_sessdata or not raw_dedeuserid:
         msg = "错误: 未设置 BILI_SESSDATA / BILI_DEDEUSERID"
         print(msg)
-        send_notification("B站登录失败", msg)
+        print_notify_results(send_notification("B站登录失败", msg))
         sys.exit(1)
 
     sessdata_list = [s.strip() for s in raw_sessdata.split(',') if s.strip()]
@@ -63,7 +63,7 @@ def main():
     if len(sessdata_list) != len(dedeuserid_list):
         msg = f"错误: BILI_SESSDATA ({len(sessdata_list)}个) 与 BILI_DEDEUSERID ({len(dedeuserid_list)}个) 数量不匹配"
         print(msg)
-        send_notification("B站登录失败", msg)
+        print_notify_results(send_notification("B站登录失败", msg))
         sys.exit(1)
 
     while len(jct_list) < len(sessdata_list):
@@ -100,7 +100,7 @@ def main():
     report = "\n".join(results)
     title = "B站每日登录" if all_ok else "B站登录部分失败"
     print(f"\n{report}")
-    send_notification(title, report)
+    print_notify_results(send_notification(title, report))
 
     if not all_ok:
         sys.exit(1)

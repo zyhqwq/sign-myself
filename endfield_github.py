@@ -7,7 +7,7 @@ import sys
 import requests
 from datetime import datetime
 
-from notify import send_notification
+from notify import send_notification, print_notify_results
 from skland_common import (
     HEADER, init_did, login, get_sign_header,
     BINDING_URL, ENDFIELD_SIGN_URL,
@@ -79,7 +79,7 @@ def main():
 
     if not TOKEN:
         print("错误: 未设置 SKLAND_TOKEN")
-        send_notification("终末地签到失败", "未设置 SKLAND_TOKEN")
+        print_notify_results(send_notification("终末地签到失败", "未设置 SKLAND_TOKEN"))
         sys.exit(1)
 
     try:
@@ -88,7 +88,7 @@ def main():
         import traceback
         print(f"dId 初始化失败: {str(e)}")
         print(f"\n详细错误信息：\n{traceback.format_exc()}")
-        send_notification("终末地签到失败", f"dId 初始化失败: {str(e)}")
+        print_notify_results(send_notification("终末地签到失败", f"dId 初始化失败: {str(e)}"))
         sys.exit(1)
 
     token_list = TOKEN.split(',')
@@ -138,7 +138,7 @@ def main():
     report = "\n".join(results)
     title = "终末地签到成功" if all_success else "终末地签到部分失败"
     print(f"\n{report}")
-    send_notification(title, report)
+    print_notify_results(send_notification(title, report))
 
     if not all_success:
         sys.exit(1)

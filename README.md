@@ -36,9 +36,11 @@
 
 2.  **添加 Secret**:
     *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
-    *   点击 `New repository secret`。
-    *   **Name** 填写 `SKLAND_TOKEN`，**Value** 粘贴你刚才复制的 Token。
-    *   如果你有多个账号，可以将多个 Token 用英文逗号 `,` 连接起来，作为一个值填入。
+    *   点击 `New repository secret`，添加以下 Secret：
+
+    | Secret 名称 | 填入的值 | 说明 |
+    | :--- | :--- | :--- |
+    | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
 ### 3. 配置 Bilibili Cookie
 

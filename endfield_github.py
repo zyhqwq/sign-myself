@@ -134,7 +134,7 @@ def main():
             all_success = False
 
     report = "\n".join(results)
-    title = "终末地签到成功" if all_success else "终末地签到 - 存在失败"
+    title = "终末地签到成功" if all_success else "终末地签到部分失败"
     print(f"\n{report}")
     send_notification(title, report)
 

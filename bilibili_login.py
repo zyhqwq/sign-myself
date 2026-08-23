@@ -98,7 +98,7 @@ def main():
         results.append(line)
 
     report = "\n".join(results)
-    title = "B站每日登录" if all_ok else "B站登录 - 存在失败"
+    title = "B站每日登录" if all_ok else "B站登录部分失败"
     print(f"\n{report}")
     send_notification(title, report)
 

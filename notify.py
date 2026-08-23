@@ -163,7 +163,7 @@ def _send_feishu(title, message, verbose=False):
 
 def _send_dingtalk(title, message, verbose=False):
     try:
-        payload = {"msgtype": "text", "text": {"content": f"【{title}】\n\n{message}"}}
+        payload = {"msgtype": "text", "text": {"content": f"【通知】{title}\n\n{message}"}}
         url = DINGTALK_WEBHOOK_URL
 
         if DINGTALK_SECRET:

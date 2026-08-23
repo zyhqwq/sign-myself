@@ -54,11 +54,11 @@
     *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
     *   分别添加以下三个 Secret：
 
-    | Secret 名称 | 说明 |
-    | :--- | :--- |
-    | `BILI_SESSDATA` | B 站登录凭证（必需） |
-    | `BILI_DEDEUSERID` | B 站用户 ID（必需） |
-    | `BILI_JCT` | CSRF Token（可选） |
+    | Secret 名称 | 填入的值 | 说明 |
+    | :--- | :--- | :--- |
+    | `BILI_SESSDATA` | `SESSDATA` | B 站登录凭证（必需） |
+    | `BILI_DEDEUSERID` | `DedeUserID` | B 站用户 ID（必需） |
+    | `BILI_JCT` | `bili_jct` | CSRF Token（可选） |
 
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 

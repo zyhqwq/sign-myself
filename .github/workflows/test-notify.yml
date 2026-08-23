@@ -2,10 +2,16 @@ name: Test Webhook Notifications
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: '选择 Secrets 所在的 Environment（留空则用 Repository secrets）'
+        required: false
+        default: ''
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || '' }}
 
     steps:
     - name: Checkout repository

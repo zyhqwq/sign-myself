@@ -270,12 +270,21 @@ def process_account(idx, cookie_str):
 
     # 设备绑定：优先取 Cookie 内嵌值，其次 run.sh 导出的环境变量
     set_device(cookies.get("device_id") or os.environ.get("DEVICE_ID"))
+    account_label = f"账号{idx}"
 
-    # 1. 续期 cookie_token
-    try:
-        cookie_str = refresh_cookie_token(cookies)
-    except Exception as e:
-        return [f"账号_{idx}: {e}"], False
+    if cookies.get("account_id") and cookies.get("cookie_token"):
+        # 网页授权 Cookie：直接使用，无需续期
+        cookie_str = f"account_id={cookies['account_id']};cookie_token={cookies['cookie_token']}"
+    elif cookies.get("stoken"):
+        # 旧格式：用 stoken 刷新 cookie_token
+        try:
+            cookie_str = refresh_cookie_token(cookies)
+        except Exception as e:
+            return [format_sign_entry("米游社", account_label, "-",
+                                      result=f"Cookie 已失效({str(e)[:40]})，请重新扫码获取")], False
+    else:
+        return [format_sign_entry("米游社", account_label, "-",
+                                  result="Cookie 缺少有效字段，请重新扫码获取")], False
 
     # 2. 获取角色
     try:

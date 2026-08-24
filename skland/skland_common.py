@@ -300,10 +300,29 @@ def refresh_token(cred):
 
 
 def init_did():
-    """初始化设备ID，设置到全局请求头中"""
+    """初始化设备ID：优先复用本地缓存的已注册设备，失败才重新生成"""
+    did_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".did")
+
+    if os.path.exists(did_file):
+        try:
+            with open(did_file, encoding="utf-8") as f:
+                cached = f.read().strip()
+            if cached:
+                HEADER_LOGIN['dId'] = cached
+                HEADER_FOR_SIGN['dId'] = cached
+                print(f"\u2705 复用已注册设备ID: {cached[:10]}...")
+                return cached
+        except Exception:
+            pass
+
     d_id = get_d_id()
     HEADER_LOGIN['dId'] = d_id
     HEADER_FOR_SIGN['dId'] = d_id
+    try:
+        with open(did_file, "w", encoding="utf-8") as f:
+            f.write(d_id)
+    except Exception:
+        pass
     return d_id
 
 

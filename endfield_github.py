@@ -122,7 +122,8 @@ def main():
                 result = do_endfield_sign(sign_token, cred, role_id, server_id)
 
                 if result.get('repeated'):
-                    entry = format_sign_entry("终末地", account_label, role_label)
+                    entry = format_sign_entry("终末地", account_label, role_label,
+                                              result="今天已签到")
                     ok = True
                 elif result['success']:
                     award_str = ', '.join(result['awards']) if result['awards'] else ''

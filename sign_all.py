@@ -102,11 +102,8 @@ def main():
         if not entries:
             continue
         block = [f"【{platform}】"]
-        for task_name, content in entries:
-            if platform == "森空岛签到":
-                block.append(f"■ {task_name}\n{content}")
-            else:
-                block.append(content)
+        for _, content in entries:
+            block.append(content)
         sections.append("\n\n".join(block))
 
     if sections:

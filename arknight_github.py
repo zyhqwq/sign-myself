@@ -151,11 +151,13 @@ def do_sign_for_account(account_label, account_id, user_token):
                     status_list.append('success')
 
                 elif resp.get('code') == 10001 and '请勿重复签到' in resp.get('message', ''):
-                    results.append(format_sign_entry("明日方舟", account_label, character_name))
+                    results.append(format_sign_entry("明日方舟", account_label,
+                                                     character_name, result="今天已经签到过了"))
                     status_list.append('repeated')
 
                 elif resp.get('message') == '请勿重复签到':
-                    results.append(format_sign_entry("明日方舟", account_label, character_name))
+                    results.append(format_sign_entry("明日方舟", account_label,
+                                                     character_name, result="今天已经签到过了"))
                     status_list.append('repeated')
 
                 else:

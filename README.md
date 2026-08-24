@@ -208,6 +208,7 @@ bash run.sh          # 再次运行生效
 </details>
 
 > 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+<a id="step-6-actions"></a>
 <details>
 <summary><b>6.2 方式二：GitHub Actions（仅供参考，不推荐）</b></summary>
 

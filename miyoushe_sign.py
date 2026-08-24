@@ -224,7 +224,6 @@ def sign_game(game, role, cookie_str, account_label):
         is_sign = is_sign.strip().lower() in ("true", "1")
     if is_sign:
         return {"line": format_sign_entry(name, account_label, role_label,
-                                          award=award_of(get_awards(game, cookie_str), total_days),
                                           days=total_days), "ok": True}
 
     result = luna_request("post", "sign", game, cookie_str, uid=uid, region=region)
@@ -242,7 +241,6 @@ def sign_game(game, role, cookie_str, account_label):
                                           award=award_text, days=total_days + 1), "ok": True}
     if rc2 == ALREADY_SIGNED:
         return {"line": format_sign_entry(name, account_label, role_label,
-                                          award=award_of(get_awards(game, cookie_str), total_days),
                                           days=total_days), "ok": True}
     if rc2 == CAPTCHA:
         return {"line": format_sign_entry(name, account_label, role_label,

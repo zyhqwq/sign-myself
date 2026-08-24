@@ -7,7 +7,7 @@ import sys
 import requests
 from datetime import datetime
 
-from notify import send_notification, print_notify_results
+from notify import send_notification, print_notify_results, format_sign_entry
 from skland_common import (
     HEADER, init_did, login, get_sign_header,
     BINDING_URL, ENDFIELD_SIGN_URL,
@@ -116,20 +116,25 @@ def main():
                 name = char['nickName']
                 role_id = char['roleId']
                 server_id = char['serverId']
+                role_label = f"{name} Lv{char.get('level', 0)}"
+                account_label = f"账号{idx + 1}"
 
                 result = do_endfield_sign(sign_token, cred, role_id, server_id)
 
                 if result.get('repeated'):
-                    line = f"{name}: 今天已签到"
+                    result_text = "今天已签到（重复签到）"
+                    ok = True
                 elif result['success']:
                     award_str = ', '.join(result['awards']) if result['awards'] else '无奖励'
-                    line = f"{name}: 签到成功 - {award_str}"
+                    result_text = f"签到成功，获得: {award_str}"
+                    ok = True
                 else:
-                    line = f"{name}: 签到失败 - {result['error']}"
-                    all_success = False
+                    result_text = f"签到失败 - {result['error']}"
+                    ok = False
 
-                results.append(line)
-                print(line)
+                entry = format_sign_entry("终末地", account_label, role_label, result_text)
+                results.append(entry)
+                print(entry)
 
         except Exception as e:
             results.append(f"账号_{idx + 1}: 处理失败 - {str(e)}")

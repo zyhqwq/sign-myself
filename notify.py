@@ -229,6 +229,18 @@ def _send_serverchan(title, message, verbose=False):
         return str(e)
 
 
+def format_sign_entry(game: str, account: str, role: str, result: str) -> str:
+    """所有签到通知的统一条目格式：游戏/账号/角色/签到结果/签到时间 各占一行"""
+    when = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return (
+        f"游戏: {game}\n"
+        f"账号: {account}\n"
+        f"角色: {role}\n"
+        f"签到结果: {result}\n"
+        f"签到时间: {when}"
+    )
+
+
 def send_notification(title: str, message: str, extra_data=None, verbose=False):
     """发送通知到所有已配置的渠道"""
     # 聚合模式：由统一入口(sign_all.py)设置，子任务只落盘不发送，

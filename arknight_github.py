@@ -7,7 +7,7 @@ import time
 import requests
 from datetime import datetime
 
-from notify import send_notification, get_webhook_status, print_notify_results
+from notify import send_notification, get_webhook_status, print_notify_results, format_sign_entry
 from skland_common import (
     HEADER, init_did, login, get_sign_header,
     BINDING_URL, ARK_SIGN_URL,
@@ -104,7 +104,7 @@ def do_sign_for_account(account_id, user_token):
             print("  未找到角色，可能是token失效")
             return {
                 'account': account_id,
-                'results': ["未找到角色，可能是token失效"],
+                'results': [format_sign_entry("明日方舟", account_id, "-", "未找到角色，可能是token失效")],
                 'status': 'failed'
             }
 
@@ -145,28 +145,28 @@ def do_sign_for_account(account_id, user_token):
                         res = award['resource']
                         award_info.append(f"{res['name']}×{award.get('count', 1)}")
 
-                    result_msg = f"角色 {character_name} 签到成功，获得: {', '.join(award_info)}"
-                    results.append(result_msg)
+                    result_msg = f"签到成功，获得: {', '.join(award_info)}"
+                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
                     status_list.append('success')
 
                 elif resp.get('code') == 10001 and '请勿重复签到' in resp.get('message', ''):
-                    result_msg = f"角色 {character_name} 今天已经签到过了！"
-                    results.append(result_msg)
+                    result_msg = "今天已经签到过了"
+                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
                     status_list.append('repeated')
 
                 elif resp.get('message') == '请勿重复签到':
-                    result_msg = f"角色 {character_name} 今天已经签到过了！"
-                    results.append(result_msg)
+                    result_msg = "今天已经签到过了"
+                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
                     status_list.append('repeated')
 
                 else:
-                    result_msg = f"角色 {character_name} 签到失败：{resp.get('message', '未知错误')}"
-                    results.append(result_msg)
+                    result_msg = f"签到失败：{resp.get('message', '未知错误')}"
+                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
                     status_list.append('failed')
 
             except Exception as e:
-                result_msg = f"角色 {character_name} 签到异常：{str(e)}"
-                results.append(result_msg)
+                result_msg = f"签到异常：{str(e)}"
+                results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
                 status_list.append('failed')
 
         if 'success' in status_list:
@@ -188,7 +188,7 @@ def do_sign_for_account(account_id, user_token):
         print(f"  {error_msg}")
         return {
             'account': account_id,
-            'results': [error_msg],
+            'results': [format_sign_entry("明日方舟", account_id, "-", error_msg)],
             'status': 'failed',
             'character_count': 0
         }

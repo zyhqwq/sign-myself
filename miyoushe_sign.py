@@ -25,7 +25,7 @@ from datetime import datetime
 
 import requests
 
-from notify import send_notification, print_notify_results
+from notify import send_notification, print_notify_results, format_sign_entry
 
 # ================== 接口地址 ==================
 PASSPORT_API = "https://passport-api.mihoyo.com"
@@ -170,33 +170,34 @@ def luna_request(method, path, game, cookie_str, **params):
     return resp.json()
 
 
-def sign_game(game, role, cookie_str):
-    name = f"{game['name']}({role['nickname']} Lv{role['level']})"
+def sign_game(game, role, cookie_str, account_label):
+    name = game["name"]
+    role_label = f"{role['nickname']} Lv{role['level']}"
     uid, region = str(role["game_uid"]), role["region"]
 
     try:
         info = luna_request("get", "info", game, cookie_str, uid=uid, region=region)
     except Exception as e:
-        return {"line": f"{name}: 请求异常 - {str(e)[:60]}", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, f"请求异常 - {str(e)[:60]}"), "ok": False}
 
     retcode = info.get("retcode")
     if retcode in LOGIN_INVALID:
-        return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, "Cookie 已失效，请重新扫码获取"), "ok": False}
     if retcode == CAPTCHA:
-        return {"line": f"{name}: 触发风控验证(1034)，今日未能签到", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, "触发风控验证(1034)，今日未能签到"), "ok": False}
     if retcode != 0:
-        return {"line": f"{name}: 查询签到状态失败 - {info.get('message')} ({retcode})", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, f"查询签到状态失败 - {info.get('message')} ({retcode})"), "ok": False}
 
     data = info.get("data", {})
     if data.get("first_bind"):
-        return {"line": f"{name}: 首次绑定，请先在米游社 App 手动签到一次", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, "首次绑定，请先在米游社 App 手动签到一次"), "ok": False}
 
     total_days = int(data.get("total_sign_day") or 0)
     is_sign = data.get("is_sign")
     if isinstance(is_sign, str):
         is_sign = is_sign.strip().lower() in ("true", "1")
     if is_sign:
-        return {"line": f"{name}: 今天已签到（累计{total_days}天）", "ok": True}
+        return {"line": format_sign_entry(name, account_label, role_label, f"今天已签到（累计{total_days}天）"), "ok": True}
 
     result = luna_request("post", "sign", game, cookie_str, uid=uid, region=region)
     rc2 = result.get("retcode")
@@ -205,16 +206,16 @@ def sign_game(game, role, cookie_str):
         sign_data = result.get("data") or {}
         award = sign_data.get("award") or {}
         award_str = f"，获得「{award.get('name')}」x{award.get('cnt')}" if award.get("name") else ""
-        return {"line": f"{name}: 签到成功{award_str}（累计{total_days + 1}天）", "ok": True}
+        return {"line": format_sign_entry(name, account_label, role_label, f"签到成功{award_str}（累计{total_days + 1}天）"), "ok": True}
     if rc2 == ALREADY_SIGNED:
         return {"line": f"{name}: 今天已签到（累计{total_days}天）", "ok": True}
     if rc2 == CAPTCHA:
         return {"line": f"{name}: 触发风控验证(1034)，今日未能签到（可明天再试）", "ok": False}
     if rc2 in LOGIN_INVALID:
-        return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
+        return {"line": format_sign_entry(name, account_label, role_label, "Cookie 已失效，请重新扫码获取"), "ok": False}
 
     msg = result.get("message", "")
-    return {"line": f"{name}: 签到失败 - {msg} (retcode={rc2})", "ok": False}
+    return {"line": format_sign_entry(name, account_label, role_label, f"签到失败 - {msg} (retcode={rc2})"), "ok": False}
 
 
 def process_account(idx, cookie_str):
@@ -245,14 +246,17 @@ def process_account(idx, cookie_str):
     print(f"昵称绑定角色数: {len(roles)}")
 
     lines, all_ok = [], True
+    account_label = f"账号{idx}"
     for i, role in enumerate(roles):
         game = next((g for g in GAMES if g["biz"] == role.get("game_biz")), None)
         if not game:
             continue
         try:
-            r = sign_game(game, role, cookie_str)
+            r = sign_game(game, role, cookie_str, account_label)
         except Exception as e:
-            r = {"line": f"{game['name']}: 请求异常 - {str(e)[:60]}", "ok": False}
+            r = {"line": format_sign_entry(game["name"], account_label,
+                                           f"{role['nickname']} Lv{role['level']}",
+                                           f"请求异常 - {str(e)[:60]}"), "ok": False}
         lines.append(r["line"])
         print(r["line"])
         all_ok = all_ok and r["ok"]

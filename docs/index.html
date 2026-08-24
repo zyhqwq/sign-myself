@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>米游社扫码登录 · 获取签到 Cookie</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#24292f; --muted:#656d76; --brand:#00c3cc; --ok:#1a7f37; --err:#cf222e; --border:#d0d7de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --card:#161b22; --text:#e6edf3; --muted:#8b949e; --border:#30363d; }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; justify-content:center; padding:32px 16px; }
+  .wrap { width:100%; max-width:520px; }
+  h1 { font-size:20px; text-align:center; margin-bottom:6px; }
+  .sub { color:var(--muted); font-size:13px; text-align:center; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+  #qrbox { display:flex; flex-direction:column; align-items:center; gap:12px; min-height:220px; justify-content:center; }
+  #qrimg { width:200px; height:200px; image-rendering:pixelated; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  .status { font-size:14px; color:var(--muted); }
+  .status.ok { color:var(--ok); }
+  .status.err { color:var(--err); }
+  button { appearance:none; border:none; border-radius:8px; padding:10px 18px; font-size:14px; cursor:pointer; background:var(--brand); color:#fff; font-weight:600; }
+  button.secondary { background:transparent; color:var(--brand); border:1px solid var(--brand); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  textarea { width:100%; height:110px; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; resize:vertical; }
+  ol { padding-left:20px; font-size:13px; color:var(--muted); line-height:2; }
+  details { margin-top:16px; font-size:13px; color:var(--muted); }
+  summary { cursor:pointer; }
+  .row { display:flex; gap:8px; align-items:center; }
+  input[type=text] { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:13px; }
+  .hidden { display:none; }
+  .tip { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>米游社扫码登录</h1>
+  <div class="sub">扫码确认后生成签到用 Cookie，全程在你的浏览器内完成，可复制后填入 GitHub Secrets</div>
+
+  <div class="card">
+    <div id="qrbox">
+      <div class="status" id="status">正在初始化…</div>
+      <img id="qrimg" class="hidden" alt="二维码">
+      <button id="refreshBtn" class="secondary hidden">重新生成二维码</button>
+    </div>
+    <ol style="margin-top:16px">
+      <li>打开<strong>米游社 App</strong>，点右上角「扫一扫」</li>
+      <li>扫描上方二维码</li>
+      <li>在手机上点击「确认登录」</li>
+    </ol>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <strong style="font-size:14px">你的 Cookie（已累计 <span id="count">0</span> 个账号）</strong>
+    <textarea id="output" readonly placeholder="扫码成功后，Cookie 会出现在这里"></textarea>
+    <div class="tip">多账号 Cookie 已自动用英文逗号连接，整段复制填入 Secret <code>MIYOUSHE_COOKIE</code> 即可。</div>
+    <div class="row" style="margin-top:12px">
+      <button id="copyBtn">复制全部</button>
+      <button id="addBtn" class="secondary">继续添加账号</button>
+      <button id="resetBtn" class="secondary">清空重来</button>
+    </div>
+  </div>
+
+  <details>
+    <summary>代理设置（首次使用需配置一次）</summary>
+    <p class="tip">本页需要一个小型 CORS 代理访问米哈游接口（官方接口仅允许自家域名跨域）。请按 README 部署你自己的 Cloudflare Worker 代理，然后把地址填到这里。Cookie 只在浏览器内组装，代理不存储任何数据。</p>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="proxyInput" placeholder="https://your-worker.your-name.workers.dev">
+      <button id="saveProxyBtn" class="secondary">保存</button>
+    </div>
+  </details>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function () {
+  var DEFAULT_PROXY = ""; // 也可直接把你的 Worker 地址写死在这里
+  var CREATE_URL = "/account/ma-cn-passport/app/createQRLogin";
+  var QUERY_URL = "/account/ma-cn-passport/app/queryQRLoginStatus";
+  var CTOKEN_URL = "/account/auth/api/getCookieAccountInfoBySToken";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cookies = [];
+  var polling = null;
+  var deviceSeed = Math.random().toString(36).slice(2);
+
+  function randStr(n) {
+    var s = "";
+    while (s.length < n) s += Math.random().toString(36).slice(2);
+    return s.slice(0, n);
+  }
+
+  function getProxy() {
+    return (
+      new URLSearchParams(location.search).get("proxy") ||
+      localStorage.getItem("mys_proxy") ||
+      DEFAULT_PROXY
+    ).replace(/\/+$/, "");
+  }
+
+  function setStatus(text, cls) {
+    $("status").textContent = text;
+    $("status").className = "status" + (cls ? " " + cls : "");
+  }
+
+  function callApi(path, opts) {
+    var proxy = getProxy();
+    if (!proxy) return Promise.reject(new Error("未配置代理地址"));
+    return fetch(proxy + path, opts).then(function (r) {
+      if (!r.ok) throw new Error("代理请求失败 HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function renderQR(text) {
+    if (typeof qrcode === "undefined") {
+      // CDN 不可用时降级为链接提示
+      setStatus("二维码库加载失败，请复制此链接到手机浏览器打开：", "err");
+      var a = document.createElement("a");
+      a.href = text; a.textContent = text.length > 60 ? text.slice(0, 60) + "…" : text;
+      $("qrbox").appendChild(a);
+      return false;
+    }
+    var qr = qrcode(0, "L");
+    qr.addData(text);
+    qr.make();
+    $("qrimg").src = qr.createDataURL(8, 4);
+    $("qrimg").classList.remove("hidden");
+    return true;
+  }
+
+  function stopPolling() { if (polling) { clearTimeout(polling); polling = null; } }
+
+  function startLogin() {
+    stopPolling();
+    $("qrimg").classList.add("hidden");
+    $("refreshBtn").classList.add("hidden");
+    setStatus("正在生成二维码…");
+
+    callApi(CREATE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-rpc-device_id": randStr(16) + deviceSeed.slice(0, 4),
+      },
+      body: "{}",
+    }).then(function (res) {
+      if (res.retcode !== 0) throw new Error(res.message || "创建二维码失败");
+      renderQR(res.data.url);
+      setStatus("请使用米游社 App 扫码");
+      pollTicket(res.data.ticket, 0);
+    }).catch(function (e) { setStatus(e.message, "err"); });
+  }
+
+  function pollTicket(ticket, n) {
+    if (n > 100) { expire(); return; }
+    polling = setTimeout(function () {
+      callApi(QUERY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-rpc-device_id": randStr(16),
+        },
+        body: JSON.stringify({ ticket: ticket }),
+      }).then(function (res) {
+        if (res.retcode === -3501) return expire();
+        if (res.retcode !== 0) throw new Error(res.message || "查询状态失败");
+        var s = res.data && res.data.status;
+        if (s === "Confirmed") return onConfirmed(res.data);
+        if (s === "Scanned") setStatus("已扫描 ✓ 请在手机上点击确认登录", "ok");
+        pollTicket(ticket, n + 1);
+      }).catch(function (e) {
+        if (String(e.message).indexOf("代理") === -1) pollTicket(ticket, n + 1);
+        else setStatus(e.message + "（请检查代理设置）", "err");
+      });
+    }, 3000);
+  }
+
+  function expire() {
+    stopPolling();
+    setStatus("二维码已过期", "err");
+    $("refreshBtn").classList.remove("hidden");
+  }
+
+  function onConfirmed(data) {
+    stopPolling();
+    setStatus("登录成功 ✓ 正在组装 Cookie…", "ok");
+    var tokens = {};
+    (data.tokens || []).forEach(function (t) { tokens[t.name] = t.token; });
+    var user = data.user_info || {};
+    var uid = user.aid || user.uid || user.account_id;
+    var mid = user.mid;
+    var stoken = tokens.stoken_v2 || tokens.stoken ||
+      Object.keys(tokens).map(function (k) { return tokens[k]; })[0];
+    if (!(uid && mid && stoken)) return setStatus("返回数据缺少字段，获取失败", "err");
+
+    var qs = "?stoken=" + encodeURIComponent(stoken) +
+      "&uid=" + encodeURIComponent(uid) + "&mid=" + encodeURIComponent(mid);
+    callApi(CTOKEN_URL + qs, { method: "GET" }).then(function (res) {
+      var parts = ["stoken=" + stoken, "stuid=" + uid, "mid=" + mid];
+      if (res.retcode === 0 && res.data && res.data.cookie_token)
+        parts.push("cookie_token=" + res.data.cookie_token);
+      if (tokens.ltoken_v2 || tokens.ltoken)
+        parts.push((tokens.ltoken_v2 ? "ltoken_v2=" + tokens.ltoken_v2 : "ltoken=" + tokens.ltoken), "ltuid=" + uid);
+      cookies.push(parts.join(";"));
+      $("output").value = cookies.join(",");
+      $("count").textContent = cookies.length;
+      $("resultCard").classList.remove("hidden");
+      var nick = user.nickname ? "(" + user.nickname + ")" : "";
+      setStatus("账号 " + (cookies.length) + " " + nick + " 已添加 ✓ 可继续扫下一个", "ok");
+    }).catch(function (e) { setStatus(e.message, "err"); });
+  }
+
+  $("refreshBtn").addEventListener("click", startLogin);
+  $("copyBtn").addEventListener("click", function () {
+    var t = $("output");
+    t.select();
+    (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject())
+      .catch(function () { document.execCommand("copy"); });
+    $("copyBtn").textContent = "已复制 ✓";
+    setTimeout(function () { $("copyBtn").textContent = "复制全部"; }, 1500);
+  });
+  $("addBtn").addEventListener("click", startLogin);
+  $("resetBtn").addEventListener("click", function () {
+    cookies = []; $("output").value = ""; $("count").textContent = "0";
+    $("resultCard").classList.add("hidden");
+    startLogin();
+  });
+  $("saveProxyBtn").addEventListener("click", function () {
+    localStorage.setItem("mys_proxy", $("proxyInput").value.trim());
+    $("saveProxyBtn").textContent = "已保存 ✓";
+    setTimeout(function () { $("saveProxyBtn").textContent = "保存"; }, 1500);
+    startLogin();
+  });
+  $("proxyInput").value = getProxy();
+
+  startLogin();
+})();
+</script>
+</body>
+</html>

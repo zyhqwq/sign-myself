@@ -15,6 +15,7 @@
 -   **明日方舟签到**：利用 GitHub Actions，每天定时为你完成明日方舟签到。
 -   **终末地签到**：自动完成《明日方舟：终末地》的每日签到，领取奖励。
 -   **Bilibili 每日登录**：自动登录 B 站领取每日登录硬币。
+-   **米游社签到**：自动完成米游社各游戏板块的每日签到，领取米游币。Cookie 通过本地扫码工具一键获取。
 -   **多账号支持**：只需配置一次，即可同时为多个账号签到。
 -   **多平台通知**：签到完成后，可通过微信、Telegram、Discord 等渠道接收结果通知。
 -   **安全可靠**：你的账号凭证存放在 GitHub Secrets 中，不会泄露。
@@ -64,7 +65,44 @@
 
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
-### 4. 启用 GitHub Actions
+### 4. 配置米游社 Cookie（扫码获取）
+
+米游社签到需要 `MIYOUSHE_COOKIE`。本项目提供两种扫码方式（Actions 里不执行登录），推荐网页版：
+
+#### 方式一：网页扫码（推荐）
+
+[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://你的用户名.github.io/你的仓库名/)
+
+1.  **开启网页（一次性设置）**：
+    *   **开启 GitHub Pages**：进入仓库 `Settings` -> `Pages` -> `Branch` 选择 `main` + `/docs` 目录 -> `Save`。
+    *   **部署代理**：由于米哈游接口只允许自家域名跨域，需要一个你自己部署的转发代理。登录 [Cloudflare Dashboard](https://dash.cloudflare.com/) -> `Workers & Pages` -> `Create Worker`，粘贴 [`docs/proxy.js`](docs/proxy.js) 的全部代码并部署，得到形如 `https://xxx.workers.dev` 的地址。
+
+2.  **扫码**：
+    *   点击上方按钮打开网页，展开底部「代理设置」，填入你的 Worker 地址并保存。
+    *   用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
+    *   页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
+
+3.  **添加 Secret**：复制整段内容，添加到 Secret `MIYOUSHE_COOKIE`。
+
+> Cookie 只在你的浏览器内组装，代理仅转发接口请求、无日志无存储。若不想部署代理，用下面的本地脚本方式效果相同。
+
+#### 方式二：本地脚本
+
+```bash
+pip install -r requirements.txt
+python miyoushe_qr_login.py
+```
+
+终端会打印二维码，米游社 App 扫码确认后输出 Cookie，同样填入 Secret 即可。
+
+| Secret 名称 | 填入的值 | 说明 |
+| :--- | :--- | :--- |
+| `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken`/`mid` 等字段，多账号自动以英文逗号分隔 |
+| `MIYOUSHE_GIDS`（可选） | 如 `2,6,8` | 指定要签到的游戏板块，默认 `1,2,4,6,8`（崩坏3/原神/未定/星穹铁道/绝区零），可选 `3`=崩坏学园2 |
+
+> Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
+
+### 5. 启用 GitHub Actions
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
 *   完成！各脚本将按照以下时间自动运行：
@@ -73,6 +111,7 @@
 | :--- | :--- | :--- |
 | Bilibili 登录 | 每天 03:00 | `bilibili-login.yml` |
 | 终末地签到 | 每天 02:00 | `endfield-sign.yml` |
+| 米游社签到 | 每天 04:00 | `miyoushe-sign.yml` |
 | 明日方舟签到 | 每天 05:00 | `skland-sign.yml` |
 | 通知测试 | 手动触发 | `test-notify.yml` |
 
@@ -158,7 +197,7 @@
 
 **Q：Token 会过期吗？需要经常换吗？**
 
-**A：** 通常不会。`SKLAND_TOKEN` 有效期很长，一般只有在你长时间未使用或修改密码后才会失效。如果脚本运行失败并提示 Token 错误，再按上述步骤重新获取一次即可。B 站的 `SESSDATA` 同理，过期后重新从浏览器获取即可。
+**A：** 通常不会。`SKLAND_TOKEN` 有效期很长，一般只有在你长时间未使用或修改密码后才会失效。如果脚本运行失败并提示 Token 错误，再按上述步骤重新获取一次即可。B 站的 `SESSDATA` 同理，过期后重新从浏览器获取即可。米游社的 `MIYOUSHE_COOKIE` 中的 `stoken` 同样长期有效，失效后（签到通知提示 Cookie 已失效）重新运行扫码工具获取即可。
 
 **Q：签到失败或收不到通知怎么办？**
 
@@ -202,14 +241,20 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 ├── arknight_github.py             # 明日方舟签到脚本
 ├── endfield_github.py            # 终末地签到脚本
 ├── bilibili_login.py             # Bilibili 每日登录脚本
+├── miyoushe_qr_login.py          # 米游社扫码登录工具（本地运行获取 Cookie）
+├── miyoushe_sign.py              # 米游社每日签到脚本
 ├── test_notify.py                # 通知渠道测试脚本
 ├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
 ├── notify.py                     # 共享通知模块
 ├── requirements.txt              # Python 依赖列表
+├── docs/
+│   ├── index.html                # 网页版扫码获取 Cookie 页面（GitHub Pages）
+│   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）
 └── .github/workflows/
     ├── skland-sign.yml           # 明日方舟签到工作流
     ├── endfield-sign.yml         # 终末地签到工作流
     ├── bilibili-login.yml        # Bilibili 登录工作流
+    ├── miyoushe-sign.yml         # 米游社签到工作流
     └── test-notify.yml           # 通知测试工作流
 ```
 
@@ -218,6 +263,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 - 森空岛签到逻辑参考了 [skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign)
 - 终末地签到逻辑参考了 [nonebot-plugin-skland](https://github.com/FrostN0v0/nonebot-plugin-skland)
 - Bilibili 每日登录思路参考了 [BiliBiliToolPro](https://github.com/RayWangQvQ/BiliBiliToolPro)、[BILIBILI-HELPER](https://github.com/JunzhouLiu/BILIBILI-HELPER) 等开源项目
+- 米游社扫码登录流程参考了 [TRSS-Plugin](https://github.com/TimeRainStarSky/TRSS-Plugin)，签到接口与 DS 签名参考了 [sign-task](https://github.com/starudream/sign-task)、[mihoyo-api-collect](https://github.com/UIGF-org/mihoyo-api-collect)
 
 请勿将本脚本用于任何商业或盈利目的。
 

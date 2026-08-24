@@ -313,7 +313,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 
 - 森空岛签到逻辑参考了 [skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign)
 - 终末地签到逻辑参考了 [nonebot-plugin-skland](https://github.com/FrostN0v0/nonebot-plugin-skland)
-- Bilibili 每日登录思路参考了 [BiliBiliToolPro](https://github.com/RayWangQvQ/BiliBiliToolPro)、[BILIBILI-HELPER](https://github.com/JunzhouLiu/BILIBILI-HELPER)
+- Bilibili 每日登录思路参考了 [BiliBiliToolPro](https://github.com/RayWangQvQ/BiliBiliToolPro)、[BILIBILI-HELPER](https://gitee.com/iamhoney/BILIBILI-HELPER)（原作者仓库已删除，此为镜像）
 - 米游社扫码登录流程参考了 [TRSS-Plugin](https://github.com/TimeRainStarSky/TRSS-Plugin)
 - 米游社游戏签到接口、请求头与 act_id 参考了 [MihoyoBBSTools](https://github.com/Womsxd/MihoyoBBSTools)、[astrbot_plugin_miyoqian](https://github.com/QzKevin/astrbot_plugin_miyoqian)、[sign-task](https://github.com/starudream/sign-task)
 - 米哈游 API 盐值与签名算法参考了 [mihoyo-api-collect](https://github.com/UIGF-org/mihoyo-api-collect)

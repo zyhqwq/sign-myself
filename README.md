@@ -155,6 +155,118 @@ python mihoyo/miyoushe_qr_login.py
 
 <a id="step-6-actions"></a>
 <a id="step-6-linux"></a>
+### 6. 运行方式
+
+#### 6.1 方式一：Linux / 服务器运行（推荐）
+
+凭证保存在你自己的电脑上，不经过任何第三方平台。以下步骤从零开始，每一步都有具体命令和编辑器操作。
+
+**第 0 步：环境准备（只做一次）**
+
+服务器上一般自带 git 和 python3，可以先跳过本步，哪条命令报“command not found”再回来装：
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip
+```
+
+**第 1 步：下载项目**
+
+```bash
+git clone https://github.com/zyhqwq/sign-myself.git
+cd sign-myself
+```
+
+执行 `ls` 能看到 `run.sh`、`sign_all.py` 等文件即成功。以后每次操作都要先 `cd sign-myself` 进入这个目录。
+
+**第 2 步：首次运行（自动生成配置文件）**
+
+```bash
+bash run.sh
+```
+
+看到提示"已在当前目录生成配置文件 api.txt"即为正常（此时还没有签到，是提醒你去填参数）。
+
+**第 3 步：编辑配置文件 api.txt**
+
+<details>
+<summary><b>方式 A：nano 编辑器（新手推荐）</b></summary>
+
+```bash
+nano api.txt
+```
+
+1. 打开后直接用键盘 **方向键** 移动光标到要修改的行（nano 无需任何模式切换，打开即可输入）
+2. 把 `=` 后面改成自己的值，并删除该行行首的 `#` 号（`#` 开头的行不会生效）
+3. 按 **`Ctrl + O`**，底部出现文件名后按 **`Enter`** 确认保存
+4. 按 **`Ctrl + X`** 退出
+
+</details>
+
+<details>
+<summary><b>方式 B：vim 编辑器</b></summary>
+
+```bash
+vim api.txt
+```
+
+1. 刚打开时是普通模式，**不能直接输入**。按 **`i`** 键进入插入模式（左下角出现 `-- INSERT --`）
+2. 用方向键移动光标，像记事本一样修改内容
+3. 改完后按 **`Esc`** 退出插入模式
+4. 输入 **`:wq`** 再按回车 = 保存并退出；输错了想放弃就输入 **`:q!`** 回车（不保存强制退出）
+
+</details>
+
+<details>
+<summary><b>方式 C：Windows 图形化工具（不想敲命令）</b></summary>
+
+用 WinSCP、FinalShell、MobaXterm 等工具通过 SSH 连上服务器，进入项目目录，右键 `api.txt` 选择"编辑"，改完保存会自动传回服务器。
+
+</details>
+
+需要填写的内容示例（每一项的作用文件内都有中文注释）：
+
+```text
+SKLAND_TOKEN=你的森空岛Token
+MIYOUSHE_COOKIE=你的米游社Cookie
+SIGN_GAMES=1,2,3,4,5
+WECHAT_WEBHOOK_URL=你的企业微信机器人地址
+```
+
+**第 4 步：手动运行一次测试**
+
+```bash
+bash run.sh
+```
+
+看到各游戏的签到结果即为成功。之后就可以不管它了。
+
+**第 5 步：设置每天自动运行**
+
+```bash
+crontab -e
+```
+
+- 首次执行会让你选择编辑器：输入 nano 对应的编号（一般是 1）回车
+- 用方向键把光标移到文件最后一行，添加（路径换成你自己的真实路径，[可修改时间](#modify-time)）：
+
+```text
+25 3 * * * cd /home/你的用户名/sign-myself && bash run.sh >> sign.log 2>&1
+```
+
+- 同样按 **`Ctrl + O`** → **`Enter`** 保存，**`Ctrl + X`** 退出
+- 看到 `installing new crontab` 字样即设置成功；可用 `crontab -l` 查看确认
+
+之后每天凌晨 3:25 自动签到，历史结果可在 `sign.log` 中查看。
+
+> 💡 小贴士：
+>
+> - 全程**不需要 root 权限**；pip 没有写入权限时会自动改用 `--user` 安装到你的用户目录
+> - 若系统还没装 Python：`sudo apt install python3 python3-pip`（仅这一步需要管理员）
+> - 建议把分钟数改成随机值，避免长期固定整点请求
+
+<a id="step-6-actions"></a>
+<a id="step-6-linux"></a>
 <a id="step-6-actions"></a>
 ### 6. 运行方式
 

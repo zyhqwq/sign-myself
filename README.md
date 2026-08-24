@@ -208,12 +208,17 @@ crontab -e
 添加一行（换成你自己的真实路径，[可修改时间](#modify-time)）：
 
 ```text
-25 3 * * * cd /root/sign-myself && bash run.sh >> sign.log 2>&1
+25 3 * * * cd /home/你的用户名/sign-myself && bash run.sh >> sign.log 2>&1
 ```
 
 保存退出即可，之后每天自动签到，结果可在 `sign.log` 查看。
 
-> 💡 小贴士：系统时区不是北京时间时请先执行 `timedatectl set-timezone Asia/Shanghai`；建议把 `25` 改成随机分钟数，避免固定整点请求。
+> 💡 小贴士：
+>
+> - 全程**不需要 root 权限**；pip 没有写入权限时会自动改用 `--user` 安装到你的用户目录
+> - 若系统还没装 Python：`sudo apt install python3 python3-pip`（仅这一步需要管理员）
+> - 系统时区不是北京时间时先执行 `timedatectl set-timezone Asia/Shanghai`
+> - 建议把分钟数改成随机值，避免长期固定整点请求
 
 #### 6.2 方式二：GitHub Actions（仅供参考，不推荐）
 

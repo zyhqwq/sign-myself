@@ -11,16 +11,23 @@
  *   - /_debug 为诊断路径，仅回显收到的请求内容，可随时删除
  */
 
-const UPSTREAM = "https://passport-api.mihoyo.com";
+const UPSTREAMS = [
+  { prefix: "/account/", host: "https://passport-api.mihoyo.com" },
+  { prefix: "/apihub/", host: "https://bbs-api.miyoushe.com" },
+  { prefix: "/user/", host: "https://bbs-api.miyoushe.com" },
+  { prefix: "/post/", host: "https://bbs-api.miyoushe.com" },
+];
 
 const ALLOWED_PATHS = new Set([
   "/account/ma-cn-passport/app/createQRLogin",
   "/account/ma-cn-passport/app/queryQRLoginStatus",
   "/account/auth/api/getCookieAccountInfoBySToken",
+  "/apihub/app/api/signIn",
+  "/user/api/getUserFullInfo",
 ]);
 
-// 不应转发给上游的请求头
-const HOP_HEADERS = ["host", "origin", "referer", "content-length", "connection", "cookie"];
+// 不应转发给上游的请求头（cookie 必须保留：bbs-api 靠它认证）
+const HOP_HEADERS = ["host", "origin", "referer", "content-length", "connection"];
 
 function corsHeaders(contentType) {
   const headers = {
@@ -72,7 +79,8 @@ export default {
       );
     }
 
-    if (!ALLOWED_PATHS.has(url.pathname)) {
+    const route = UPSTREAMS.find((r) => url.pathname.startsWith(r.prefix));
+    if (!route || !ALLOWED_PATHS.has(url.pathname)) {
       return new Response("Not Found", { status: 404, headers: corsHeaders() });
     }
     if (request.method !== "POST" && request.method !== "GET") {
@@ -83,7 +91,7 @@ export default {
 
     let upstream;
     try {
-      upstream = await fetch(UPSTREAM + url.pathname + url.search, {
+      upstream = await fetch(route.host + url.pathname + url.search, {
         method: request.method,
         headers: buildOutgoingHeaders(request),
         body: hasBody ? request.body : undefined,

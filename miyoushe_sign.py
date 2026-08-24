@@ -23,8 +23,10 @@ import requests
 from notify import send_notification, print_notify_results
 
 # ================== 接口地址（bbs 社区） ==================
-SIGN_URL = "https://bbs-api.miyoushe.com/apihub/app/api/signIn"
-USER_INFO_URL = "https://bbs-api.miyoushe.com/user/api/getUserFullInfo"
+# 可用 MIYOUSHE_BASE_URL 切换中继（如 Cloudflare Worker）以更换出口 IP
+BASE_URL = os.environ.get("MIYOUSHE_BASE_URL", "https://bbs-api.miyoushe.com").rstrip("/")
+SIGN_URL = f"{BASE_URL}/apihub/app/api/signIn"
+USER_INFO_URL = f"{BASE_URL}/user/api/getUserFullInfo"
 
 # ================== DS 签名盐值（与版本配对，参考 MihoyoBBSTools/setting.py） ==================
 DS_SALT_K2 = "47f15f1b66bee46b816115d8e8e6ebb6"   # DS1：对应 2.109.0

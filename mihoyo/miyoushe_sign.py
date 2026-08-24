@@ -268,6 +268,9 @@ def sign_game(game, role, cookie_str, account_label):
 def process_account(idx, cookie_str):
     cookies = parse_cookie(cookie_str)
 
+    # 设备绑定：优先取 Cookie 内嵌值，其次 run.sh 导出的环境变量
+    set_device(cookies.get("device_id") or os.environ.get("DEVICE_ID"))
+
     # 1. 续期 cookie_token
     try:
         cookie_str = refresh_cookie_token(cookies)

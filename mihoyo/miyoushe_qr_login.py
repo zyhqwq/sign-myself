@@ -120,6 +120,17 @@ def render_qr(url):
             svg_path = out_dir / "login_qr.svg"
             img.save(str(svg_path))
             files.append(svg_path.name)
+
+            # HTML 包装：双击默认浏览器直接渲染，避免 svg 无关联程序
+            svg_text = svg_path.read_text(encoding="utf-8")
+            html_path = out_dir / "login_qr.html"
+            html_path.write_text(
+                '<html><body style="text-align:center;margin-top:40px">'
+                "<h3>米游社扫码登录</h3>"
+                f"{svg_text}"
+                '<p>请使用米游社 App 扫描此二维码</p></body></html>',
+                encoding="utf-8")
+            files.append(html_path.name)
         except Exception:
             pass
 
@@ -284,6 +295,7 @@ def main():
 
     print("=" * 60)
     print("登录成功！你的米游社 Cookie 如下：")
+    cookie = cookie + f";device_id={device_id}"
     update_api_file(cookie, device_id)
     print("=" * 60)
     print(cookie)

@@ -36,7 +36,7 @@
 
 ## 主要功能
 
-一个用于自动签到的工具，支持通过 GitHub Actions 全自动运行，并可通过多种渠道接收通知。按平台分为两组：
+一个用于自动签到的工具，支持多账号与多种通知渠道。按平台分为两组：
 
 **森空岛**（共用 `SKLAND_TOKEN`）
 - **明日方舟签到**
@@ -154,6 +154,9 @@ python mihoyo/miyoushe_qr_login.py
 
 <a id="step-6-actions"></a>
 ### 6. 启用 GitHub Actions
+
+> ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
+
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
 *   完成！各脚本将按照以下时间自动运行：

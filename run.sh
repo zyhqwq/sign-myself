@@ -70,12 +70,25 @@ set -a
 set +a
 
 # ---------- 3. 依赖检查（缺依赖自动安装）----------
-python3 -c "import requests, cryptography, qrcode" 2>/dev/null || {
-    echo "首次运行：正在安装依赖..."
-    python3 -m pip install -r requirements.txt \
-        || python3 -m pip install --user -r requirements.txt \
-        || pip3 install --user -r requirements.txt
-}
+if ! python3 -c "import requests, cryptography, qrcode" 2>/dev/null; then
+    echo "首次运行：正在检查/安装依赖..."
+
+    # 缺 pip 时先补齐（Debian/Ubuntu 精简环境常见）
+    if ! python3 -m pip --version >/dev/null 2>&1 && ! command -v pip3 >/dev/null 2>&1; then
+        SUDO=""; [ "$(id -u)" != "0" ] && command -v sudo >/dev/null 2>&1 && SUDO="sudo"
+        if command -v apt-get >/dev/null 2>&1; then
+            $SUDO apt-get update -qq 2>/dev/null
+            $SUDO apt-get install -y -qq python3-pip 2>/dev/null
+        fi
+        python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
+    fi
+
+    python3 -m pip install -r requirements.txt 2>/dev/null \
+        || python3 -m pip install --user -r requirements.txt 2>/dev/null \
+        || python3 -m pip install --break-system-packages --user -r requirements.txt 2>/dev/null \
+        || echo "警告：依赖自动安装失败。请手动执行：" \
+        && echo "  sudo apt install python3-pip && pip3 install -r requirements.txt"
+fi
 
 # ---------- 4. 运行签到 ----------
 python3 sign_all.py

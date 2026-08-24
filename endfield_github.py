@@ -69,7 +69,7 @@ def do_endfield_sign(sign_token, cred, role_id, server_id):
         return {'success': True, 'awards': awards}
     else:
         msg = resp.get('message', '未知错误')
-        if '已签到' in msg or 'repeat' in msg.lower():
+        if '已签到' in msg or '重复' in msg or 'repeat' in msg.lower():
             return {'success': True, 'awards': [], 'repeated': True}
         return {'success': False, 'error': msg}
 

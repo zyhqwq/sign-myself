@@ -8,12 +8,15 @@
     4 = 崩坏:星穹铁道 (米游社, MIYOUSHE_COOKIE)
     5 = 绝区零     (米游社, MIYOUSHE_COOKIE)
 
-每个子任务独立发送通知，最后汇总结果；任一失败则整体退出码为 1。
+各子任务的报告会聚合为一条汇总通知发送；任一失败则整体退出码为 1。
 """
 
 import os
 import subprocess
 import sys
+import tempfile
+
+import notify
 
 NUMBER_MAP = {
     "1": ("明日方舟", "arknight_github.py", None),
@@ -42,14 +45,48 @@ def main():
         jobs.append(("米游社游戏(" + ",".join(mys_bizs) + ")",
                      "miyoushe_sign.py", {"MIYOUSHE_ONLY": ",".join(mys_bizs)}))
 
+    # 聚合模式：子任务的通知写入临时目录，最后合并发送
+    report_dir = tempfile.mkdtemp(prefix="sign_reports_")
+    env_base = dict(os.environ)
+    env_base["SIGN_REPORT_DIR"] = report_dir
+
     failed = []
     for name, script, extra_env in jobs:
         print(f"\n{'=' * 20} {name} {'=' * 20}")
-        env = dict(os.environ)
+        env = dict(env_base)
         env.update(extra_env or {})
         rc = subprocess.run([sys.executable, script], env=env).returncode
         if rc != 0:
             failed.append(name)
+
+    # 汇总通知
+    sections = []
+    for fname in sorted(os.listdir(report_dir)):
+        path = os.path.join(report_dir, fname)
+        try:
+            with open(path, encoding="utf-8") as f:
+                content = f.read().strip()
+            if content:
+                title_part = fname.split("_", 1)[1][:-4] if "_" in fname else fname[:-4]
+                sections.append(f"■ {title_part}\n{content}")
+        except Exception:
+            pass
+
+    if sections:
+        overall_ok = not failed
+        title = ("每日签到汇总 - 全部成功" if overall_ok
+                 else f"每日签到汇总 - 部分失败({len(failed)})")
+        body = "\n\n".join(sections)
+        if failed:
+            body += f"\n\n❌ 失败的任务: {', '.join(failed)}"
+        print("\n📬 发送聚合通知...")
+        results = notify.send_notification(title, body)
+        notify.print_notify_results(results)
+    else:
+        print("\n⚠️ 未捕获到任何子任务报告，无法发送聚合通知")
+
+    import shutil
+    shutil.rmtree(report_dir, ignore_errors=True)
 
     print(f"\n{'=' * 20} 汇总 {'=' * 20}")
     if failed:

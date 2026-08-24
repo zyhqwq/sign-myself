@@ -231,6 +231,21 @@ def _send_serverchan(title, message, verbose=False):
 
 def send_notification(title: str, message: str, extra_data=None, verbose=False):
     """发送通知到所有已配置的渠道"""
+    # 聚合模式：由统一入口(sign_all.py)设置，子任务只落盘不发送，
+    # 最后由入口读取所有报告合并成一条通知发送
+    agg_dir = os.environ.get("SIGN_REPORT_DIR", "")
+    if agg_dir:
+        try:
+            os.makedirs(agg_dir, exist_ok=True)
+            existing = [f for f in os.listdir(agg_dir) if f.endswith(".txt")]
+            seq = len(existing)
+            safe = "".join(c for c in title if c not in '\\/:*?"<>|').strip() or "report"
+            with open(os.path.join(agg_dir, f"{seq:02d}_{safe}.txt"), "w", encoding="utf-8") as f:
+                f.write(message)
+            return [("汇总暂存", "OK")]
+        except Exception:
+            pass  # 落盘失败则回退为直接发送
+
     verbose = verbose or DEBUG_NOTIFY
     results = []
 

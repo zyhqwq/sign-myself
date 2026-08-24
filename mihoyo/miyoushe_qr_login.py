@@ -135,13 +135,19 @@ def render_qr(url):
         print("[提示] 未安装 qrcode 库（pip install qrcode），仅提供链接方式")
 
     if is_wsl():
-        # WSL：调用 Windows 资源管理器打开项目目录，方便双击图片文件
-        try:
-            subprocess.run(["explorer.exe", str(out_dir)], timeout=5,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            opened = "已尝试在 Windows 中打开项目目录"
-        except Exception:
-            opened = None
+        # WSL：后台调用 Windows 资源管理器打开项目目录（绝不阻塞主流程）
+        def _open_dir():
+            for p in ("explorer.exe", "/mnt/c/Windows/explorer.exe"):
+                try:
+                    subprocess.run([p, str(out_dir)], capture_output=True,
+                                   timeout=8)
+                    return
+                except FileNotFoundError:
+                    continue
+                except Exception:
+                    return
+        import threading
+        threading.Thread(target=_open_dir, daemon=True).start()
 
     print()
     print("获取可扫二维码的方式（任选其一）：")
@@ -150,8 +156,8 @@ def render_qr(url):
         print(f"  2. 在 Windows 里打开项目目录下的 {' 或 '.join(files)}，用手机扫屏幕")
     print(f"  3. 把 {url_file.name} 里的链接发到手机（微信文件传输助手等），")
     print(f"     用手机浏览器直接打开它 —— 效果等同于扫码确认")
-    if is_wsl() and opened:
-        print(f"  ({opened})")
+    if is_wsl():
+        print("  (WSL 环境：已尝试弹出 Windows 目录，未弹出请手动进入项目目录)")
     print()
     return True
 

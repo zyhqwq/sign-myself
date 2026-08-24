@@ -26,7 +26,8 @@
   - [3. 配置 Bilibili Cookie](#step-3-bilibili)
   - [4. 配置米游社 Cookie](#step-4-mihoyo)
   - [5. 选择要签到的游戏](#step-5-games)
-  - [6. 启用 GitHub Actions](#step-6-actions)
+  - [6.1 方式一：Linux 本地 / 服务器运行](#step-6-linux)
+  - [6.2 方式二：GitHub Actions](#step-6-actions)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
   - [钉钉机器人创建步骤](#dingtalk-steps)
@@ -153,7 +154,51 @@ python mihoyo/miyoushe_qr_login.py
 例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
 
 <a id="step-6-actions"></a>
-### 6. 启用 GitHub Actions
+<a id="step-6-linux"></a>
+### 6. 运行方式
+
+#### 6.1 方式一：Linux 本地 / 服务器运行（推荐）
+
+凭证保存在你自己的机器上，不经过任何第三方平台。
+
+1.  **准备环境**
+
+    ```bash
+    git clone https://github.com/zyhqwq/sign-myself.git && cd sign-myself
+    pip install -r requirements.txt
+    ```
+
+2.  **配置凭证**：创建启动脚本，填入自己的参数
+
+    ```bash
+    cat > run.sh <<'EOF'
+    #!/bin/bash
+    cd "$(dirname "$0")"
+    export SKLAND_TOKEN="你的森空岛Token"       # 序号 1、2 需要
+    export MIYOUSHE_COOKIE="你的米游社Cookie"   # 序号 3、4、5 需要
+    export SIGN_GAMES="1,2,3,4,5"              # 可选，默认全部
+    # 通知渠道按需配置，例如：
+    # export WECHAT_WEBHOOK_URL="..."
+    python3 sign_all.py
+    EOF
+    chmod +x run.sh
+    ./run.sh    # 先手动运行一次，确认输出正常
+    ```
+
+3.  **加入 crontab 定时**（每天北京时间凌晨 3:25）
+
+    ```bash
+    crontab -e
+    ```
+
+    ```text
+    # 系统时区为北京时间（Asia/Shanghai）时直接写：
+    25 3 * * * /path/to/sign-myself/run.sh >> /path/to/sign-myself/sign.log 2>&1
+    ```
+
+    > 时区不对可先执行 `timedatectl set-timezone Asia/Shanghai`；建议在分钟上做随机偏移，避免长期固定整点请求。
+
+#### 6.2 方式二：GitHub Actions（仅供参考，不推荐）
 
 > ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 

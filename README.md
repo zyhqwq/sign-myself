@@ -71,20 +71,13 @@
 
 #### 方式一：网页扫码（推荐）
 
-[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://你的用户名.github.io/你的仓库名/)
+[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/)
 
-1.  **开启网页（一次性设置）**：
-    *   **开启 GitHub Pages**：进入仓库 `Settings` -> `Pages` -> `Branch` 选择 `main` + `/docs` 目录 -> `Save`。
-    *   **部署代理**：由于米哈游接口只允许自家域名跨域，需要一个你自己部署的转发代理。登录 [Cloudflare Dashboard](https://dash.cloudflare.com/) -> `Workers & Pages` -> `Create Worker`，粘贴 [`docs/proxy.js`](docs/proxy.js) 的全部代码并部署，得到形如 `https://xxx.workers.dev` 的地址。
-
-2.  **扫码**：
-    *   点击上方按钮打开网页，展开底部「代理设置」，填入你的 Worker 地址并保存。
-    *   用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
-    *   页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
-
+1.  **扫码**：点击上方按钮打开网页，用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
+2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
 3.  **添加 Secret**：复制整段内容，添加到 Secret `MIYOUSHE_COOKIE`。
 
-> Cookie 只在你的浏览器内组装，代理仅转发接口请求、无日志无存储。若不想部署代理，用下面的本地脚本方式效果相同。
+> 页面默认使用仓库作者提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
 #### 方式二：本地脚本
 

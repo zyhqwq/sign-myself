@@ -170,6 +170,32 @@ def luna_request(method, path, game, cookie_str, **params):
     return resp.json()
 
 
+def get_awards(game, cookie_str):
+    """获取签到活动奖励列表（用于展示每日获得的道具）"""
+    url = f"{game['base']}/event/luna{game['sub']}/home"
+    headers = web_headers(cookie_str)
+    if game["signgame"]:
+        headers["x-rpc-signgame"] = game["signgame"]
+    headers["DS"] = gen_ds()
+    try:
+        resp = requests.get(url, params={"lang": "zh-cn", "act_id": game["act_id"]},
+                            headers=headers, timeout=15)
+        data = resp.json()
+        if data.get("retcode") == 0:
+            return data.get("data", {}).get("awards") or []
+    except Exception:
+        pass
+    return []
+
+
+def award_of(awards, day_1based):
+    """按第几天（1-based）取奖励描述"""
+    if awards and 1 <= day_1based <= len(awards):
+        a = awards[day_1based - 1]
+        return f"「{a.get('name')}」x{a.get('cnt', 1)}"
+    return ""
+
+
 def sign_game(game, role, cookie_str, account_label):
     name = game["name"]
     role_label = f"{role['nickname']} Lv{role['level']}"
@@ -197,7 +223,10 @@ def sign_game(game, role, cookie_str, account_label):
     if isinstance(is_sign, str):
         is_sign = is_sign.strip().lower() in ("true", "1")
     if is_sign:
-        return {"line": format_sign_entry(name, account_label, role_label, f"今天已签到（累计{total_days}天）"), "ok": True}
+        award_str = award_of(get_awards(game, cookie_str), total_days)
+        award_text = f"，今日奖励:{award_str}" if award_str else ""
+        return {"line": format_sign_entry(name, account_label, role_label,
+                                          f"今天已签到{award_text}（累计{total_days}天）"), "ok": True}
 
     result = luna_request("post", "sign", game, cookie_str, uid=uid, region=region)
     rc2 = result.get("retcode")

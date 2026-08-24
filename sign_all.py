@@ -8,7 +8,7 @@
     4 = 崩坏:星穹铁道 (米游社, MIYOUSHE_COOKIE)
     5 = 绝区零     (米游社, MIYOUSHE_COOKIE)
 
-各子任务的报告会聚合为一条汇总通知发送；任一失败则整体退出码为 1。
+通知按平台聚合为一条汇总消息发送；任一任务失败则整体退出码为 1。
 """
 
 import os
@@ -18,19 +18,47 @@ import tempfile
 
 import notify
 
-NUMBER_MAP = {
-    "1": ("明日方舟", "arknight_github.py", None),
-    "2": ("终末地", "endfield_github.py", None),
-    "3": ("原神", "miyoushe_sign.py", {"MIYOUSHE_ONLY": "hk4e_cn"}),
-    "4": ("崩坏:星穹铁道", "miyoushe_sign.py", {"MIYOUSHE_ONLY": "hkrpg_cn"}),
-    "5": ("绝区零", "miyoushe_sign.py", {"MIYOUSHE_ONLY": "nap_cn"}),
+# 任务定义: 序号 -> (名称, 脚本, 平台, 额外环境变量)
+JOBS = {
+    "1": {"name": "明日方舟", "platform": "森空岛签到",
+          "script": "arknight_github.py", "env": None},
+    "2": {"name": "终末地", "platform": "森空岛签到",
+          "script": "endfield_github.py", "env": None},
+    "3": {"name": "原神", "platform": "米游社签到",
+          "script": "miyoushe_sign.py",
+          "env": {"MIYOUSHE_ONLY": "hk4e_cn"}},
+    "4": {"name": "崩坏:星穹铁道", "platform": "米游社签到",
+          "script": "miyoushe_sign.py",
+          "env": {"MIYOUSHE_ONLY": "hkrpg_cn"}},
+    "5": {"name": "绝区零", "platform": "米游社签到",
+          "script": "miyoushe_sign.py",
+          "env": {"MIYOUSHE_ONLY": "nap_cn"}},
 }
+
+PLATFORM_ORDER = ["森空岛签到", "米游社签到"]
+
+
+def read_reports(report_dir):
+    """读取一个任务报告目录里的全部内容"""
+    parts = []
+    if not os.path.isdir(report_dir):
+        return parts
+    for fname in sorted(os.listdir(report_dir)):
+        path = os.path.join(report_dir, fname)
+        try:
+            with open(path, encoding="utf-8") as f:
+                content = f.read().strip()
+            if content:
+                parts.append(content)
+        except Exception:
+            pass
+    return parts
 
 
 def main():
     # GitHub Secrets 未配置时变量为空字符串，需视为未设置
     raw = os.environ.get("SIGN_GAMES", "").strip() or "1,2,3,4,5"
-    selected = {s.strip() for s in raw.split(",") if s.strip() in NUMBER_MAP}
+    selected = {s.strip() for s in raw.split(",") if s.strip() in JOBS}
 
     if not selected:
         print(f"错误: SIGN_GAMES='{raw}' 中没有有效的序号（可选 1-5）")
@@ -38,44 +66,52 @@ def main():
 
     print(f"[每日签到] 选择的游戏: {', '.join(sorted(selected))}")
 
-    # 米游社的多个游戏合并成一次调用（共享一次 cookie_token 续期与角色查询）
-    mys_bizs = sorted(NUMBER_MAP[k][2]["MIYOUSHE_ONLY"] for k in selected if k in ("3", "4", "5"))
-    jobs = [(NUMBER_MAP[k][0], NUMBER_MAP[k][1], NUMBER_MAP[k][2]) for k in ("1", "2") if k in selected]
-    if mys_bizs:
-        jobs.append(("米游社游戏(" + ",".join(mys_bizs) + ")",
-                     "miyoushe_sign.py", {"MIYOUSHE_ONLY": ",".join(mys_bizs)}))
-
-    # 聚合模式：子任务的通知写入临时目录，最后合并发送
-    report_dir = tempfile.mkdtemp(prefix="sign_reports_")
-    env_base = dict(os.environ)
-    env_base["SIGN_REPORT_DIR"] = report_dir
-
     failed = []
-    for name, script, extra_env in jobs:
+    # platform -> list of (任务名, 报告列表)，保持运行顺序
+    platform_reports = {p: [] for p in PLATFORM_ORDER}
+
+    for key in ("1", "2", "3", "4", "5"):
+        if key not in selected:
+            continue
+        job = JOBS[key]
+        name = job["name"]
+
         print(f"\n{'=' * 20} {name} {'=' * 20}")
-        env = dict(env_base)
-        env.update(extra_env or {})
-        rc = subprocess.run([sys.executable, script], env=env).returncode
+
+        # 每个任务独立报告目录
+        report_dir = tempfile.mkdtemp(prefix=f"sign_{key}_")
+        env = dict(os.environ)
+        env["SIGN_REPORT_DIR"] = report_dir
+        env.update(job["env"] or {})
+
+        rc = subprocess.run([sys.executable, job["script"]], env=env).returncode
         if rc != 0:
             failed.append(name)
 
-    # 汇总通知
+        reports = read_reports(report_dir)
+        if reports:
+            platform_reports[job["platform"]].append((name, "\n".join(reports)))
+        else:
+            platform_reports[job["platform"]].append(
+                (name, "(未捕获到报告)" if rc == 0 else "运行失败，详见 Actions 日志"))
+
+    # 组装按平台分组的汇总消息
     sections = []
-    for fname in sorted(os.listdir(report_dir)):
-        path = os.path.join(report_dir, fname)
-        try:
-            with open(path, encoding="utf-8") as f:
-                content = f.read().strip()
-            if content:
-                title_part = fname.split("_", 1)[1][:-4] if "_" in fname else fname[:-4]
-                sections.append(f"■ {title_part}\n{content}")
-        except Exception:
-            pass
+    for platform in PLATFORM_ORDER:
+        entries = platform_reports[platform]
+        if not entries:
+            continue
+        block = [f"【{platform}】"]
+        for task_name, content in entries:
+            if platform == "森空岛签到":
+                block.append(f"■ {task_name}\n{content}")
+            else:
+                block.append(content)
+        sections.append("\n".join(block))
 
     if sections:
         overall_ok = not failed
-        title = ("每日签到汇总 - 全部成功" if overall_ok
-                 else f"每日签到汇总 - 部分失败({len(failed)})")
+        title = "每日签到汇总 - 全部成功" if overall_ok else "每日签到汇总 - 部分失败"
         body = "\n\n".join(sections)
         if failed:
             body += f"\n\n❌ 失败的任务: {', '.join(failed)}"
@@ -84,9 +120,6 @@ def main():
         notify.print_notify_results(results)
     else:
         print("\n⚠️ 未捕获到任何子任务报告，无法发送聚合通知")
-
-    import shutil
-    shutil.rmtree(report_dir, ignore_errors=True)
 
     print(f"\n{'=' * 20} 汇总 {'=' * 20}")
     if failed:

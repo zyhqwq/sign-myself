@@ -6,7 +6,7 @@
 
 参考实现：
 - TimeRainStarSky/TRSS-Plugin (Apps/miHoYoLogin.js) 扫码登录与请求头
-- starudream/sign-task 签到接口 (apihub/app/api/signIn) 与 DS 签名
+- Womsxd/MihoyoBBSTools 签到接口、DS 签名与请求头组合
 """
 
 import hashlib
@@ -24,15 +24,13 @@ from notify import send_notification, print_notify_results
 
 # ================== 接口地址（bbs 社区） ==================
 SIGN_URL = "https://bbs-api.miyoushe.com/apihub/app/api/signIn"
-SIGN_STATUS_URL = "https://bbs-api.miyoushe.com/apihub/sapi/querySignInStatus"
 USER_INFO_URL = "https://bbs-api.miyoushe.com/user/api/getUserFullInfo"
 
-# ================== DS 签名盐值 ==================
-# https://github.com/UIGF-org/mihoyo-api-collect
-DS_SALT_K2 = "QVu5OdwEWxkq9ygpYBgDprR5tI471HWQ"   # DS1：无参数签名
-DS_SALT_6X = "t0qEgfub6cvueAPgR5m9aQWWVciEer7v"   # DS2：body + query 签名
+# ================== DS 签名盐值（与版本配对，参考 MihoyoBBSTools/setting.py） ==================
+DS_SALT_K2 = "47f15f1b66bee46b816115d8e8e6ebb6"   # DS1：对应 2.109.0
+DS_SALT_6X = "t0qEgfub6cvueAPgR5m9aQWWVciEer7v"   # DS2：body+query 签名（一般不变）
 
-APP_VERSION = "2.81.1"
+APP_VERSION = "2.109.0"
 APP_ID = "bll8iq97cem8"
 
 # 游戏板块 ID（gids）
@@ -43,6 +41,8 @@ GAMES = {
     "4": "未定事件簿",
     "6": "崩坏:星穹铁道",
     "8": "绝区零",
+    "9": "崩坏:因缘精灵",
+    "10": "星布谷地",
 }
 DEFAULT_GIDS = ["1", "2", "4", "6", "8"]
 
@@ -50,7 +50,7 @@ COOKIE_ENV = "MIYOUSHE_COOKIE"
 
 
 def random_string(n):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=n))
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
 
 
 def md5(s):
@@ -67,19 +67,17 @@ def ds1():
 def ds2(body="", query=""):
     """DS 签名（body + query 参与），用于签到接口"""
     t = int(time.time())
-    r = random.randint(100001, 199999)
+    r = str(random.randint(100001, 200000))
     return f"{t},{r},{md5(f'salt={DS_SALT_6X}&t={t}&r={r}&b={body}&q={query}')}"
 
 
-def bbs_headers(cookie_str, ds=None, extra=None):
-    headers = {
-        "Accept-Encoding": "gzip",
-        "User-Agent": (
-            "Mozilla/5.0 (Linux; Android 13; 22011211C Build/TP1A.220624.014; wv) "
-            f"AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/104.0.5112.97 "
-            f"Mobile Safari/537.36 miHoYoBBS/{APP_VERSION}"
-        ),
+def bbs_headers(cookie_str):
+    """与米游社 App 客户端一致的请求头（okhttp UA），签到接口必需"""
+    return {
+        "User-Agent": "okhttp/4.9.3",
         "Referer": "https://app.mihoyo.com",
+        "Accept-Encoding": "gzip",
+        "Content-Type": "application/json; charset=UTF-8",
         "x-rpc-app_version": APP_VERSION,
         "x-rpc-app_id": APP_ID,
         "x-rpc-verify_key": APP_ID,
@@ -88,18 +86,14 @@ def bbs_headers(cookie_str, ds=None, extra=None):
         "x-rpc-device_name": random_string(16),
         "x-rpc-device_model": random_string(16),
         "x-rpc-sys_version": "12",
-        "x-rpc-channel": "mihoyo",
+        "x-rpc-channel": "miyousheluodi",
+        "x-rpc-h265_supported": "1",
+        "x-rpc-csm_source": "discussion",
         "Cookie": cookie_str,
     }
-    if ds:
-        headers["DS"] = ds
-    if extra:
-        headers.update(extra)
-    return headers
 
 
 def parse_cookie(cookie_str):
-    """解析 Cookie 字符串为字典"""
     cookies = {}
     for item in cookie_str.split(";"):
         item = item.strip()
@@ -109,34 +103,18 @@ def parse_cookie(cookie_str):
     return cookies
 
 
-def bbs_get(url, params, cookie_str):
-    resp = requests.get(
-        url,
-        params=params,
-        headers=bbs_headers(cookie_str, ds=ds1()),
-        timeout=15,
-    )
-    return resp.json()
-
-
-def bbs_post_sign(gid, cookie_str):
-    body = json.dumps({"gids": gid}, separators=(",", ":"))
-    resp = requests.post(
-        SIGN_URL,
-        data=body,
-        headers=bbs_headers(cookie_str, ds=ds2(body)),
-        timeout=15,
-    )
-    return resp.json()
-
-
 def get_nickname(cookies, cookie_str):
-    """获取账号昵称（仅用于通知展示，失败不影响签到）"""
     uid = cookies.get("stuid") or cookies.get("ltuid")
     if not uid:
         return ""
     try:
-        data = bbs_get(USER_INFO_URL, {"uid": uid}, cookie_str)
+        resp = requests.get(
+            USER_INFO_URL,
+            params={"uid": uid},
+            headers={**bbs_headers(cookie_str), "DS": ds1(), "Content-Type": "application/json"},
+            timeout=15,
+        )
+        data = resp.json()
         if data.get("retcode") == 0:
             return data["data"]["user_info"].get("nickname", "")
     except Exception:
@@ -145,34 +123,29 @@ def get_nickname(cookies, cookie_str):
 
 
 def sign_forum(gid, name, cookie_str):
-    """对单个板块执行签到，返回结果行"""
-    status = bbs_get(SIGN_STATUS_URL, {"gids": gid}, cookie_str)
+    """对单个板块执行签到（直接签到，不依赖已废弃的状态查询接口）"""
+    body = json.dumps({"gids": gid}, separators=(",", ":"))
+    headers = bbs_headers(cookie_str)
+    headers["DS"] = ds2(body)
 
-    if status.get("retcode") == -100 or status.get("message") == "登录失效，请重新登录":
-        return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
-
-    if status.get("retcode") == 0 and status.get("data", {}).get("is_signed"):
-        return {"line": f"{name}: 今天已签到", "ok": True}
-
-    result = bbs_post_sign(gid, cookie_str)
+    result = requests.post(SIGN_URL, data=body, headers=headers, timeout=15).json()
     retcode = result.get("retcode")
+    msg = result.get("message", "")
 
     if retcode == 0:
         points = result.get("data", {}).get("points")
         award = f"，获得 {points} 米游币" if isinstance(points, int) else ""
         return {"line": f"{name}: 签到成功{award}", "ok": True}
 
-    msg = result.get("message", "未知错误")
+    if retcode == 1034 or "验证" in msg:
+        return {"line": f"{name}: 触发风控验证，签到失败（可稍后重试或换 IP）", "ok": False}
     if retcode in (-100, -101):
         return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
-    if retcode == 1034 or "验证" in msg:
-        return {"line": f"{name}: 触发风控验证，签到失败 ({msg})", "ok": False}
 
-    # 其余错误视为已签或临时失败，不再重试
-    already = ("已签" in msg) or ("repeat" in msg.lower())
-    ok = already
-    line = f"{name}: 今天已签到" if already else f"{name}: 签到失败 - {msg} (retcode={retcode})"
-    return {"line": line, "ok": ok}
+    already = ("已签" in msg) or ("repeat" in msg.lower()) or ("已经" in msg)
+    if already:
+        return {"line": f"{name}: 今天已签到", "ok": True}
+    return {"line": f"{name}: 签到失败 - {msg} (retcode={retcode})", "ok": False}
 
 
 def process_account(idx, cookie_str):
@@ -181,13 +154,14 @@ def process_account(idx, cookie_str):
         return [f"账号_{idx}: Cookie 缺少 stoken 字段，请重新扫码获取"], False
 
     nickname = get_nickname(cookies, cookie_str)
-    label = f"{nickname}" if nickname else f"账号_{idx}"
+    label = nickname if nickname else f"账号_{idx}"
+    print(f"账号: {label}")
 
     gids_env = os.environ.get("MIYOUSHE_GIDS", "").strip()
     gids = [g.strip() for g in gids_env.split(",") if g.strip() in GAMES] if gids_env else DEFAULT_GIDS
 
     lines, all_ok = [], True
-    for gid in gids:
+    for i, gid in enumerate(gids):
         try:
             r = sign_forum(gid, GAMES[gid], cookie_str)
         except Exception as e:
@@ -195,6 +169,8 @@ def process_account(idx, cookie_str):
         lines.append(r["line"])
         print(r["line"])
         all_ok = all_ok and r["ok"]
+        if i < len(gids) - 1:
+            time.sleep(random.uniform(2, 5))
     return lines, all_ok
 
 

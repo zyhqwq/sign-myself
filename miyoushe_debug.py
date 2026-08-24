@@ -40,7 +40,7 @@ def ds1(salt):
     return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}')}"
 
 
-def ds2(body="", query="", salt=K2_NEW):
+def ds2(body="", query="", salt="t0qEgfub6cvueAPgR5m9aQWWVciEer7v"):
     t = int(time.time())
     r = random.randint(100001, 199999)
     return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}&b={body}&q={query}')}"

@@ -104,7 +104,7 @@ def do_sign_for_account(account_label, account_id, user_token):
             print("  未找到角色，可能是token失效")
             return {
                 'account': account_id,
-                'results': [format_sign_entry("明日方舟", account_label, "-", "未找到角色，可能是token失效")],
+                'results': [format_sign_entry("明日方舟", account_label, "-", result="未找到角色，可能是token失效")],
                 'status': 'failed'
             }
 
@@ -145,28 +145,29 @@ def do_sign_for_account(account_label, account_id, user_token):
                         res = award['resource']
                         award_info.append(f"{res['name']}×{award.get('count', 1)}")
 
-                    result_msg = f"签到成功，获得: {', '.join(award_info)}"
-                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
+                    result_text = f"签到成功，获得: {', '.join(award_info)}"
+                    results.append(format_sign_entry("明日方舟", account_label,
+                                                     character_name, result=result_text))
                     status_list.append('success')
 
                 elif resp.get('code') == 10001 and '请勿重复签到' in resp.get('message', ''):
-                    result_msg = "今天已经签到过了"
-                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name))
                     status_list.append('repeated')
 
                 elif resp.get('message') == '请勿重复签到':
-                    result_msg = "今天已经签到过了"
-                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name))
                     status_list.append('repeated')
 
                 else:
-                    result_msg = f"签到失败：{resp.get('message', '未知错误')}"
-                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
+                    result_text = f"签到失败：{resp.get('message', '未知错误')}"
+                    results.append(format_sign_entry("明日方舟", account_label,
+                                                     character_name, result=result_text))
                     status_list.append('failed')
 
             except Exception as e:
-                result_msg = f"签到异常：{str(e)}"
-                results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
+                result_text = f"签到异常：{str(e)}"
+                results.append(format_sign_entry("明日方舟", account_label,
+                                                 character_name, result=result_text))
                 status_list.append('failed')
 
         if 'success' in status_list:
@@ -188,7 +189,7 @@ def do_sign_for_account(account_label, account_id, user_token):
         print(f"  {error_msg}")
         return {
             'account': account_id,
-            'results': [format_sign_entry("明日方舟", account_label, "-", error_msg)],
+            'results': [format_sign_entry("明日方舟", account_label, "-", result=error_msg)],
             'status': 'failed',
             'character_count': 0
         }

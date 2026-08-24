@@ -229,16 +229,26 @@ def _send_serverchan(title, message, verbose=False):
         return str(e)
 
 
-def format_sign_entry(game: str, account: str, role: str, result: str) -> str:
-    """所有签到通知的统一条目格式：游戏/账号/角色/签到结果/签到时间 各占一行"""
-    when = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return (
-        f"游戏: {game}\n"
-        f"账号: {account}\n"
-        f"角色: {role}\n"
-        f"签到结果: {result}\n"
-        f"签到时间: {when}"
-    )
+from datetime import timezone, timedelta
+
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+
+def format_sign_entry(game: str, account: str, role: str,
+                      result: str = "", award: str = "") -> str:
+    """统一条目格式：■游戏名 / 账号 / 角色 / 签到结果(仅异常时) / 今日奖励 / 北京时间"""
+    lines = [
+        f"■ {game}",
+        f"账号: {account}",
+        f"角色: {role}",
+    ]
+    if result:
+        lines.append(f"签到结果: {result}")
+    if award:
+        lines.append(f"今日奖励: {award}")
+    when = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    lines.append(f"签到时间: {when}")
+    return "\n".join(lines)
 
 
 def send_notification(title: str, message: str, extra_data=None, verbose=False):

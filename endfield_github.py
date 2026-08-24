@@ -122,17 +122,17 @@ def main():
                 result = do_endfield_sign(sign_token, cred, role_id, server_id)
 
                 if result.get('repeated'):
-                    result_text = "今天已签到（重复签到）"
+                    entry = format_sign_entry("终末地", account_label, role_label)
                     ok = True
                 elif result['success']:
-                    award_str = ', '.join(result['awards']) if result['awards'] else '无奖励'
-                    result_text = f"签到成功，获得: {award_str}"
+                    award_str = ', '.join(result['awards']) if result['awards'] else ''
+                    entry = format_sign_entry("终末地", account_label, role_label,
+                                              result=f"签到成功，获得: {award_str}" if award_str else "签到成功")
                     ok = True
                 else:
-                    result_text = f"签到失败 - {result['error']}"
+                    entry = format_sign_entry("终末地", account_label, role_label,
+                                              result=f"签到失败 - {result['error']}")
                     ok = False
-
-                entry = format_sign_entry("终末地", account_label, role_label, result_text)
                 results.append(entry)
 
         except Exception as e:

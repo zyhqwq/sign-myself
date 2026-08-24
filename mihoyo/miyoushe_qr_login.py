@@ -14,9 +14,11 @@
 
 import json
 import random
+import re
 import string
 import sys
 import time
+from pathlib import Path
 
 import requests
 
@@ -104,6 +106,29 @@ def render_qr(url):
     except Exception:
         pass  # 未安装 pillow 时跳过 PNG 导出
     return True
+
+
+def update_api_file(cookie):
+    """若项目根目录存在 api.txt，则自动更新其中的 MIYOUSHE_COOKIE 行"""
+    api_file = Path(__file__).resolve().parent.parent / "api.txt"
+    if not api_file.exists():
+        return False
+    try:
+        content = api_file.read_text(encoding="utf-8")
+        bak = api_file.with_suffix(".txt.bak")
+        bak.write_text(content, encoding="utf-8")
+        if re.search(r"^MIYOUSHE_COOKIE=.*$", content, flags=re.M):
+            new_content = re.sub(
+                r"^MIYOUSHE_COOKIE=.*$", f"MIYOUSHE_COOKIE={cookie}",
+                content, flags=re.M)
+        else:
+            new_content = content.rstrip("\n") + f"\nMIYOUSHE_COOKIE={cookie}\n"
+        api_file.write_text(new_content, encoding="utf-8")
+        print(f"已自动更新 {api_file} 中的 MIYOUSHE_COOKIE（原内容备份为 {bak.name}）")
+        return True
+    except Exception as e:
+        print(f"自动更新 api.txt 失败（{e}），请手动复制上面的 Cookie")
+        return False
 
 
 def extract_cookie(result):
@@ -197,6 +222,7 @@ def main():
 
     print("=" * 60)
     print("登录成功！你的米游社 Cookie 如下：")
+    update_api_file(cookie)
     print("=" * 60)
     print(cookie)
     print("=" * 60)

@@ -2,48 +2,25 @@
 """米游社 Cookie 诊断工具（本地运行，值自动脱敏）
 
 用法：
-    MIYOUSHE_COOKIE='粘贴你的完整Cookie' python3 miyoushe_debug.py [gid]
+    MIYOUSHE_COOKIE='粘贴你的完整Cookie' python3 mihoyo/miyoushe_debug.py [游戏序号]
 
-会依次用多种 Cookie 字段组合与 DS 签名变体请求米游社接口，
-根据哪个组合能通过认证来定位问题。
+检测项：
+1. Cookie 字段解析
+2. stoken 有效性（passport-api，独立于任何签名逻辑）
+3. 米游社用户信息接口认证
+4. 游戏角色绑定与每日签到状态（luna 接口，当前使用的正式链路，只读不签到）
 """
 
-import hashlib
 import json
 import os
-import random
-import string
 import sys
-import time
 
 import requests
 
-K2_NEW = "QVu5OdwEWxkq9ygpYBgDprR5tI471HWQ"   # 2.81.1
-K2_OLD = "JwYDpKvLj6MrMqqYU6jTKF17KNO2PXoS"   # 2.104.0 (trss-plugin)
-
-USER_URL = "https://bbs-api.miyoushe.com/user/api/getUserFullInfo"
-STATUS_URL = "https://bbs-api.miyoushe.com/apihub/sapi/querySignInStatus"
-CTOKEN_URL = "https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken"
-
-
-def rs(n):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=n))
-
-
-def md5(s):
-    return hashlib.md5(s.encode()).hexdigest()
-
-
-def ds1(salt):
-    t = int(time.time())
-    r = rs(6)
-    return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}')}"
-
-
-def ds2(body="", query="", salt="t0qEgfub6cvueAPgR5m9aQWWVciEer7v"):
-    t = int(time.time())
-    r = random.randint(100001, 199999)
-    return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}&b={body}&q={query}')}"
+from miyoushe_sign import (
+    GAMES, USER_INFO_URL, BINDING_URL,
+    bbs_headers, ds1, ds2, parse_cookie,
+)
 
 
 def mask(v):
@@ -52,142 +29,107 @@ def mask(v):
     return v[:8] + f"...({len(v)}位)"
 
 
-def parse(cookie_str):
-    out = {}
-    for item in cookie_str.replace("\n", "").split(";"):
-        item = item.strip()
-        if "=" in item:
-            k, v = item.split("=", 1)
-            out[k.strip()] = v.strip()
-    return out
-
-
-def headers_for(ver, ua, cookie_str, salt):
-    return {
-        "User-Agent": ua,
-        "Referer": "https://app.mihoyo.com",
-        "x-rpc-app_version": ver,
-        "x-rpc-app_id": "bll8iq97cem8",
-        "x-rpc-verify_key": "bll8iq97cem8",
-        "x-rpc-client_type": "2",
-        "x-rpc-device_id": rs(16),
-        "x-rpc-device_name": rs(16),
-        "x-rpc-device_model": rs(16),
-        "x-rpc-sys_version": "12",
-        "x-rpc-channel": "mihoyo",
-        "DS": ds1(salt),
-        "Cookie": cookie_str,
-    }
-
-
 def main():
     raw = os.environ.get("MIYOUSHE_COOKIE", "").strip()
     if not raw:
-        print("用法: MIYOUSHE_COOKIE='<Cookie>' python3 miyoushe_debug.py")
+        print("用法: MIYOUSHE_COOKIE='<Cookie>' python3 mihoyo/miyoushe_debug.py [序号]")
         sys.exit(1)
-    gid = sys.argv[1] if len(sys.argv) > 1 else "6"
+    only = sys.argv[1] if len(sys.argv) > 1 else None
 
-    c = parse(raw)
+    c = parse_cookie(raw)
+    uid = c.get("stuid") or c.get("ltuid") or ""
+    mid = c.get("mid", "")
+    stoken = c.get("stoken", "")
     print("== Cookie 字段解析 ==")
     for k, v in c.items():
         print(f"  {k} = {mask(v)}")
 
-    uid = c.get("stuid") or c.get("ltuid") or ""
-    mid = c.get("mid", "")
-    stoken = c.get("stoken", "")
-
-    variants = [
-        ("完整Cookie原样", raw),
-        ("stoken+mid(官方推荐)", f"stoken={stoken};mid={mid}"),
-        ("stoken+stuid+mid", f"stoken={stoken};stuid={uid};mid={mid}"),
-    ]
-    combos = [
-        ("v2.81.1 新盐", "2.81.1",
-         "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Mobile Safari/537.36 miHoYoBBS/2.81.1",
-         K2_NEW),
-        ("v2.104.0 旧盐(trss)", "2.104.0",
-         "Hyperion/550 CFNetwork/3860.500.112 Darwin/25.4.0",
-         K2_OLD),
-    ]
-
-    print("\n== 认证探测（getUserFullInfo，-100=认证失败，0=成功）==")
-    working = []
-    for vname, cookie_str in variants:
-        for cname, ver, ua, salt in combos:
-            try:
-                r = requests.get(
-                    USER_URL, params={"uid": uid},
-                    headers=headers_for(ver, ua, cookie_str, salt), timeout=15)
-                d = r.json()
-                rc, msg = d.get("retcode"), d.get("message", "")
-            except Exception as e:
-                rc, msg = "ERR", str(e)[:40]
-            mark = ""
-            if rc == 0:
-                mark = "  "
-                working.append((vname, cname))
-            print(f"  [{cname}] {vname}: retcode={rc} {msg}{mark}")
-
-    if working:
-        print(f"\n可用组合: {working}")
-        print("\n== 用首个可用组合测签到状态接口 ==")
-        vname, cname = working[0]
-        idx = [v[0] for v in variants].index(vname)
-        ci = [x[0] for x in combos].index(cname)
-        _, ver, ua, salt = combos[ci]
-        r = requests.get(STATUS_URL, params={"gids": gid},
-                         headers=headers_for(ver, ua, variants[idx][1], salt), timeout=15)
-        print(f"  querySignInStatus(gids={gid}): {json.dumps(r.json(), ensure_ascii=False)}")
-
-        # 状态接口失败时，追加测试其他认证方式与直接签到
-        status_rc = r.json().get("retcode")
-        cookie_token = c.get("cookie_token", "")
-
-        if status_rc != 0 and cookie_token:
-            print("\n== 状态接口 - 用 cookie_token 认证重试 ==")
-            ct_cookie = f"account_id={uid};cookie_token={cookie_token}"
-            h = headers_for(ver, ua, ct_cookie, salt)
-            r2 = requests.get(STATUS_URL, params={"gids": gid}, headers=h, timeout=15)
-            print(f"  querySignInStatus(ctoken): {json.dumps(r2.json(), ensure_ascii=False)}")
-
-        print("\n== 直接实测签到接口 signIn（DS2 签名）==")
-        body = json.dumps({"gids": gid}, separators=(",", ":"))
-        for vname2, cookie_str in variants[:3]:
-            h = headers_for("2.81.1",
-                            "Mozilla/5.0 (Linux; Android 13) miHoYoBBS/2.81.1",
-                            cookie_str, K2_NEW)
-            h["DS"] = ds2(body)
-            try:
-                r3 = requests.post(
-                    "https://bbs-api.miyoushe.com/apihub/app/api/signIn",
-                    data=body, headers=h, timeout=15)
-                d3 = r3.json()
-                print(f"  signIn[{vname2}]: retcode={d3.get('retcode')} {d3.get('message','')}"
-                      + (f" points={d3['data'].get('points')}" if isinstance(d3.get('data'), dict) else ""))
-            except Exception as e:
-                print(f"  signIn[{vname2}]: ERR {str(e)[:60]}")
-    else:
-        print("\n 所有组合均认证失败 —— Cookie 本身无效或已过期")
-        print("   排查建议：")
-        print("   1. 确认 Secret 值是整行 Cookie，无换行、无多余文字")
-        print("   2. 重新扫码生成一次，立即测试（stoken 不应秒失效）")
-        print("   3. 若网页获取的失败，改用本地脚本对比: python miyoushe_qr_login.py")
-
-    # stoken 本体有效性独立验证（走 passport-api，不依赖 bbs 头）
-    print("\n== stoken 有效性独立验证（passport-api）==")
+    # 1. stoken 独立验证（passport-api）
+    print("\n== 1. stoken 独立验证 ==")
     r = requests.get(
-        CTOKEN_URL,
+        "https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken",
         params={"stoken": stoken, "uid": uid, "mid": mid},
         headers={"User-Agent": "HYPContainer/1.3.3.182",
-                 "x-rpc-app_id": "ddxf5dufpuyo", "x-rpc-client_type": "3"},
-        timeout=15,
-    )
+                 "x-rpc-app_id": "ddxf5dufpuyo", "x-rpc-client_type": "3",
+                 "Cookie": f"stoken={stoken};stuid={uid};mid={mid}"},
+        timeout=15)
     d = r.json()
     ok = d.get("retcode") == 0
-    print(f"  getCookieAccountInfoBySToken: retcode={d.get('retcode')} {d.get('message','')}"
-          + ("   stoken 有效！" if ok else ""))
-    if ok:
-        print("  → 结论：stoken 有效，问题在 bbs-api 的请求头/签名组合")
+    print(f"  retcode={d.get('retcode')} {d.get('message','')}"
+          + ("   ✅ stoken 有效" if ok else "   ❌ Cookie 已失效，请重新扫码"))
+    if not ok:
+        sys.exit(1)
+
+    ct = d["data"].get("cookie_token")
+    print(f"  新 cookie_token: {mask(ct)}")
+    web_cookie = f"account_id={uid};cookie_token={ct}"
+
+    # 2. 米游社用户信息认证
+    print("\n== 2. 米游社用户信息接口 ==")
+    h = bbs_headers(f"stoken={stoken};stuid={uid};mid={mid}")
+    h["DS"] = ds1()
+    r = requests.get(USER_INFO_URL, params={"uid": uid}, headers=h, timeout=15)
+    d = r.json()
+    if d.get("retcode") == 0:
+        nick = d["data"]["user_info"].get("nickname", "")
+        print(f"  retcode=0   ✅ 昵称: {nick}")
+    else:
+        print(f"  retcode={d.get('retcode')} {d.get('message','')}")
+    web_cookie = f"account_id={uid};cookie_token={ct}"
+
+    # 3. 角色绑定
+    print("\n== 3. 游戏角色绑定 ==")
+    roles = []
+    for biz in sorted({g["biz"] for g in GAMES}):
+        try:
+            rr = requests.get(BINDING_URL, params={"game_biz": biz},
+                              headers=bbs_headers(web_cookie), timeout=15)
+            dd = rr.json()
+            if dd.get("retcode") == 0:
+                lst = dd.get("data", {}).get("list", [])
+                for role in lst:
+                    roles.append(role)
+                    print(f"  {biz}: {role.get('nickname')} Lv{role.get('level')} "
+                          f"region={role.get('region')}")
+                if not lst:
+                    print(f"  {biz}: 无绑定角色")
+            else:
+                print(f"  {biz}: 查询失败 ({dd.get('message','')[:30]})")
+        except Exception as e:
+            print(f"  {biz}: ERR {str(e)[:40]}")
+
+    if not roles:
+        print("\n未查到任何游戏角色，无法进行游戏签到")
+        return
+
+    # 4. 各游戏签到状态（luna 正式链路，只读）
+    print("\n== 4. 游戏签到状态（只读查询，不会实际签到）==")
+    targets = [g for g in GAMES if not only or g["biz"] == only]
+    for g in targets:
+        role = next((r_ for r_ in roles if r_.get("game_biz") == g["biz"]), None)
+        if not role:
+            print(f"  {g['name']}: 账号未绑定此游戏，跳过")
+            continue
+        url = f"{g['base']}/event/luna{g['sub']}/info"
+        h = bbs_headers(web_cookie)
+        if g["signgame"]:
+            h["x-rpc-signgame"] = g["signgame"]
+        h["DS"] = ds2()
+        try:
+            rr = requests.get(url, params={"lang": "zh-cn", "act_id": g["act_id"],
+                                           "uid": str(role["game_uid"]),
+                                           "region": role["region"]},
+                              headers=h, timeout=15)
+            dd = rr.json()
+            if dd.get("retcode") == 0:
+                data = dd["data"]
+                state = "今日已签" if data.get("is_sign") else "今日未签"
+                print(f"  {g['name']}: ✅ {state}（本月累计{data.get('total_sign_day')}天）")
+            else:
+                print(f"  {g['name']}: ❌ retcode={dd.get('retcode')} "
+                      f"{str(dd.get('message',''))[:50]}")
+        except Exception as e:
+            print(f"  {g['name']}: ERR {str(e)[:50]}")
 
 
 if __name__ == "__main__":

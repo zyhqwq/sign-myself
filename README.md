@@ -154,6 +154,61 @@ python mihoyo/miyoushe_qr_login.py
 例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
 
 <a id="step-6-linux"></a>
+### 6. 运行方式
+
+#### 6.1 方式一：Linux / 服务器运行（推荐）
+
+只需一条命令，跟着向导走完即可，不需要懂编程。
+
+**第 1 步：下载项目**
+
+```bash
+git clone https://github.com/zyhqwq/sign-myself.git
+cd sign-myself
+```
+
+**第 2 步：运行配置向导**
+
+```bash
+python3 setup_sign.py
+```
+
+向导会自动完成所有事：
+
+- 检查 Python 版本与依赖（缺什么自动安装，无需 root）
+- 询问是否有森空岛 Token / 米游社 Cookie，有就填入（获取方法见上文第 2、4 节）
+- 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
+- **当场实测**凭证和通知是否能用，失败可以马上重填
+- 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
+
+完成后：
+
+| 项目 | 说明 |
+| :--- | :--- |
+| 参数文件 | `api.txt`（权限 600，含凭证，**请勿外传**；重跑向导会覆盖，旧文件备份为 `api.txt.bak`） |
+| 日志 | `sign.log`（持续追加，可随时删除，不影响运行） |
+| 手动测试 | `bash run.sh` |
+| 修改配置 | 重新运行 `python3 setup_sign.py` 即可 |
+
+<details>
+<summary><b>不用向导？手动编辑配置</b></summary>
+
+```bash
+bash run.sh          # 首次运行会生成带中文注释的 api.txt 模板并提示
+nano api.txt         # 按 nano 提示编辑：Ctrl+O 回车保存，Ctrl+X 退出（vim 用户自行 i/:wq）
+bash run.sh          # 再次运行生效
+```
+
+定时任务也可手动添加到 `crontab -e`：
+
+```text
+25 3 * * * cd /home/你的用户名/sign-myself && bash run.sh >> sign.log 2>&1
+```
+
+</details>
+
+> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+
 <a id="step-6-actions"></a>
 ### 6. 运行方式
 

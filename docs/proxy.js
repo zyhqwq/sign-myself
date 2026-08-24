@@ -48,6 +48,10 @@ export default {
       "User-Agent": "HYPContainer/1.3.3.182",
       "x-rpc-app_id": "ddxf5dufpuyo",
       "x-rpc-client_type": "3",
+      // 米哈游接口要求设备 ID（缺失会返回 -3005 参数不合法）
+      "x-rpc-device_id":
+        request.headers.get("x-rpc-device_id") ||
+        crypto.randomUUID().replace(/-/g, "").slice(0, 16),
     };
 
     // getCookieAccountInfoBySToken 需要 Cookie 头，由 query 参数转换而来

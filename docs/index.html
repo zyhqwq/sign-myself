@@ -83,7 +83,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var cookies = [];
   var polling = null;
-  var deviceSeed = Math.random().toString(36).slice(2);
+  var deviceId = randStr(16); // 整个会话复用同一设备 ID（创建与轮询必须一致）
 
   function randStr(n) {
     var s = "";
@@ -142,7 +142,7 @@
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-rpc-device_id": randStr(16) + deviceSeed.slice(0, 4),
+        "x-rpc-device_id": deviceId,
       },
       body: "{}",
     }).then(function (res) {
@@ -160,7 +160,7 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-rpc-device_id": randStr(16),
+          "x-rpc-device_id": deviceId,
         },
         body: JSON.stringify({ ticket: ticket }),
       }).then(function (res) {

@@ -85,9 +85,9 @@ if ! python3 -c "import requests, cryptography, qrcode" 2>/dev/null; then
 
     python3 -m pip install -r requirements.txt 2>/dev/null \
         || python3 -m pip install --user -r requirements.txt 2>/dev/null \
-        || python3 -m pip install --break-system-packages --user -r requirements.txt 2>/dev/null \
-        || echo "警告：依赖自动安装失败。请手动执行：" \
-        && echo "  sudo apt install python3-pip && pip3 install -r requirements.txt"
+        || python3 -m pip install --break-system-packages --user -r requirements.txt \
+        || { echo "警告：依赖自动安装失败。请手动执行："; \
+             echo "  pip3 install --break-system-packages -r requirements.txt"; }
 fi
 
 # ---------- 4. 运行签到 ----------

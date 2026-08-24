@@ -235,6 +235,13 @@ def process_account(idx, cookie_str):
     if not roles:
         return [f"账号_{idx}: 未绑定任何游戏角色，无需签到"], True
 
+    # 可选：只签指定游戏（MIYOUSHE_ONLY=biz1,biz2）
+    only = {b.strip() for b in os.environ.get("MIYOUSHE_ONLY", "").split(",") if b.strip()}
+    if only:
+        roles = [r for r in roles if r.get("game_biz") in only]
+        if not roles:
+            return ["所选游戏未绑定角色，跳过"], True
+
     print(f"昵称绑定角色数: {len(roles)}")
 
     lines, all_ok = [], True

@@ -208,7 +208,7 @@ def main():
         error_msg = "❌ 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN"
         print(f"\n{error_msg}")
         print_notify_results(send_notification("签到失败", error_msg))
-        return
+        exit(1)
 
     try:
         init_did()
@@ -219,7 +219,7 @@ def main():
         print(f"\n{error_msg}")
         print(f"\n详细错误信息：\n{traceback.format_exc()}")
         print_notify_results(send_notification("签到失败", error_msg))
-        return
+        exit(1)
 
     all_tokens = TokenManager.get_all_tokens()
 
@@ -227,7 +227,7 @@ def main():
         error_msg = "❌ 未找到有效token"
         print(f"\n{error_msg}")
         print_notify_results(send_notification("签到失败", error_msg))
-        return
+        exit(1)
 
     print(f"✅ 找到 {len(all_tokens)} 个账号，开始签到...")
 

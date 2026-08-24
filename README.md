@@ -12,11 +12,19 @@
 
 ## 主要功能
 
--   **明日方舟签到**：利用 GitHub Actions，每天定时为你完成明日方舟签到。
--   **终末地签到**：自动完成《明日方舟：终末地》的每日签到，领取奖励。
--   **Bilibili 每日登录**：自动登录 B 站领取每日登录硬币。
--   **米游社游戏签到**：自动完成原神 / 星穹铁道 / 绝区零的每月签到福利，Cookie 通过本地扫码工具一键获取且长期自动续期。
+一个用于自动签到的工具，支持通过 GitHub Actions 全自动运行，并可通过多种渠道接收通知。按平台分为两组：
+
+**森空岛**（共用 `SKLAND_TOKEN`）
+- **明日方舟签到**
+- **终末地签到**
+
+**米游社**（共用 `MIYOUSHE_COOKIE`）
+- **原神 / 崩坏:星穹铁道 / 绝区零** 游戏签到福利
+
+另外还有 **Bilibili 每日登录**（独立运行）。
+
 -   **多账号支持**：只需配置一次，即可同时为多个账号签到。
+-   **按序号选择游戏**：通过 Secret 选择要签到的游戏，不必全部都跑。
 -   **多平台通知**：签到完成后，可通过微信、Telegram、Discord 等渠道接收结果通知。
 -   **安全可靠**：你的账号凭证存放在 GitHub Secrets 中，不会泄露。
 
@@ -98,17 +106,29 @@ python miyoushe_qr_login.py
 
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
-### 5. 启用 GitHub Actions
+### 5. 选择要签到的游戏（可选）
+
+通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
+
+| 序号 | 游戏 | 所属平台 | 依赖的 Secret |
+| :---: | :--- | :--- | :--- |
+| `1` | 明日方舟 | 森空岛 | `SKLAND_TOKEN` |
+| `2` | 终末地 | 森空岛 | `SKLAND_TOKEN` |
+| `3` | 原神 | 米游社 | `MIYOUSHE_COOKIE` |
+| `4` | 崩坏:星穹铁道 | 米游社 | `MIYOUSHE_COOKIE` |
+| `5` | 绝区零 | 米游社 | `MIYOUSHE_COOKIE` |
+
+例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
+
+### 6. 启用 GitHub Actions
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
 *   完成！各脚本将按照以下时间自动运行：
 
 | 任务 | [运行时间（北京时间）可修改](#modify-time) | 工作流文件 |
 | :--- | :--- | :--- |
+| 每日签到（按 `SIGN_GAMES` 选择） | 每天 03:25 | `daily-sign.yml` |
 | Bilibili 登录 | 每天 03:00 | `bilibili-login.yml` |
-| 终末地签到 | 每天 02:00 | `endfield-sign.yml` |
-| 米游社签到 | 每天 04:00 | `miyoushe-sign.yml` |
-| 明日方舟签到 | 每天 05:00 | `skland-sign.yml` |
 | 通知测试 | 手动触发 | `test-notify.yml` |
 
 你也可以在 Actions 页面手动触发任意工作流。
@@ -234,11 +254,12 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 ## 文件说明
 
 ```
-├── arknight_github.py             # 明日方舟签到脚本
-├── endfield_github.py            # 终末地签到脚本
+├── arknight_github.py             # 明日方舟签到脚本（森空岛）
+├── endfield_github.py            # 终末地签到脚本（森空岛）
+├── miyoushe_sign.py              # 米游社游戏签到脚本（原神/星铁/绝区零）
+├── sign_all.py                   # 每日签到统一入口（按 SIGN_GAMES 序号调度）
 ├── bilibili_login.py             # Bilibili 每日登录脚本
 ├── miyoushe_qr_login.py          # 米游社扫码登录工具（本地运行获取 Cookie）
-├── miyoushe_sign.py              # 米游社游戏签到脚本（原神/星铁/绝区零）
 ├── miyoushe_debug.py             # 米游社 Cookie 诊断工具
 ├── test_notify.py                # 通知渠道测试脚本
 ├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
@@ -248,10 +269,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 │   ├── index.html                # 网页版扫码获取 Cookie 页面（GitHub Pages）
 │   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）
 └── .github/workflows/
-    ├── skland-sign.yml           # 明日方舟签到工作流
-    ├── endfield-sign.yml         # 终末地签到工作流
+    ├── daily-sign.yml            # 每日签到工作流（森空岛 + 米游社，按序号选择）
     ├── bilibili-login.yml        # Bilibili 登录工作流
-    ├── miyoushe-sign.yml         # 米游社游戏签到工作流
     ├── miyoushe-debug.yml        # 米游社 Cookie 诊断工作流（手动触发）
     └── test-notify.yml           # 通知测试工作流
 ```

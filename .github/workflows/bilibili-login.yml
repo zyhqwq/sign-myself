@@ -2,8 +2,8 @@ name: Bilibili Daily Login
 
 on:
   schedule:
-    # 每天北京时间凌晨1点运行（UTC时间17点）
-    - cron: '0 17 * * *'
+    # 每天北京时间凌晨3点运行（UTC时间19点）
+    - cron: '0 19 * * *'
   workflow_dispatch:
 
 jobs:

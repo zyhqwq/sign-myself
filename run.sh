@@ -70,7 +70,7 @@ set -a
 set +a
 
 # ---------- 3. 依赖检查（缺依赖自动安装）----------
-python3 -c "import requests" 2>/dev/null || {
+python3 -c "import requests, cryptography, qrcode" 2>/dev/null || {
     echo "首次运行：正在安装依赖..."
     python3 -m pip install -r requirements.txt \
         || python3 -m pip install --user -r requirements.txt \

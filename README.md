@@ -238,7 +238,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 ├── endfield_github.py            # 终末地签到脚本
 ├── bilibili_login.py             # Bilibili 每日登录脚本
 ├── miyoushe_qr_login.py          # 米游社扫码登录工具（本地运行获取 Cookie）
-├── miyoushe_sign.py              # 米游社每日签到脚本
+├── miyoushe_sign.py              # 米游社游戏签到福利脚本（原神/星铁/绝区零）
+├── miyoushe_debug.py             # 米游社 Cookie 诊断工具
 ├── test_notify.py                # 通知渠道测试脚本
 ├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
 ├── notify.py                     # 共享通知模块
@@ -250,7 +251,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
     ├── skland-sign.yml           # 明日方舟签到工作流
     ├── endfield-sign.yml         # 终末地签到工作流
     ├── bilibili-login.yml        # Bilibili 登录工作流
-    ├── miyoushe-sign.yml         # 米游社签到工作流
+    ├── miyoushe-sign.yml         # 米游社游戏签到工作流
+    ├── miyoushe-debug.yml        # 米游社 Cookie 诊断工作流（手动触发）
     └── test-notify.yml           # 通知测试工作流
 ```
 

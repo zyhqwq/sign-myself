@@ -10,6 +10,24 @@
 
 一个用于自动签到的工具，支持通过 GitHub Actions 全自动运行，并可通过多种渠道接收通知。
 
+<a id="main-features"></a>
+## 目录
+
+- [主要功能](#main-features)
+- [使用方法](#usage)
+  - [1. Fork 本仓库](#step-1-fork)
+  - [2. 配置森空岛 Token](#step-2-skland)
+  - [3. 配置 Bilibili Cookie](#step-3-bilibili)
+  - [4. 配置米游社 Cookie](#step-4-mihoyo)
+  - [5. 选择要签到的游戏](#step-5-games)
+  - [6. 启用 GitHub Actions](#step-6-actions)
+- [配置通知（可选）](#notify-config)
+  - [Telegram 机器人创建步骤](#telegram-steps)
+  - [钉钉机器人创建步骤](#dingtalk-steps)
+- [常见问题](#faq)
+- [文件说明](#files)
+- [致谢与参考](#credits)
+
 ## 主要功能
 
 一个用于自动签到的工具，支持通过 GitHub Actions 全自动运行，并可通过多种渠道接收通知。按平台分为两组：
@@ -30,11 +48,14 @@
 -   **多平台通知**：签到完成后，可通过微信、Telegram、Discord 等渠道接收结果通知。
 -   **安全可靠**：你的账号凭证存放在 GitHub Secrets 中，不会泄露。
 
+<a id="usage"></a>
 ## 使用方法
 
+<a id="step-1-fork"></a>
 ### 1. Fork 本仓库
 点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
 
+<a id="step-2-skland"></a>
 ### 2. 配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
@@ -53,6 +74,7 @@
     | :--- | :--- | :--- |
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
+<a id="step-3-bilibili"></a>
 ### 3. 配置 Bilibili Cookie
 
 1.  **获取 Cookie**:
@@ -75,6 +97,7 @@
 
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
+<a id="step-4-mihoyo"></a>
 ### 4. 配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
@@ -108,6 +131,7 @@ python mihoyo/miyoushe_qr_login.py
 
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
+<a id="step-5-games"></a>
 ### 5. 选择要签到的游戏（可选）
 
 通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
@@ -122,6 +146,7 @@ python mihoyo/miyoushe_qr_login.py
 
 例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
 
+<a id="step-6-actions"></a>
 ### 6. 启用 GitHub Actions
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
@@ -134,6 +159,7 @@ python mihoyo/miyoushe_qr_login.py
 
 你也可以在 Actions 页面手动触发任意工作流。
 
+<a id="notify-config"></a>
 ## 配置通知（可选）
 
 如果你希望签到后收到通知，可以按需添加以下 Secret。进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret` 添加。所有脚本共享同一套通知配置。
@@ -212,6 +238,7 @@ python mihoyo/miyoushe_qr_login.py
 
 > **说明**：代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
 
+<a id="faq"></a>
 ## 常见问题
 
 **Q：Token 会过期吗？需要经常换吗？**
@@ -254,6 +281,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 
 **A：** 请确认你已在森空岛 App 或网页端绑定了终末地游戏角色。未绑定角色的账号无法签到。
 
+<a id="files"></a>
 ## 文件说明
 
 ```
@@ -280,6 +308,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
     └── test-notify.yml           # 通知测试工作流
 ```
 
+<a id="credits"></a>
 ## 致谢与参考
 
 - 森空岛签到逻辑参考了 [skyland-auto-sign](https://gitee.com/FancyCabbage/skyland-auto-sign)
@@ -293,6 +322,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 
 请勿将本脚本用于任何商业或盈利目的。
 
+<a id="ending"></a>
 ## 最后
 
 如果觉得这个项目有帮助，欢迎给个 Star。祝你游戏愉快！

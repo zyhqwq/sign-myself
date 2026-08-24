@@ -155,48 +155,65 @@ python mihoyo/miyoushe_qr_login.py
 
 <a id="step-6-actions"></a>
 <a id="step-6-linux"></a>
+<a id="step-6-actions"></a>
 ### 6. 运行方式
 
-#### 6.1 方式一：Linux 本地 / 服务器运行（推荐）
+#### 6.1 方式一：Linux / 服务器运行（推荐）
 
-凭证保存在你自己的机器上，不经过任何第三方平台。
+全程只需 4 条命令，凭证保存在你自己电脑上，不需要懂编程。
 
-1.  **准备环境**
+**第 1 步：下载项目**
 
-    ```bash
-    git clone https://github.com/zyhqwq/sign-myself.git && cd sign-myself
-    pip install -r requirements.txt
-    ```
+```bash
+git clone https://github.com/zyhqwq/sign-myself.git
+cd sign-myself
+```
 
-2.  **配置凭证**：创建启动脚本，填入自己的参数
+**第 2 步：第一次运行（自动生成配置文件）**
 
-    ```bash
-    cat > run.sh <<'EOF'
-    #!/bin/bash
-    cd "$(dirname "$0")"
-    export SKLAND_TOKEN="你的森空岛Token"       # 序号 1、2 需要
-    export MIYOUSHE_COOKIE="你的米游社Cookie"   # 序号 3、4、5 需要
-    export SIGN_GAMES="1,2,3,4,5"              # 可选，默认全部
-    # 通知渠道按需配置，例如：
-    # export WECHAT_WEBHOOK_URL="..."
-    python3 sign_all.py
-    EOF
-    chmod +x run.sh
-    ./run.sh    # 先手动运行一次，确认输出正常
-    ```
+```bash
+bash run.sh
+```
 
-3.  **加入 crontab 定时**（每天北京时间凌晨 3:25）
+运行后会提示"已在当前目录生成配置文件 api.txt"。
 
-    ```bash
-    crontab -e
-    ```
+**第 3 步：填写 api.txt**
 
-    ```text
-    # 系统时区为北京时间（Asia/Shanghai）时直接写：
-    25 3 * * * /path/to/sign-myself/run.sh >> /path/to/sign-myself/sign.log 2>&1
-    ```
+用记事本或任意编辑器打开 `api.txt`，把 `=` 后面改成自己的值，并删掉行首的 `#` 号。例如：
 
-    > 时区不对可先执行 `timedatectl set-timezone Asia/Shanghai`；建议在分钟上做随机偏移，避免长期固定整点请求。
+```text
+SKLAND_TOKEN=你的森空岛Token
+MIYOUSHE_COOKIE=你的米游社Cookie
+SIGN_GAMES=1,2,3,4,5
+WECHAT_WEBHOOK_URL=你的企业微信机器人地址
+```
+
+> - 每一项的作用文件里都有中文注释说明，不需要的保持 `#` 注释状态即可
+> - 多账号用英文逗号分隔；获取方法见上文第 2、4 节
+
+**第 4 步：再次运行测试**
+
+```bash
+bash run.sh
+```
+
+看到各游戏签到结果即为成功。
+
+**第 5 步：加入定时任务（每天北京时间凌晨 3:25 自动签到）**
+
+```bash
+crontab -e
+```
+
+添加一行（把路径换成你自己的）：
+
+```text
+25 3 * * * cd /root/sign-myself && bash run.sh >> sign.log 2>&1
+```
+
+保存退出即可，之后每天自动签到，结果可在 `sign.log` 查看。
+
+> 💡 小贴士：系统时区不是北京时间时请先执行 `timedatectl set-timezone Asia/Shanghai`；建议把 `25` 改成随机分钟数，避免固定整点请求。
 
 #### 6.2 方式二：GitHub Actions（仅供参考，不推荐）
 

@@ -50,7 +50,7 @@ class TokenManager:
             for i, token in enumerate(token_list):
                 token = token.strip()
                 if token:
-                    token_id = f"token_{i+1}"
+                    token_id = f"账号{i+1}"
                     tokens[token_id] = {
                         'token': parse_token(token),
                         'label': token_id,
@@ -92,9 +92,9 @@ def get_binding_list(cred_resp):
         return []
 
 
-def do_sign_for_account(account_id, user_token):
+def do_sign_for_account(account_label, account_id, user_token):
     """为单个账号执行签到"""
-    print(f"\n处理账号: {account_id}")
+    print(f"\n处理账号: {account_label}")
 
     try:
         cred_resp = login(user_token)
@@ -104,7 +104,7 @@ def do_sign_for_account(account_id, user_token):
             print("  未找到角色，可能是token失效")
             return {
                 'account': account_id,
-                'results': [format_sign_entry("明日方舟", account_id, "-", "未找到角色，可能是token失效")],
+                'results': [format_sign_entry("明日方舟", account_label, "-", "未找到角色，可能是token失效")],
                 'status': 'failed'
             }
 
@@ -146,27 +146,27 @@ def do_sign_for_account(account_id, user_token):
                         award_info.append(f"{res['name']}×{award.get('count', 1)}")
 
                     result_msg = f"签到成功，获得: {', '.join(award_info)}"
-                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
                     status_list.append('success')
 
                 elif resp.get('code') == 10001 and '请勿重复签到' in resp.get('message', ''):
                     result_msg = "今天已经签到过了"
-                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
                     status_list.append('repeated')
 
                 elif resp.get('message') == '请勿重复签到':
                     result_msg = "今天已经签到过了"
-                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
                     status_list.append('repeated')
 
                 else:
                     result_msg = f"签到失败：{resp.get('message', '未知错误')}"
-                    results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
+                    results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
                     status_list.append('failed')
 
             except Exception as e:
                 result_msg = f"签到异常：{str(e)}"
-                results.append(format_sign_entry("明日方舟", account_id, character_name, result_msg))
+                results.append(format_sign_entry("明日方舟", account_label, character_name, result_msg))
                 status_list.append('failed')
 
         if 'success' in status_list:
@@ -188,7 +188,7 @@ def do_sign_for_account(account_id, user_token):
         print(f"  {error_msg}")
         return {
             'account': account_id,
-            'results': [format_sign_entry("明日方舟", account_id, "-", error_msg)],
+            'results': [format_sign_entry("明日方舟", account_label, "-", error_msg)],
             'status': 'failed',
             'character_count': 0
         }
@@ -237,8 +237,8 @@ def main():
     failed_count = 0
     total_characters = 0
 
-    for account_id, token_info in all_tokens.items():
-        result = do_sign_for_account(account_id, token_info['token'])
+    for idx, (account_id, token_info) in enumerate(all_tokens.items(), 1):
+        result = do_sign_for_account(f"账号{idx}", account_id, token_info['token'])
         all_results.append(result)
 
         if result['status'] == 'success':
@@ -263,26 +263,9 @@ def main():
     else:
         subject = "签到完成"
 
-    report = f"""签到统计：
-{subject}
-• 账号总数: {len(all_results)}
-• 签到成功: {success_count}
-• 重复签到: {repeated_count}
-• 签到失败: {failed_count}
-• 角色总数: {total_characters}
-
-详细结果："""
-
-    max_results_to_show = 2
-    for result in all_results:
-        report += f"\n\n账号: {result['account']}"
-
-        results_to_show = result['results'][:max_results_to_show]
-        for res in results_to_show:
-            report += f"\n  {res}"
-
-        if len(result['results']) > max_results_to_show:
-            report += f"\n  ...（还有{len(result['results']) - max_results_to_show}个结果未显示）"
+    report = "\n\n".join(
+        entry for result in all_results for entry in result["results"]
+    )
 
     if failed_count > 0:
         failed_accounts = [r for r in all_results if r['status'] == 'failed']

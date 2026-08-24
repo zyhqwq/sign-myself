@@ -107,7 +107,7 @@ def main():
                 block.append(f"■ {task_name}\n{content}")
             else:
                 block.append(content)
-        sections.append("\n".join(block))
+        sections.append("\n\n".join(block))
 
     if sections:
         overall_ok = not failed

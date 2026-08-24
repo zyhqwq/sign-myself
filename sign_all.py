@@ -25,7 +25,8 @@ NUMBER_MAP = {
 
 
 def main():
-    raw = os.environ.get("SIGN_GAMES", "1,2,3,4,5")
+    # GitHub Secrets 未配置时变量为空字符串，需视为未设置
+    raw = os.environ.get("SIGN_GAMES", "").strip() or "1,2,3,4,5"
     selected = {s.strip() for s in raw.split(",") if s.strip() in NUMBER_MAP}
 
     if not selected:

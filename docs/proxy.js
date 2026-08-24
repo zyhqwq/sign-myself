@@ -1,14 +1,14 @@
 /**
- * 米游社扫码登录 CORS 代理 - Cloudflare Worker
+ * 米游社扫码登录 CORS 代理 - Cloudflare Worker（透明转发版）
  *
- * 部署方法：
- *   1. 打开 https://dash.cloudflare.com -> Workers & Pages -> Create Worker
- *   2. 把本文件全部代码粘贴进编辑器，Deploy
- *   3. 把得到的 https://xxx.xxx.workers.dev 填入 docs/index.html 页面的「代理设置」
+ * 更新方法：
+ *   Cloudflare Dashboard -> Workers -> 你的 Worker -> Edit Code ->
+ *   全选删除，粘贴本文件全部代码 -> Deploy
  *
  * 安全说明：
  *   - 仅转发白名单内的 3 个米哈游 passport 接口，无日志、无存储
  *   - Cookie 只在浏览器内组装；stoken 仅在请求 cookie_token 时经由本代理中转一次
+ *   - /_debug 为诊断路径，仅回显收到的请求内容，可随时删除
  */
 
 const UPSTREAM = "https://passport-api.mihoyo.com";
@@ -18,6 +18,9 @@ const ALLOWED_PATHS = new Set([
   "/account/ma-cn-passport/app/queryQRLoginStatus",
   "/account/auth/api/getCookieAccountInfoBySToken",
 ]);
+
+// 不应转发给上游的请求头
+const HOP_HEADERS = ["host", "origin", "referer", "content-length", "connection", "cookie"];
 
 function corsHeaders(contentType) {
   const headers = {
@@ -30,6 +33,18 @@ function corsHeaders(contentType) {
   return headers;
 }
 
+function buildOutgoingHeaders(request) {
+  // 透明透传浏览器请求头，仅删除逐跳头，并补齐米哈游必需的默认值
+  const headers = new Headers(request.headers);
+  HOP_HEADERS.forEach((h) => headers.delete(h));
+  if (!headers.has("User-Agent")) headers.set("User-Agent", "HYPContainer/1.3.3.182");
+  if (!headers.has("x-rpc-app_id")) headers.set("x-rpc-app_id", "ddxf5dufpuyo");
+  if (!headers.has("x-rpc-client_type")) headers.set("x-rpc-client_type", "3");
+  if (!headers.has("x-rpc-device_id"))
+    headers.set("x-rpc-device_id", crypto.randomUUID().replace(/-/g, "").slice(0, 16));
+  return headers;
+}
+
 export default {
   async fetch(request) {
     if (request.method === "OPTIONS") {
@@ -37,6 +52,26 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // 诊断路径：回显实际收到的请求与将要转发的头
+    if (url.pathname === "/_debug") {
+      const incomingBody = request.method === "POST" ? await request.text() : "(no body)";
+      const outgoing = buildOutgoingHeaders(request);
+      return new Response(
+        JSON.stringify(
+          {
+            method: request.method,
+            incoming_body_length: incomingBody.length,
+            incoming_body_sample: incomingBody.slice(0, 200),
+            outgoing_headers: Object.fromEntries(outgoing.entries()),
+          },
+          null,
+          2,
+        ),
+        { status: 200, headers: corsHeaders("application/json") },
+      );
+    }
+
     if (!ALLOWED_PATHS.has(url.pathname)) {
       return new Response("Not Found", { status: 404, headers: corsHeaders() });
     }
@@ -44,43 +79,33 @@ export default {
       return new Response("Method Not Allowed", { status: 405, headers: corsHeaders() });
     }
 
-    const headers = {
-      "User-Agent": "HYPContainer/1.3.3.182",
-      "x-rpc-app_id": "ddxf5dufpuyo",
-      "x-rpc-client_type": "3",
-      // 米哈游接口要求设备 ID（缺失会返回 -3005 参数不合法）
-      "x-rpc-device_id":
-        request.headers.get("x-rpc-device_id") ||
-        crypto.randomUUID().replace(/-/g, "").slice(0, 16),
-    };
-
-    // getCookieAccountInfoBySToken 需要 Cookie 头，由 query 参数转换而来
-    const stoken = url.searchParams.get("stoken");
-    if (stoken) {
-      headers["Cookie"] =
-        `stoken=${stoken};stuid=${url.searchParams.get("stuid") || ""};mid=${url.searchParams.get("mid") || ""}`;
-    }
-    if (request.method === "POST") {
-      headers["Content-Type"] = "application/json";
-    }
+    const hasBody = request.method === "POST";
 
     let upstream;
     try {
       upstream = await fetch(UPSTREAM + url.pathname + url.search, {
         method: request.method,
-        headers,
-        body: request.method === "POST" ? await request.text() : undefined,
+        headers: buildOutgoingHeaders(request),
+        body: hasBody ? request.body : undefined,
       });
     } catch (err) {
-      return new Response(JSON.stringify({ retcode: -1, message: "upstream error" }), {
+      return new Response(JSON.stringify({ retcode: -1, message: "upstream error: " + err.message }), {
         status: 502,
         headers: corsHeaders("application/json"),
       });
     }
 
+    const respHeaders = corsHeaders(upstream.headers.get("Content-Type") || "application/json");
+
+    // 透传上游业务头（如 x-rpc-aigis），便于排查风控
+    for (const name of ["x-rpc-aigis", "x-trace-id"]) {
+      const v = upstream.headers.get(name);
+      if (v) respHeaders[name] = v;
+    }
+
     return new Response(await upstream.text(), {
       status: upstream.status,
-      headers: corsHeaders(upstream.headers.get("Content-Type") || "application/json"),
+      headers: respHeaders,
     });
   },
 };

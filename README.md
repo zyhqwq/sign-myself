@@ -131,7 +131,6 @@ python mihoyo/miyoushe_qr_login.py
 | :--- | :--- | :--- |
 | 每日签到（按 `SIGN_GAMES` 选择） | 每天 03:25 | `daily-sign.yml` |
 | Bilibili 登录 | 每天 03:00 | `bilibili-login.yml` |
-| 通知测试 | 手动触发 | `test-notify.yml` |
 
 你也可以在 Actions 页面手动触发任意工作流。
 

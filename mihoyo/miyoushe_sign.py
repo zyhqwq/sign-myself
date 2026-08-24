@@ -50,6 +50,14 @@ GAMES = [
 
 COOKIE_ENV = "MIYOUSHE_COOKIE"
 
+# 与扫码时会话一致的设备 ID（stoken 与其绑定，混用会被判登录失效）
+_DEVICE = None
+
+
+def set_device(device_id):
+    global _DEVICE
+    _DEVICE = device_id or None
+
 # 网页端 DS 盐值（2026 新版，参考 astrbot_plugin_miyoqian）
 DS_SALT_WEB = "G1ktdwFL4IyGkHuuWSmz0wUe9Db9scyK"
 
@@ -76,7 +84,7 @@ def passport_headers(device_id=None):
         "User-Agent": "HYPContainer/1.3.3.182",
         "x-rpc-app_id": "ddxf5dufpuyo",
         "x-rpc-client_type": "3",
-        "x-rpc-device_id": device_id or random_string(16),
+        "x-rpc-device_id": device_id or _DEVICE or random_string(16),
     }
 
 
@@ -98,7 +106,7 @@ def web_headers(cookie_str):
         "Accept-Encoding": "gzip, deflate",
         "Accept-Language": "zh-CN,en-US;q=0.8",
         "Connection": "keep-alive",
-        "x-rpc-device_id": random_string(32),
+        "x-rpc-device_id": _DEVICE or random_string(32),
         "Cookie": cookie_str,
     }
 
@@ -116,6 +124,8 @@ def parse_cookie(cookie_str):
 def refresh_cookie_token(cookies):
     """用 stoken 刷新 cookie_token（stoken 长期有效，实现免维护续期）"""
     stoken = cookies.get("stoken")
+    if cookies.get("device_id"):
+        set_device(cookies["device_id"])
     uid = cookies.get("stuid") or cookies.get("ltuid") or ""
     mid = cookies.get("mid", "")
     if not stoken:

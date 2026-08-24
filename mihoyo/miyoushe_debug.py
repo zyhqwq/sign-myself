@@ -19,7 +19,7 @@ import requests
 
 from miyoushe_sign import (
     GAMES, USER_INFO_URL, BINDING_URL,
-    bbs_headers, ds1, ds2, parse_cookie,
+    web_headers as bbs_headers, ds1, ds2, parse_cookie,
 )
 
 

@@ -108,8 +108,8 @@ def render_qr(url):
     return True
 
 
-def update_api_file(cookie):
-    """若项目根目录存在 api.txt，则自动更新其中的 MIYOUSHE_COOKIE 行"""
+def update_api_file(cookie, device_id):
+    """若项目根目录存在 api.txt，则自动更新其中的 MIYOUSHE_COOKIE 与 DEVICE_ID 行"""
     api_file = Path(__file__).resolve().parent.parent / "api.txt"
     if not api_file.exists():
         return False
@@ -121,8 +121,16 @@ def update_api_file(cookie):
             new_content = re.sub(
                 r"^MIYOUSHE_COOKIE=.*$", f"MIYOUSHE_COOKIE={cookie}",
                 content, flags=re.M)
+            if re.search(r"^DEVICE_ID=.*$", new_content, flags=re.M):
+                new_content = re.sub(
+                    r"^DEVICE_ID=.*$", f"DEVICE_ID={device_id}",
+                    new_content, flags=re.M)
+            else:
+                new_content = new_content.rstrip("\n") + f"\nDEVICE_ID={device_id}\n"
         else:
-            new_content = content.rstrip("\n") + f"\nMIYOUSHE_COOKIE={cookie}\n"
+            new_content = (content.rstrip("\n")
+                           + f"\nMIYOUSHE_COOKIE={cookie}"
+                           + f"\nDEVICE_ID={device_id}\n")
         api_file.write_text(new_content, encoding="utf-8")
         print(f"已自动更新 {api_file} 中的 MIYOUSHE_COOKIE（原内容备份为 {bak.name}）")
         return True
@@ -222,7 +230,7 @@ def main():
 
     print("=" * 60)
     print("登录成功！你的米游社 Cookie 如下：")
-    update_api_file(cookie)
+    update_api_file(cookie, device_id)
     print("=" * 60)
     print(cookie)
     print("=" * 60)

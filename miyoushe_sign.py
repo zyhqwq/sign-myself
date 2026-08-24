@@ -287,7 +287,6 @@ def process_account(idx, cookie_str):
                                            f"{role['nickname']} Lv{role['level']}",
                                            f"请求异常 - {str(e)[:60]}"), "ok": False}
         lines.append(r["line"])
-        print(r["line"])
         all_ok = all_ok and r["ok"]
         if i < len(roles) - 1:
             time.sleep(random.uniform(2, 5))
@@ -314,7 +313,7 @@ def main():
         results.extend(lines)
         all_ok = all_ok and ok
 
-    report = "\n".join(results)
+    report = "\n\n".join(results)
     title = "米游社游戏签到成功" if all_ok else "米游社游戏签到部分失败"
     print(f"\n{report}")
     print_notify_results(send_notification(title, report))

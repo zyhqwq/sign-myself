@@ -134,13 +134,12 @@ def main():
 
                 entry = format_sign_entry("终末地", account_label, role_label, result_text)
                 results.append(entry)
-                print(entry)
 
         except Exception as e:
             results.append(f"账号_{idx + 1}: 处理失败 - {str(e)}")
             all_success = False
 
-    report = "\n".join(results)
+    report = "\n\n".join(results)
     title = "终末地签到成功" if all_success else "终末地签到部分失败"
     print(f"\n{report}")
     print_notify_results(send_notification(title, report))

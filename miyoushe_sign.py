@@ -223,8 +223,7 @@ def sign_game(game, role, cookie_str, account_label):
     if isinstance(is_sign, str):
         is_sign = is_sign.strip().lower() in ("true", "1")
     if is_sign:
-        return {"line": format_sign_entry(name, account_label, role_label,
-                                          days=total_days), "ok": True}
+        return {"line": format_sign_entry(name, account_label, role_label,), "ok": True}
 
     result = luna_request("post", "sign", game, cookie_str, uid=uid, region=region)
     rc2 = result.get("retcode")
@@ -238,10 +237,9 @@ def sign_game(game, role, cookie_str, account_label):
             award_text = award_of(get_awards(game, cookie_str), total_days + 1)
         return {"line": format_sign_entry(name, account_label, role_label,
                                           result="签到成功",
-                                          award=award_text, days=total_days + 1), "ok": True}
+                                          award=award_text), "ok": True}
     if rc2 == ALREADY_SIGNED:
-        return {"line": format_sign_entry(name, account_label, role_label,
-                                          days=total_days), "ok": True}
+        return {"line": format_sign_entry(name, account_label, role_label,), "ok": True}
     if rc2 == CAPTCHA:
         return {"line": format_sign_entry(name, account_label, role_label,
                                           result="触发风控验证(1034)，今日未能签到"), "ok": False}

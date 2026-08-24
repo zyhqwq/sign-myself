@@ -49,7 +49,7 @@
     *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
     *   点击 `New repository secret`，添加以下 Secret：
 
-    | Secret 名称 | 填入的值 | 说明 |
+    | Name | Secret | 说明 |
     | :--- | :--- | :--- |
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
@@ -67,7 +67,7 @@
     *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
     *   分别添加以下三个 Secret：
 
-    | Secret 名称 | 填入的值 | 说明 |
+    | Name | Secret | 说明 |
     | :--- | :--- | :--- |
     | `BILI_SESSDATA` | `SESSDATA` | B 站登录凭证（必需） |
     | `BILI_DEDEUSERID` | `DedeUserID` | B 站用户 ID（必需） |
@@ -102,7 +102,7 @@ python mihoyo/miyoushe_qr_login.py
 
 终端会打印二维码，米游社 App 扫码确认后输出 Cookie，同样填入 Secret 即可。
 
-| Secret 名称 | 填入的值 | 说明 |
+| Name | Secret | 说明 |
 | :--- | :--- | :--- |
 | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
@@ -141,14 +141,14 @@ python mihoyo/miyoushe_qr_login.py
 
 **国外平台**
 
-| 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
+| 通知平台 | Name | 说明与获取提示 | 已测试 |
 | :--- | :--- | :--- | :--- |
 | [**Discord**](https://discord.com/) | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
 | [**Telegram**](https://telegram.org/) | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。详见下方步骤。 | ✓ |
 
 **国内平台**
 
-| 通知平台 | Secret 名称 | 说明与获取提示 | 已测试 |
+| 通知平台 | Name | 说明与获取提示 | 已测试 |
 | :--- | :--- | :--- | :--- |
 | [**企业微信**](https://work.weixin.qq.com/) | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
 | [**飞书**](https://www.feishu.cn/) | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
@@ -159,7 +159,7 @@ python mihoyo/miyoushe_qr_login.py
 
 **通用**
 
-| 通知平台 | Secret 名称 | 说明与获取提示 |
+| 通知平台 | Name | 说明与获取提示 |
 | :--- | :--- | :--- |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 |
 

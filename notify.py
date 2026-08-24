@@ -235,17 +235,20 @@ BEIJING_TZ = timezone(timedelta(hours=8))
 
 
 def format_sign_entry(game: str, account: str, role: str,
-                      result: str = "", award: str = "") -> str:
-    """统一条目格式：■游戏名 / 账号 / 角色 / 签到结果(仅异常时) / 今日奖励 / 北京时间"""
+                      result: str = "", award: str = "", days=None) -> str:
+    """统一条目格式：■游戏名 / 账号 / 角色 / 签到结果 / 今日奖励 / 累计天数 / 北京时间"""
     lines = [
         f"■ {game}",
         f"账号: {account}",
         f"角色: {role}",
     ]
     if result:
-        lines.append(f"签到结果: {result}")
+        bad = any(k in result for k in ("失败", "异常", "失效", "风控"))
+        lines.append(f"{'❌' if bad else '✅'} {result}")
     if award:
         lines.append(f"今日奖励: {award}")
+    if days is not None:
+        lines.append(f"📅 累计签到天数: {days}天")
     when = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S")
     lines.append(f"签到时间: {when}")
     return "\n".join(lines)

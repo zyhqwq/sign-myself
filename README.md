@@ -71,9 +71,9 @@
 
 | 任务 | [运行时间（北京时间）可修改](#modify-time) | 工作流文件 |
 | :--- | :--- | :--- |
-| 明日方舟签到 | 每天 06:00 | `skland-sign.yml` |
-| Bilibili 登录 | 每天 08:00 | `bilibili-login.yml` |
-| 终末地签到 | 每天 13:00 | `endfield-sign.yml` |
+| Bilibili 登录 | 每天 01:00 | `bilibili-login.yml` |
+| 终末地签到 | 每天 03:00 | `endfield-sign.yml` |
+| 明日方舟签到 | 每天 05:00 | `skland-sign.yml` |
 | 通知测试 | 手动触发 | `test-notify.yml` |
 
 你也可以在 Actions 页面手动触发任意工作流。

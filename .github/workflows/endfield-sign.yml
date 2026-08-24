@@ -2,7 +2,8 @@ name: Endfield Daily Sign
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    # 每天北京时间凌晨3点运行（UTC时间19点）
+    - cron: '0 19 * * *'
   workflow_dispatch:
 
 jobs:

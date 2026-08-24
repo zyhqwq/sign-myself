@@ -2,8 +2,8 @@ name: Skland Daily Sign with Multiple Webhooks
 
 on:
   schedule:
-    # 每天早上6点运行（UTC时间22点，北京时间早上6点）
-    - cron: '0 22 * * *'
+    # 每天北京时间凌晨5点运行（UTC时间21点）
+    - cron: '0 21 * * *'
   workflow_dispatch:  # 允许手动触发
 
 jobs:

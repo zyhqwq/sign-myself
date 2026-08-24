@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """明日方舟：终末地 签到脚本 - GitHub Actions 专用版"""
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import json
 import os
 import sys

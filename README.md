@@ -95,7 +95,7 @@
 
 ```bash
 pip install -r requirements.txt
-python miyoushe_qr_login.py
+python mihoyo/miyoushe_qr_login.py
 ```
 
 终端会打印二维码，米游社 App 扫码确认后输出 Cookie，同样填入 Secret 即可。
@@ -254,17 +254,19 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 ## 文件说明
 
 ```
-├── arknight_github.py             # 明日方舟签到脚本（森空岛）
-├── endfield_github.py            # 终末地签到脚本（森空岛）
-├── miyoushe_sign.py              # 米游社游戏签到脚本（原神/星铁/绝区零）
 ├── sign_all.py                   # 每日签到统一入口（按 SIGN_GAMES 序号调度）
 ├── bilibili_login.py             # Bilibili 每日登录脚本
-├── miyoushe_qr_login.py          # 米游社扫码登录工具（本地运行获取 Cookie）
-├── miyoushe_debug.py             # 米游社 Cookie 诊断工具
 ├── test_notify.py                # 通知渠道测试脚本
-├── skland_common.py              # 森空岛公共模块（加密、签名、登录）
-├── notify.py                     # 共享通知模块
+├── notify.py                     # 共享通知模块（含统一通知格式）
 ├── requirements.txt              # Python 依赖列表
+├── skland/                       # 森空岛平台
+│   ├── arknight_github.py        # 明日方舟签到脚本
+│   ├── endfield_github.py        # 终末地签到脚本
+│   └── skland_common.py          # 公共模块（加密、签名、登录）
+├── mihoyo/                       # 米游社平台
+│   ├── miyoushe_sign.py          # 游戏签到脚本（原神/星铁/绝区零）
+│   ├── miyoushe_qr_login.py      # 扫码登录工具（本地运行获取 Cookie）
+│   └── miyoushe_debug.py         # Cookie 诊断工具
 ├── docs/
 │   ├── index.html                # 网页版扫码获取 Cookie 页面（GitHub Pages）
 │   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）

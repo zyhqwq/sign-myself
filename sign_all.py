@@ -21,17 +21,17 @@ import notify
 # 任务定义: 序号 -> (名称, 脚本, 平台, 额外环境变量)
 JOBS = {
     "1": {"name": "明日方舟", "platform": "森空岛签到",
-          "script": "arknight_github.py", "env": None},
+          "script": "skland/arknight_github.py", "env": None},
     "2": {"name": "终末地", "platform": "森空岛签到",
-          "script": "endfield_github.py", "env": None},
+          "script": "skland/endfield_github.py", "env": None},
     "3": {"name": "原神", "platform": "米游社签到",
-          "script": "miyoushe_sign.py",
+          "script": "mihoyo/miyoushe_sign.py",
           "env": {"MIYOUSHE_ONLY": "hk4e_cn"}},
     "4": {"name": "崩坏:星穹铁道", "platform": "米游社签到",
-          "script": "miyoushe_sign.py",
+          "script": "mihoyo/miyoushe_sign.py",
           "env": {"MIYOUSHE_ONLY": "hkrpg_cn"}},
     "5": {"name": "绝区零", "platform": "米游社签到",
-          "script": "miyoushe_sign.py",
+          "script": "mihoyo/miyoushe_sign.py",
           "env": {"MIYOUSHE_ONLY": "nap_cn"}},
 }
 

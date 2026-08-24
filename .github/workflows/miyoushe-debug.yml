@@ -23,4 +23,4 @@ jobs:
       env:
         MIYOUSHE_COOKIE: ${{ secrets.MIYOUSHE_COOKIE }}
       run: |
-        python miyoushe_debug.py 6
+        python mihoyo/miyoushe_debug.py 6

@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """米游社游戏签到脚本 - GitHub Actions 专用版
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 使用 MIYOUSHE_COOKIE（由本地 miyoushe_qr_login.py 扫码获取）完成
 原神 / 崩坏:星穹铁道 / 绝区零 的每月签到福利（领原石、燃料等）。
 

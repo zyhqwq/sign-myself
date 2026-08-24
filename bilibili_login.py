@@ -9,6 +9,7 @@ from datetime import datetime
 from notify import send_notification, print_notify_results
 
 NAV_URL = "https://api.bilibili.com/x/web-interface/nav"
+HEARTBEAT_URL = "https://api.bilibili.com/x/click-interface/web/heartbeat"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -23,11 +24,27 @@ def daily_login(sessdata, jct, dedeuserid) -> dict:
         "DedeUserID": dedeuserid,
     }
 
+    # 1. 查询登录状态
     resp = requests.get(NAV_URL, headers=HEADERS, cookies=cookies, timeout=15)
     data = resp.json()
 
     if data["code"] == 0:
         info = data["data"]
+        
+        # 2. 发送心跳，模拟页面访问行为
+        try:
+            heartbeat_data = {
+                "aid": "0",
+                "cid": "0",
+                "bvid": "",
+                "mid": dedeuserid,
+                "csrf": jct,
+            }
+            requests.post(HEARTBEAT_URL, headers=HEADERS, cookies=cookies, 
+                         data=heartbeat_data, timeout=15)
+        except Exception:
+            pass  # 心跳失败不影响主流程
+        
         return {
             "success": info.get("isLogin", False),
             "uname": info.get("uname", "unknown"),

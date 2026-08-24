@@ -56,6 +56,9 @@ def read_reports(report_dir):
 
 
 def main():
+    # 切到脚本所在目录，保证从任意位置调用都能找到子脚本
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     # GitHub Secrets 未配置时变量为空字符串，需视为未设置
     raw = os.environ.get("SIGN_GAMES", "").strip() or "1,2,3,4,5"
     selected = {s.strip() for s in raw.split(",") if s.strip() in JOBS}

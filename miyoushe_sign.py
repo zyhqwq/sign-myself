@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""米游社每日签到脚本 - GitHub Actions 专用版
+"""米游社游戏签到脚本 - GitHub Actions 专用版
 
 使用 MIYOUSHE_COOKIE（由本地 miyoushe_qr_login.py 扫码获取）完成
-米游社各游戏板块的社区签到，领取米游币。
+原神 / 崩坏:星穹铁道 / 绝区零 的每月签到福利（领原石、燃料等）。
+
+特性：
+- 自动用 Cookie 内的 stoken 刷新 cookie_token（stoken 长期有效，一次扫码长期免维护）
+- 自动检测账号绑定的游戏角色，只签有角色的游戏
+- 社区签到（米游币）接口已被米哈游封禁第三方调用，本脚本不做社区签到
 
 参考实现：
-- TimeRainStarSky/TRSS-Plugin (Apps/miHoYoLogin.js) 扫码登录与请求头
-- Womsxd/MihoyoBBSTools 签到接口、DS 签名与请求头组合
+- TimeRainStarSky/TRSS-Plugin 扫码登录流程
+- Womsxd/MihoyoBBSTools 游戏签到接口与请求头
 """
 
 import hashlib
@@ -22,82 +27,80 @@ import requests
 
 from notify import send_notification, print_notify_results
 
-# ================== 接口地址（bbs 社区） ==================
-# 可用 MIYOUSHE_BASE_URL 切换中继（如 Cloudflare Worker）以更换出口 IP
-BASE_URL = os.environ.get("MIYOUSHE_BASE_URL", "https://bbs-api.miyoushe.com").rstrip("/")
-SIGN_URL = f"{BASE_URL}/apihub/app/api/signIn"
-USER_INFO_URL = f"{BASE_URL}/user/api/getUserFullInfo"
+# ================== 接口地址 ==================
+PASSPORT_API = "https://passport-api.mihoyo.com"
+TAKUMI_API = "https://api-takumi.mihoyo.com"
+NAP_API = "https://act-nap-api.mihoyo.com"
+BINDING_URL = f"{TAKUMI_API}/binding/api/getUserGameRolesByCookie"
 
-# ================== DS 签名盐值（与版本配对，参考 MihoyoBBSTools/setting.py） ==================
-DS_SALT_K2 = "47f15f1b66bee46b816115d8e8e6ebb6"   # DS1：对应 2.109.0
-DS_SALT_6X = "t0qEgfub6cvueAPgR5m9aQWWVciEer7v"   # DS2：body+query 签名（一般不变）
-
-APP_VERSION = "2.109.0"
-APP_ID = "bll8iq97cem8"
-
-# 游戏板块 ID（gids）
-GAMES = {
-    "1": "崩坏3",
-    "2": "原神",
-    "3": "崩坏学园2",
-    "4": "未定事件簿",
-    "6": "崩坏:星穹铁道",
-    "8": "绝区零",
-    "9": "崩坏:因缘精灵",
-    "10": "星布谷地",
-}
-DEFAULT_GIDS = ["1", "2", "4", "6", "8"]
+# 支持的游戏（act_id 参考 MihoyoBBSTools 与 astrbot_plugin_miyoqian）
+GAMES = [
+    {"biz": "hk4e_cn", "name": "原神", "act_id": "e202311201442471",
+     "signgame": "hk4e", "base": TAKUMI_API, "sub": ""},
+    {"biz": "hkrpg_cn", "name": "崩坏:星穹铁道", "act_id": "e202304121516551",
+     "signgame": "", "base": TAKUMI_API, "sub": ""},
+    {"biz": "nap_cn", "name": "绝区零", "act_id": "e202406242138391",
+     "signgame": "zzz", "base": NAP_API, "sub": "/zzz"},
+]
 
 COOKIE_ENV = "MIYOUSHE_COOKIE"
+
+# 网页端 DS 盐值（2026 新版，参考 astrbot_plugin_miyoqian）
+DS_SALT_WEB = "G1ktdwFL4IyGkHuuWSmz0wUe9Db9scyK"
+
+# 登录失效相关返回码
+LOGIN_INVALID = (-100, -101, 10001, 1008, 10103, 10104)
+ALREADY_SIGNED = -5003
+CAPTCHA = 1034
 
 
 def random_string(n):
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
 
 
-def md5(s):
-    return hashlib.md5(s.encode()).hexdigest()
-
-
-def ds1():
-    """DS 签名（无 body/query 参与）"""
-    t = int(time.time())
+def gen_ds():
+    """DS1 签名（网页端盐值）"""
+    t = str(int(time.time()))
     r = random_string(6)
-    return f"{t},{r},{md5(f'salt={DS_SALT_K2}&t={t}&r={r}')}"
+    c = hashlib.md5(f"salt={DS_SALT_WEB}&t={t}&r={r}".encode()).hexdigest()
+    return f"{t},{r},{c}"
 
 
-def ds2(body="", query=""):
-    """DS 签名（body + query 参与），用于签到接口"""
-    t = int(time.time())
-    r = str(random.randint(100001, 200000))
-    return f"{t},{r},{md5(f'salt={DS_SALT_6X}&t={t}&r={r}&b={body}&q={query}')}"
-
-
-def bbs_headers(cookie_str):
-    """与米游社 App 客户端一致的请求头（okhttp UA），签到接口必需"""
+def passport_headers(device_id=None):
     return {
-        "User-Agent": "okhttp/4.9.3",
-        "Referer": "https://app.mihoyo.com",
-        "Accept-Encoding": "gzip",
-        "Content-Type": "application/json; charset=UTF-8",
-        "x-rpc-app_version": APP_VERSION,
-        "x-rpc-app_id": APP_ID,
-        "x-rpc-verify_key": APP_ID,
-        "x-rpc-client_type": "2",
-        "x-rpc-device_id": random_string(16),
-        "x-rpc-device_name": random_string(16),
-        "x-rpc-device_model": random_string(16),
-        "x-rpc-sys_version": "12",
+        "User-Agent": "HYPContainer/1.3.3.182",
+        "x-rpc-app_id": "ddxf5dufpuyo",
+        "x-rpc-client_type": "3",
+        "x-rpc-device_id": device_id or random_string(16),
+    }
+
+
+def web_headers(cookie_str):
+    """游戏签到请求头（对齐 astrbot_plugin_miyoqian 验证可用的组合）"""
+    return {
+        "Accept": "application/json, text/plain, */*",
+        "User-Agent": (
+            "Mozilla/5.0 (Linux; Android 12; Unspecified Device) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.129 Mobile "
+            "Safari/537.36 miHoYoBBS/2.109.0"
+        ),
+        "x-rpc-app_version": "2.109.0",
+        "x-rpc-client_type": "5",
+        "Origin": "https://act.mihoyo.com",
+        "Referer": "https://act.mihoyo.com/",
         "x-rpc-channel": "miyousheluodi",
-        "x-rpc-h265_supported": "1",
-        "x-rpc-csm_source": "discussion",
+        "X-Requested-With": "com.mihoyo.hyperion",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "zh-CN,en-US;q=0.8",
+        "Connection": "keep-alive",
+        "x-rpc-device_id": random_string(32),
         "Cookie": cookie_str,
     }
 
 
 def parse_cookie(cookie_str):
     cookies = {}
-    for item in cookie_str.split(";"):
+    for item in cookie_str.replace("\n", "").split(";"):
         item = item.strip()
         if "=" in item:
             k, v = item.split("=", 1)
@@ -105,85 +108,160 @@ def parse_cookie(cookie_str):
     return cookies
 
 
-def get_nickname(cookies, cookie_str):
-    uid = cookies.get("stuid") or cookies.get("ltuid")
-    if not uid:
-        return ""
+def refresh_cookie_token(cookies):
+    """用 stoken 刷新 cookie_token（stoken 长期有效，实现免维护续期）"""
+    stoken = cookies.get("stoken")
+    uid = cookies.get("stuid") or cookies.get("ltuid") or ""
+    mid = cookies.get("mid", "")
+    if not stoken:
+        raise Exception("Cookie 缺少 stoken 字段")
+
+    resp = requests.get(
+        f"{PASSPORT_API}/account/auth/api/getCookieAccountInfoBySToken",
+        params={"stoken": stoken, "uid": uid, "mid": mid},
+        headers={**passport_headers(), "Cookie": f"stoken={stoken};stuid={uid};mid={mid}"},
+        timeout=15,
+    )
+    data = resp.json()
+    if data.get("retcode") != 0:
+        raise Exception(f"stoken 已失效({data.get('message')})，请重新扫码获取")
+
+    token = data["data"].get("cookie_token")
+    if not token:
+        raise Exception("刷新 cookie_token 失败：返回为空")
+
+    # 回写，保证本次运行内后续请求一致
+    cookies["cookie_token"] = token
+    return f"account_id={uid};cookie_token={token}"
+
+
+def get_roles(cookie_str):
+    """获取账号绑定的全部游戏角色"""
+    roles = []
+    for biz in sorted({g["biz"] for g in GAMES}):
+        try:
+            resp = requests.get(
+                BINDING_URL,
+                params={"game_biz": biz},
+                headers=web_headers(cookie_str),
+                timeout=15,
+            )
+            data = resp.json()
+            if data.get("retcode") == 0:
+                for role in data.get("data", {}).get("list", []):
+                    roles.append(role)
+        except Exception:
+            pass
+    return roles
+
+
+def luna_request(method, path, game, cookie_str, **params):
+    url = f"{game['base']}/event/luna{game['sub']}/{path}"
+    headers = web_headers(cookie_str)
+    if game["signgame"]:
+        headers["x-rpc-signgame"] = game["signgame"]
+    headers["DS"] = gen_ds()
+    payload = {"lang": "zh-cn", "act_id": game["act_id"]}
+    payload.update(params)
+    if method == "get":
+        resp = requests.get(url, params=payload, headers=headers, timeout=15)
+    else:
+        resp = requests.post(url, json=payload, headers=headers, timeout=15)
+    return resp.json()
+
+
+def sign_game(game, role, cookie_str):
+    name = f"{game['name']}({role['nickname']} Lv{role['level']})"
+    uid, region = str(role["game_uid"]), role["region"]
+
     try:
-        resp = requests.get(
-            USER_INFO_URL,
-            params={"uid": uid},
-            headers={**bbs_headers(cookie_str), "DS": ds1(), "Content-Type": "application/json"},
-            timeout=15,
-        )
-        data = resp.json()
-        if data.get("retcode") == 0:
-            return data["data"]["user_info"].get("nickname", "")
-    except Exception:
-        pass
-    return ""
+        info = luna_request("get", "info", game, cookie_str, uid=uid, region=region)
+    except Exception as e:
+        return {"line": f"{name}: 请求异常 - {str(e)[:60]}", "ok": False}
 
+    retcode = info.get("retcode")
+    if retcode in LOGIN_INVALID:
+        return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
+    if retcode == CAPTCHA:
+        return {"line": f"{name}: 触发风控验证(1034)，今日未能签到", "ok": False}
+    if retcode != 0:
+        return {"line": f"{name}: 查询签到状态失败 - {info.get('message')} ({retcode})", "ok": False}
 
-def sign_forum(gid, name, cookie_str):
-    """对单个板块执行签到（直接签到，不依赖已废弃的状态查询接口）"""
-    body = json.dumps({"gids": gid}, separators=(",", ":"))
-    headers = bbs_headers(cookie_str)
-    headers["DS"] = ds2(body)
+    data = info.get("data", {})
+    if data.get("first_bind"):
+        return {"line": f"{name}: 首次绑定，请先在米游社 App 手动签到一次", "ok": False}
 
-    result = requests.post(SIGN_URL, data=body, headers=headers, timeout=15).json()
-    retcode = result.get("retcode")
-    msg = result.get("message", "")
+    total_days = int(data.get("total_sign_day") or 0)
+    is_sign = data.get("is_sign")
+    if isinstance(is_sign, str):
+        is_sign = is_sign.strip().lower() in ("true", "1")
+    if is_sign:
+        return {"line": f"{name}: 今天已签到（累计{total_days}天）", "ok": True}
 
-    if retcode == 0:
-        points = result.get("data", {}).get("points")
-        award = f"，获得 {points} 米游币" if isinstance(points, int) else ""
-        return {"line": f"{name}: 签到成功{award}", "ok": True}
+    result = luna_request("post", "sign", game, cookie_str, uid=uid, region=region)
+    rc2 = result.get("retcode")
 
-    if retcode == 1034 or "验证" in msg:
-        return {"line": f"{name}: 触发风控验证，签到失败（可稍后重试或换 IP）", "ok": False}
-    if retcode in (-100, -101):
+    if rc2 == 0:
+        sign_data = result.get("data") or {}
+        award = sign_data.get("award") or {}
+        award_str = f"，获得「{award.get('name')}」x{award.get('cnt')}" if award.get("name") else ""
+        return {"line": f"{name}: 签到成功{award_str}（累计{total_days + 1}天）", "ok": True}
+    if rc2 == ALREADY_SIGNED:
+        return {"line": f"{name}: 今天已签到（累计{total_days}天）", "ok": True}
+    if rc2 == CAPTCHA:
+        return {"line": f"{name}: 触发风控验证(1034)，今日未能签到（可明天再试）", "ok": False}
+    if rc2 in LOGIN_INVALID:
         return {"line": f"{name}: Cookie 已失效，请重新扫码获取", "ok": False}
 
-    already = ("已签" in msg) or ("repeat" in msg.lower()) or ("已经" in msg)
-    if already:
-        return {"line": f"{name}: 今天已签到", "ok": True}
-    return {"line": f"{name}: 签到失败 - {msg} (retcode={retcode})", "ok": False}
+    msg = result.get("message", "")
+    return {"line": f"{name}: 签到失败 - {msg} (retcode={rc2})", "ok": False}
 
 
 def process_account(idx, cookie_str):
     cookies = parse_cookie(cookie_str)
-    if not cookies.get("stoken"):
-        return [f"账号_{idx}: Cookie 缺少 stoken 字段，请重新扫码获取"], False
 
-    nickname = get_nickname(cookies, cookie_str)
-    label = nickname if nickname else f"账号_{idx}"
-    print(f"账号: {label}")
+    # 1. 续期 cookie_token
+    try:
+        cookie_str = refresh_cookie_token(cookies)
+    except Exception as e:
+        return [f"账号_{idx}: {e}"], False
 
-    gids_env = os.environ.get("MIYOUSHE_GIDS", "").strip()
-    gids = [g.strip() for g in gids_env.split(",") if g.strip() in GAMES] if gids_env else DEFAULT_GIDS
+    # 2. 获取角色
+    try:
+        roles = get_roles(cookie_str)
+    except Exception as e:
+        return [f"账号_{idx}: 获取角色失败 - {str(e)[:60]}"], False
+
+    if not roles:
+        return [f"账号_{idx}: 未绑定任何游戏角色，无需签到"], True
+
+    print(f"昵称绑定角色数: {len(roles)}")
 
     lines, all_ok = [], True
-    for i, gid in enumerate(gids):
+    for i, role in enumerate(roles):
+        game = next((g for g in GAMES if g["biz"] == role.get("game_biz")), None)
+        if not game:
+            continue
         try:
-            r = sign_forum(gid, GAMES[gid], cookie_str)
+            r = sign_game(game, role, cookie_str)
         except Exception as e:
-            r = {"line": f"{GAMES[gid]}: 请求异常 - {e}", "ok": False}
+            r = {"line": f"{game['name']}: 请求异常 - {str(e)[:60]}", "ok": False}
         lines.append(r["line"])
         print(r["line"])
         all_ok = all_ok and r["ok"]
-        if i < len(gids) - 1:
+        if i < len(roles) - 1:
             time.sleep(random.uniform(2, 5))
     return lines, all_ok
 
 
 def main():
-    print(f"[米游社签到] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[米游社游戏签到] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     raw = os.environ.get(COOKIE_ENV, "").strip()
     if not raw:
         msg = f"错误: 未设置 {COOKIE_ENV}（请在本地运行 miyoushe_qr_login.py 扫码获取）"
         print(msg)
-        print_notify_results(send_notification("米游社签到失败", msg))
+        print_notify_results(send_notification("米游社游戏签到失败", msg))
         sys.exit(1)
 
     account_list = [c.strip() for c in raw.split(",") if c.strip()]
@@ -197,7 +275,7 @@ def main():
         all_ok = all_ok and ok
 
     report = "\n".join(results)
-    title = "米游社签到成功" if all_ok else "米游社签到部分失败"
+    title = "米游社游戏签到成功" if all_ok else "米游社游戏签到部分失败"
     print(f"\n{report}")
     print_notify_results(send_notification(title, report))
 

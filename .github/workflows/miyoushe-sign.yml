@@ -24,10 +24,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests
 
-    - name: Run Miyoushe Daily Sign
+    - name: Run Miyoushe Game Sign
       env:
         MIYOUSHE_COOKIE: ${{ secrets.MIYOUSHE_COOKIE }}
-        MIYOUSHE_GIDS: ${{ secrets.MIYOUSHE_GIDS }}
         WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
         DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

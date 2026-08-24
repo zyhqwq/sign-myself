@@ -40,6 +40,12 @@ def ds1(salt):
     return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}')}"
 
 
+def ds2(body="", query="", salt=K2_NEW):
+    t = int(time.time())
+    r = random.randint(100001, 199999)
+    return f"{t},{r},{md5(f'salt={salt}&t={t}&r={r}&b={body}&q={query}')}"
+
+
 def mask(v):
     if not v:
         return "(空)"
@@ -132,6 +138,34 @@ def main():
         r = requests.get(STATUS_URL, params={"gids": gid},
                          headers=headers_for(ver, ua, variants[idx][1], salt), timeout=15)
         print(f"  querySignInStatus(gids={gid}): {json.dumps(r.json(), ensure_ascii=False)}")
+
+        # 状态接口失败时，追加测试其他认证方式与直接签到
+        status_rc = r.json().get("retcode")
+        cookie_token = c.get("cookie_token", "")
+
+        if status_rc != 0 and cookie_token:
+            print("\n== 状态接口 - 用 cookie_token 认证重试 ==")
+            ct_cookie = f"account_id={uid};cookie_token={cookie_token}"
+            h = headers_for(ver, ua, ct_cookie, salt)
+            r2 = requests.get(STATUS_URL, params={"gids": gid}, headers=h, timeout=15)
+            print(f"  querySignInStatus(ctoken): {json.dumps(r2.json(), ensure_ascii=False)}")
+
+        print("\n== 直接实测签到接口 signIn（DS2 签名）==")
+        body = json.dumps({"gids": gid}, separators=(",", ":"))
+        for vname2, cookie_str in variants[:3]:
+            h = headers_for("2.81.1",
+                            "Mozilla/5.0 (Linux; Android 13) miHoYoBBS/2.81.1",
+                            cookie_str, K2_NEW)
+            h["DS"] = ds2(body)
+            try:
+                r3 = requests.post(
+                    "https://bbs-api.miyoushe.com/apihub/app/api/signIn",
+                    data=body, headers=h, timeout=15)
+                d3 = r3.json()
+                print(f"  signIn[{vname2}]: retcode={d3.get('retcode')} {d3.get('message','')}"
+                      + (f" points={d3['data'].get('points')}" if isinstance(d3.get('data'), dict) else ""))
+            except Exception as e:
+                print(f"  signIn[{vname2}]: ERR {str(e)[:60]}")
     else:
         print("\n❌ 所有组合均认证失败 —— Cookie 本身无效或已过期")
         print("   排查建议：")

@@ -16,6 +16,7 @@ import json
 import random
 import re
 import string
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -80,31 +81,78 @@ def get_cookie_token(stoken, uid, mid):
     return resp.json()
 
 
+def is_wsl():
+    try:
+        with open("/proc/version", encoding="utf-8") as f:
+            return "microsoft" in f.read().lower()
+    except Exception:
+        return False
+
+
 def render_qr(url):
-    """终端打印二维码；可选保存 PNG。依赖 qrcode 库（pip install qrcode）"""
+    """多通道输出二维码：终端 ASCII + SVG/PNG 文件 + 登录链接文件"""
+    out_dir = Path(__file__).resolve().parent.parent
+
+    # 登录链接单独保存：手机上直接打开该链接等同于扫码确认
+    url_file = out_dir / "login_url.txt"
+    url_file.write_text(url, encoding="utf-8")
+
+    have_lib = True
     try:
         import qrcode
     except ImportError:
-        print("未安装 qrcode 库，无法在终端显示二维码")
-        print("请先执行: pip install qrcode")
-        return False
+        have_lib = False
 
-    qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=1,
-        border=1,
-    )
-    qr.add_data(url)
-    qr.make(fit=True)
-    qr.print_ascii(invert=True)
+    files = []
+    if have_lib:
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L,
+                           box_size=1, border=1)
+        qr.add_data(url)
+        qr.make(fit=True)
 
-    try:
-        img = qr.make_image(fill_color="black", back_color="white")
-        img.save("miyoushe_qr.png")
-        print("(已同时保存图片 miyoushe_qr.png，可用手机相册扫码)")
-    except Exception:
-        pass  # 未安装 pillow 时跳过 PNG 导出
+        # 终端 ASCII（WSL/cmd 下可能渲染异常，仅作为快捷方式之一）
+        qr.print_ascii(invert=True)
+
+        # SVG：无需 pillow，浏览器直接打开即可展示
+        try:
+            from qrcode.image.svg import SvgPathImage
+            img = qr.make_image(image_factory=SvgPathImage)
+            svg_path = out_dir / "login_qr.svg"
+            img.save(str(svg_path))
+            files.append(svg_path.name)
+        except Exception:
+            pass
+
+        # PNG：需 pillow，可用则一并生成
+        try:
+            img = qr.make_image(fill_color="black", back_color="white")
+            png_path = out_dir / "login_qr.png"
+            img.save(str(png_path))
+            files.append(png_path.name)
+        except Exception:
+            pass
+    else:
+        print("[提示] 未安装 qrcode 库（pip install qrcode），仅提供链接方式")
+
+    if is_wsl():
+        # WSL：调用 Windows 资源管理器打开项目目录，方便双击图片文件
+        try:
+            subprocess.run(["explorer.exe", str(out_dir)], timeout=5,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            opened = "已尝试在 Windows 中打开项目目录"
+        except Exception:
+            opened = None
+
+    print()
+    print("获取可扫二维码的方式（任选其一）：")
+    print(f"  1. 扫描上方终端二维码（若显示正常）")
+    if files:
+        print(f"  2. 在 Windows 里打开项目目录下的 {' 或 '.join(files)}，用手机扫屏幕")
+    print(f"  3. 把 {url_file.name} 里的链接发到手机（微信文件传输助手等），")
+    print(f"     用手机浏览器直接打开它 —— 效果等同于扫码确认")
+    if is_wsl() and opened:
+        print(f"  ({opened})")
+    print()
     return True
 
 

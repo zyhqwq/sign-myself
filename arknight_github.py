@@ -200,22 +200,22 @@ def main():
     print(f"当前时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
 
-    print("\n📋 Webhook配置状态：")
+    print("\n Webhook配置状态：")
     for status in get_webhook_status():
         print(f"  {status}")
 
     if not TOKEN:
-        error_msg = "❌ 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN"
+        error_msg = " 错误：请在 GitHub Secrets 中设置 SKLAND_TOKEN"
         print(f"\n{error_msg}")
         print_notify_results(send_notification("签到失败", error_msg))
         exit(1)
 
     try:
         init_did()
-        print(f"\n✅ 成功生成设备ID")
+        print(f"\n 成功生成设备ID")
     except Exception as e:
         import traceback
-        error_msg = f"❌ dId 初始化失败：{str(e)}"
+        error_msg = f" dId 初始化失败：{str(e)}"
         print(f"\n{error_msg}")
         print(f"\n详细错误信息：\n{traceback.format_exc()}")
         print_notify_results(send_notification("签到失败", error_msg))
@@ -224,12 +224,12 @@ def main():
     all_tokens = TokenManager.get_all_tokens()
 
     if not all_tokens:
-        error_msg = "❌ 未找到有效token"
+        error_msg = " 未找到有效token"
         print(f"\n{error_msg}")
         print_notify_results(send_notification("签到失败", error_msg))
         exit(1)
 
-    print(f"✅ 找到 {len(all_tokens)} 个账号，开始签到...")
+    print(f" 找到 {len(all_tokens)} 个账号，开始签到...")
 
     all_results = []
     success_count = 0
@@ -256,31 +256,26 @@ def main():
 
     if success_count > 0:
         subject = f"签到成功 ({success_count}个成功)"
-        emoji = "✅"
     elif repeated_count > 0:
         subject = f"重复签到 ({repeated_count}个重复)"
-        emoji = "🔄"
     elif failed_count > 0:
         subject = f"签到失败 ({failed_count}个失败)"
-        emoji = "❌"
     else:
         subject = "签到完成"
-        emoji = "📝"
 
-    report = f"""📊 签到统计：
-{emoji} {subject}
+    report = f"""签到统计：
+{subject}
 • 账号总数: {len(all_results)}
 • 签到成功: {success_count}
 • 重复签到: {repeated_count}
 • 签到失败: {failed_count}
 • 角色总数: {total_characters}
 
-📋 详细结果："""
+详细结果："""
 
     max_results_to_show = 2
     for result in all_results:
-        status_icon = "✅" if result['status'] == 'success' else "🔄" if result['status'] == 'repeated' else "❌"
-        report += f"\n\n{status_icon} 账号: {result['account']}"
+        report += f"\n\n账号: {result['account']}"
 
         results_to_show = result['results'][:max_results_to_show]
         for res in results_to_show:
@@ -291,20 +286,20 @@ def main():
 
     if failed_count > 0:
         failed_accounts = [r for r in all_results if r['status'] == 'failed']
-        report += f"\n\n❌ 失败账号摘要："
+        report += f"\n\n 失败账号摘要："
         for fail in failed_accounts[:3]:
             report += f"\n  {fail['account']}: {fail['results'][0] if fail['results'] else '未知错误'}"
 
     print(report)
 
-    print("\n📨 开始发送通知...")
+    print("\n 开始发送通知...")
     print_notify_results(send_notification(subject, report))
 
     if failed_count == len(all_results):
-        print("\n❌ 所有账号签到失败")
+        print("\n 所有账号签到失败")
         exit(1)
     else:
-        print("\n✅ 签到任务完成")
+        print("\n 签到任务完成")
 
 
 if __name__ == "__main__":

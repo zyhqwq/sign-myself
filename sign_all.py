@@ -114,12 +114,12 @@ def main():
         title = "每日签到汇总 - 全部成功" if overall_ok else "每日签到汇总 - 部分失败"
         body = "\n\n".join(sections)
         if failed:
-            body += f"\n\n❌ 失败的任务: {', '.join(failed)}"
-        print("\n📬 发送聚合通知...")
+            body += f"\n\n 失败的任务: {', '.join(failed)}"
+        print("\n 发送聚合通知...")
         results = notify.send_notification(title, body)
         notify.print_notify_results(results)
     else:
-        print("\n⚠️ 未捕获到任何子任务报告，无法发送聚合通知")
+        print("\n 未捕获到任何子任务报告，无法发送聚合通知")
 
     print(f"\n{'=' * 20} 汇总 {'=' * 20}")
     if failed:

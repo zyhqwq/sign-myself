@@ -274,16 +274,16 @@ def send_notification(title: str, message: str, extra_data=None, verbose=False):
 def print_notify_results(results):
     """打印通知结果摘要"""
     if not results:
-        print("\n⚠️ 未配置任何通知渠道")
+        print("\n 未配置任何通知渠道")
         return
 
-    print("\n📬 通知发送结果：")
+    print("\n 通知发送结果：")
     has_failure = False
     for name, status in results:
         if status == "OK":
-            print(f"  ✅ {name}: 成功")
+            print(f"   {name}: 成功")
         else:
-            print(f"  ❌ {name}: {status}")
+            print(f"   {name}: {status}")
             has_failure = True
 
     if has_failure:
@@ -305,5 +305,5 @@ def get_webhook_status():
         (SERVER_CHAN_KEY, "Server酱"),
     ]
     for configured, name in checks:
-        status.append(f"✅ {name} 已配置" if configured else f"❌ {name} 未配置")
+        status.append(f" {name} 已配置" if configured else f" {name} 未配置")
     return status

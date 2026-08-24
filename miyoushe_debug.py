@@ -124,7 +124,7 @@ def main():
                 rc, msg = "ERR", str(e)[:40]
             mark = ""
             if rc == 0:
-                mark = "  ✅✅✅"
+                mark = "  "
                 working.append((vname, cname))
             print(f"  [{cname}] {vname}: retcode={rc} {msg}{mark}")
 
@@ -167,7 +167,7 @@ def main():
             except Exception as e:
                 print(f"  signIn[{vname2}]: ERR {str(e)[:60]}")
     else:
-        print("\n❌ 所有组合均认证失败 —— Cookie 本身无效或已过期")
+        print("\n 所有组合均认证失败 —— Cookie 本身无效或已过期")
         print("   排查建议：")
         print("   1. 确认 Secret 值是整行 Cookie，无换行、无多余文字")
         print("   2. 重新扫码生成一次，立即测试（stoken 不应秒失效）")
@@ -185,7 +185,7 @@ def main():
     d = r.json()
     ok = d.get("retcode") == 0
     print(f"  getCookieAccountInfoBySToken: retcode={d.get('retcode')} {d.get('message','')}"
-          + ("  ✅ stoken 有效！" if ok else ""))
+          + ("   stoken 有效！" if ok else ""))
     if ok:
         print("  → 结论：stoken 有效，问题在 bbs-api 的请求头/签名组合")
 

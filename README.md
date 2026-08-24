@@ -205,7 +205,7 @@ bash run.sh
 crontab -e
 ```
 
-添加一行（把路径换成你自己的）：
+添加一行（换成你自己的真实路径，[可修改时间](#modify-time)）：
 
 ```text
 25 3 * * * cd /root/sign-myself && bash run.sh >> sign.log 2>&1

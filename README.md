@@ -81,7 +81,7 @@
 2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
 3.  **添加 Secret**：复制整段内容，添加到 Secret `MIYOUSHE_COOKIE`。
 
-> 页面默认使用仓库作者提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
+> 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
 #### 方式二：本地脚本
 

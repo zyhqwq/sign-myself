@@ -22,12 +22,12 @@
 - [主要功能](#main-features)
 - [使用方法](#usage)
   - [1. Fork 本仓库](#step-1-fork)
-  - [2. 配置森空岛 Token](#step-2-skland)
-  - [3. 配置米游社 Cookie](#step-3-mihoyo)
-  - [4. 配置 Bilibili Cookie（可选）](#step-4-bilibili)
-  - [5. 选择要签到的游戏](#step-5-games)
-  - [6.1 方式一：Linux 本地 / 服务器运行](#step-6-linux)
-  - [6.2 方式二：GitHub Actions](#step-6-actions)
+  - [2. Linux 本地 / 服务器运行（推荐）](#step-2-linux)
+  - [3. 配置森空岛 Token](#step-3-skland)
+  - [4. 配置米游社 Cookie](#step-4-mihoyo)
+  - [5. 配置 Bilibili Cookie（可选）](#step-5-bilibili)
+  - [6. 选择要签到的游戏（可选）](#step-6-games)
+  - [7. 方式二：GitHub Actions（不推荐）](#step-7-actions)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
   - [钉钉机器人创建步骤](#dingtalk-steps)
@@ -62,8 +62,62 @@
 ### 1. Fork 本仓库
 点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
 
-<a id="step-2-skland"></a>
-### 2. 配置森空岛 Token（明日方舟 + 终末地）
+<a id="step-2-linux"></a>
+### 2. Linux 本地 / 服务器运行（推荐）
+
+只需一条命令，跟着向导走完即可，不需要懂编程。
+
+**第 1 步：下载项目**
+
+```bash
+git clone https://github.com/zyhqwq/sign-myself.git
+cd sign-myself
+```
+
+**第 2 步：运行配置向导**
+
+```bash
+python3 setup_sign.py
+```
+
+向导会自动完成所有事：
+
+- 检查 Python 版本与依赖（缺什么自动安装，无需 root）
+- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证教程见下文第 3、4 节）
+- 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
+- **当场实测**凭证和通知是否能用，失败可以马上重填
+- 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
+
+完成后：
+
+| 项目 | 说明 |
+| :--- | :--- |
+| 参数文件 | `api.txt`（权限 600，含凭证，**请勿外传**；重跑向导会覆盖，旧文件备份为 `api.txt.bak`） |
+| 日志 | `sign.log`（持续追加，可随时删除，不影响运行） |
+| 手动测试 | `bash run.sh` |
+| 修改配置 | 重新运行 `python3 setup_sign.py` 即可 |
+
+<details>
+<summary><b>不用向导？手动编辑配置</b></summary>
+
+```bash
+bash run.sh          # 首次运行会生成带中文注释的 api.txt 模板并提示
+nano api.txt         # 按 nano 提示编辑：Ctrl+O 回车保存，Ctrl+X 退出（vim 用户自行 i/:wq）
+bash run.sh          # 再次运行生效
+```
+
+定时任务也可手动添加到 `crontab -e`：
+
+```text
+25 3 * * * cd /home/你的用户名/sign-myself && bash run.sh >> sign.log 2>&1
+```
+
+</details>
+
+> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+
+<a id="step-3-skland"></a>
+### 3. 配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
@@ -81,8 +135,8 @@
     | :--- | :--- | :--- |
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
-<a id="step-3-mihoyo"></a>
-### 3. 配置米游社 Cookie
+<a id="step-4-mihoyo"></a>
+### 4. 配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
@@ -115,8 +169,8 @@ python mihoyo/miyoushe_qr_login.py
 
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
-<a id="step-4-bilibili"></a>
-### 4. 配置 Bilibili Cookie（可选）
+<a id="step-5-bilibili"></a>
+### 5. 配置 Bilibili Cookie（可选）
 
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
@@ -140,8 +194,8 @@ python mihoyo/miyoushe_qr_login.py
 
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
-<a id="step-5-games"></a>
-### 5. 选择要签到的游戏（可选）
+<a id="step-6-games"></a>
+### 6. 选择要签到的游戏（可选）
 
 通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
 
@@ -155,64 +209,9 @@ python mihoyo/miyoushe_qr_login.py
 
 例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
 
-<a id="step-6-linux"></a>
-### 6. 运行方式
-
-#### 6.1 方式一：Linux / 服务器运行（推荐）
-
-只需一条命令，跟着向导走完即可，不需要懂编程。
-
-**第 1 步：下载项目**
-
-```bash
-git clone https://github.com/zyhqwq/sign-myself.git
-cd sign-myself
-```
-
-**第 2 步：运行配置向导**
-
-```bash
-python3 setup_sign.py
-```
-
-向导会自动完成所有事：
-
-- 检查 Python 版本与依赖（缺什么自动安装，无需 root）
-- 询问是否有森空岛 Token / 米游社 Cookie，有就填入（获取方法见上文第 2、3 节）
-- 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
-- **当场实测**凭证和通知是否能用，失败可以马上重填
-- 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
-
-完成后：
-
-| 项目 | 说明 |
-| :--- | :--- |
-| 参数文件 | `api.txt`（权限 600，含凭证，**请勿外传**；重跑向导会覆盖，旧文件备份为 `api.txt.bak`） |
-| 日志 | `sign.log`（持续追加，可随时删除，不影响运行） |
-| 手动测试 | `bash run.sh` |
-| 修改配置 | 重新运行 `python3 setup_sign.py` 即可 |
-
+<a id="step-7-actions"></a>
 <details>
-<summary><b>不用向导？手动编辑配置</b></summary>
-
-```bash
-bash run.sh          # 首次运行会生成带中文注释的 api.txt 模板并提示
-nano api.txt         # 按 nano 提示编辑：Ctrl+O 回车保存，Ctrl+X 退出（vim 用户自行 i/:wq）
-bash run.sh          # 再次运行生效
-```
-
-定时任务也可手动添加到 `crontab -e`：
-
-```text
-25 3 * * * cd /home/你的用户名/sign-myself && bash run.sh >> sign.log 2>&1
-```
-
-</details>
-
-> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
-<a id="step-6-actions"></a>
-<details>
-<summary><b>6.2 方式二：GitHub Actions（仅供参考，不推荐）</b></summary>
+<summary><b>方式二：GitHub Actions（仅供参考，不推荐）</b></summary>
 
 > ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 

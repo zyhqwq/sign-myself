@@ -30,7 +30,7 @@
       - [步骤 5：启用并运行](#actions-run)
   - [2. 凭证获取](#cred)
     - [2.1 森空岛凭证获取](#cred-skland)
-    - [2.2 米游社凭证获取](#cred-mihoyo)
+    - [2.2 米游社Cookie获取](#cred-mihoyo)
     - [2.3 Bilibili Cookie 获取](#cred-bilibili)
   - [3. 选择要签到的游戏（可选）](#step-3-games)
 - [配置通知（可选）](#notify-config)
@@ -155,7 +155,7 @@ bash run.sh          # 再次运行生效
 
 > 注：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
-Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社凭证获取](#cred-mihoyo)。
+Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社Cookie获取](#cred-mihoyo)。
 
 1.  **添加 Secret**:
     *   扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
@@ -213,7 +213,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 4.  找到 `{"content":"****"}`，复制 `****` 中的内容，即为 Token。
 
 <a id="cred-mihoyo"></a>
-#### 2.2 米游社凭证获取
+#### 2.2 米游社Cookie获取
 
 **网页扫码（推荐）**
 

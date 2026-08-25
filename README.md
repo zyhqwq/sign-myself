@@ -23,8 +23,8 @@
 - [使用方法](#usage)
   - [1. Fork 本仓库](#step-1-fork)
   - [2. 配置森空岛 Token](#step-2-skland)
-  - [3. 配置 Bilibili Cookie](#step-3-bilibili)
-  - [4. 配置米游社 Cookie](#step-4-mihoyo)
+  - [3. 配置米游社 Cookie](#step-3-mihoyo)
+  - [4. 配置 Bilibili Cookie（可选）](#step-4-bilibili)
   - [5. 选择要签到的游戏](#step-5-games)
   - [6.1 方式一：Linux 本地 / 服务器运行](#step-6-linux)
   - [6.2 方式二：GitHub Actions](#step-6-actions)
@@ -81,37 +81,14 @@
     | :--- | :--- | :--- |
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
-<a id="step-3-bilibili"></a>
-### 3. 配置 Bilibili Cookie
-
-1.  **获取 Cookie**:
-    *   在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
-    *   按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
-    *   找到以下三个值并复制：
-        *   `SESSDATA`（必需）
-        *   `DedeUserID`（必需）
-        *   `bili_jct`（可选）
-
-2.  **添加 Secret**:
-    *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
-    *   分别添加以下三个 Secret：
-
-    | Name | Secret | 说明 |
-    | :--- | :--- | :--- |
-    | `BILI_SESSDATA` | `SESSDATA` | B 站登录凭证（必需） |
-    | `BILI_DEDEUSERID` | `DedeUserID` | B 站用户 ID（必需） |
-    | `BILI_JCT` | `bili_jct` | CSRF Token（可选） |
-
-    支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
-
-<a id="step-4-mihoyo"></a>
-### 4. 配置米游社 Cookie
+<a id="step-3-mihoyo"></a>
+### 3. 配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
 > 注：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
-与上面手动抓 Cookie 不同，Cookie 通过扫码工具获取（Actions 里不执行登录），推荐网页版：
+Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），推荐网页版：
 
 #### 方式一：网页扫码（推荐）
 
@@ -137,6 +114,31 @@ python mihoyo/miyoushe_qr_login.py
 | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
+
+<a id="step-4-bilibili"></a>
+### 4. 配置 Bilibili Cookie（可选）
+
+> 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
+
+1.  **获取 Cookie**:
+    *   在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
+    *   按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
+    *   找到以下三个值并复制：
+        *   `SESSDATA`（必需）
+        *   `DedeUserID`（必需）
+        *   `bili_jct`（可选）
+
+2.  **添加 Secret**:
+    *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
+    *   分别添加以下三个 Secret：
+
+    | Name | Secret | 说明 |
+    | :--- | :--- | :--- |
+    | `BILI_SESSDATA` | `SESSDATA` | B 站登录凭证（必需） |
+    | `BILI_DEDEUSERID` | `DedeUserID` | B 站用户 ID（必需） |
+    | `BILI_JCT` | `bili_jct` | CSRF Token（可选） |
+
+    支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
 <a id="step-5-games"></a>
 ### 5. 选择要签到的游戏（可选）
@@ -176,7 +178,7 @@ python3 setup_sign.py
 向导会自动完成所有事：
 
 - 检查 Python 版本与依赖（缺什么自动安装，无需 root）
-- 询问是否有森空岛 Token / 米游社 Cookie，有就填入（获取方法见上文第 2、4 节）
+- 询问是否有森空岛 Token / 米游社 Cookie，有就填入（获取方法见上文第 2、3 节）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
 - **当场实测**凭证和通知是否能用，失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务

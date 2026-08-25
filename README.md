@@ -29,6 +29,10 @@
       - [步骤 2：配置米游社 Cookie](#actions-mihoyo)
       - [步骤 3：配置 Bilibili Cookie（可选）](#actions-bilibili)
       - [步骤 4：启用并运行](#actions-run)
+    - [2.3 凭证获取](#cred)
+      - [2.3.1 森空岛凭证获取](#cred-skland)
+      - [2.3.2 米游社凭证获取](#cred-mihoyo)
+      - [2.3.3 Bilibili Cookie 获取](#cred-bilibili)
   - [3. 选择要签到的游戏（可选）](#step-3-games)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
@@ -88,7 +92,7 @@ python3 setup_sign.py
 向导会自动完成所有事：
 
 - 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；极简系统若连 pip 都没有，补装时需要管理员权限）
-- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证获取见下文 2.2 节）
+- 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2.3 凭证获取](#cred)）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
 - **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
@@ -134,12 +138,7 @@ bash run.sh          # 再次运行生效
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
-1.  **获取 Token**:
-    *   在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
-    *   登录后进入 https://web-api.skland.com/account/info/hg
-    *   格式如下：`{"code":0,"data":{"content":"****"},"msg":"..."}`
-    *   找到 `{"content":"****"}`，复制 `****` 中的内容，并保存。
-
+1.  **获取 Token**：步骤见 [2.3.1 森空岛凭证获取](#cred-skland)。
 2.  **添加 Secret**:
     *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
     *   点击 `New repository secret`，添加以下 Secret：
@@ -155,46 +154,22 @@ bash run.sh          # 再次运行生效
 
 > 注：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
-Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），推荐网页版：
+Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.3.2 米游社凭证获取](#cred-mihoyo)。
 
-##### 网页扫码（推荐）
+1.  **添加 Secret**:
+    *   扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
+    *   添加以下 Secret：
 
-[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/)
-
-1.  **扫码**：点击上方按钮打开网页，用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
-2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
-3.  **添加 Secret**：复制整段内容，添加到 Secret `MIYOUSHE_COOKIE`。
-
-> 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
-
-##### 本地脚本
-
-```bash
-pip install -r requirements.txt
-python mihoyo/miyoushe_qr_login.py
-```
-
-终端会打印二维码，米游社 App 扫码确认后输出 Cookie，同样填入 Secret 即可。
-
-| Name | Secret | 说明 |
-| :--- | :--- | :--- |
-| `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
-
-> Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
+    | Name | Secret | 说明 |
+    | :--- | :--- | :--- |
+    | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
 <a id="actions-bilibili"></a>
 ##### 步骤 3：配置 Bilibili Cookie（可选）
 
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
-1.  **获取 Cookie**:
-    *   在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
-    *   按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
-    *   找到以下三个值并复制：
-        *   `SESSDATA`（必需）
-        *   `DedeUserID`（必需）
-        *   `bili_jct`（可选）
-
+1.  **获取 Cookie**：步骤见 [2.3.3 Bilibili Cookie 获取](#cred-bilibili)。
 2.  **添加 Secret**:
     *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
     *   分别添加以下三个 Secret：
@@ -223,12 +198,61 @@ python mihoyo/miyoushe_qr_login.py
 
 </details>
 
+<a id="cred"></a>
+#### 2.3 凭证获取
+
+各平台凭证的获取方法汇总（与运行方式无关，本地运行用户同样按此获取后填入 `api.txt`）。
+
+<a id="cred-skland"></a>
+##### 2.3.1 森空岛凭证获取
+
+1.  在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
+2.  登录后进入 https://web-api.skland.com/account/info/hg
+3.  返回内容格式如下：`{"code":0,"data":{"content":"****"},"msg":"..."}`
+4.  找到 `{"content":"****"}`，复制 `****` 中的内容，即为 Token。
+
+<a id="cred-mihoyo"></a>
+##### 2.3.2 米游社凭证获取
+
+**网页扫码（推荐）**
+
+[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/)
+
+1.  **扫码**：点击上方按钮打开网页，用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
+2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
+
+> 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
+
+**本地脚本**
+
+```bash
+pip install -r requirements.txt
+python mihoyo/miyoushe_qr_login.py
+```
+
+终端会打印二维码，米游社 App 扫码确认后输出 Cookie。
+
+> Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
+
+<a id="cred-bilibili"></a>
+##### 2.3.3 Bilibili Cookie 获取
+
+1.  在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
+2.  按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
+3.  找到以下三个值并复制：
+    *   `SESSDATA`（必需）
+    *   `DedeUserID`（必需）
+    *   `bili_jct`（可选）
+
 <a id="step-3-games"></a>
 ### 3. 选择要签到的游戏（可选）
 
-通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
+通过 `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
 
-| 序号 | 游戏 | 所属平台 | 依赖的 Secret |
+- **GitHub Actions 用户**：添加 Secret `SIGN_GAMES`
+- **本地运行用户**：编辑 `api.txt` 中的 `SIGN_GAMES=` 行，去掉行首 `#` 并填入序号
+
+| 序号 | 游戏 | 所属平台 | 对应变量 |
 | :---: | :--- | :--- | :--- |
 | `1` | 明日方舟 | 森空岛 | `SKLAND_TOKEN` |
 | `2` | 终末地 | 森空岛 | `SKLAND_TOKEN` |
@@ -236,7 +260,9 @@ python mihoyo/miyoushe_qr_login.py
 | `4` | 崩坏:星穹铁道 | 米游社 | `MIYOUSHE_COOKIE` |
 | `5` | 绝区零 | 米游社 | `MIYOUSHE_COOKIE` |
 
-例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
+例如只想签明日方舟和原神：
+- GitHub Actions：添加 Secret `SIGN_GAMES`，值为 `1,3`
+- 本地运行：把 `api.txt` 中该行改为 `SIGN_GAMES=1,3`
 
 <a id="notify-config"></a>
 ## 配置通知（可选）

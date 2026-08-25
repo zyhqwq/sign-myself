@@ -182,10 +182,10 @@ def obtain_cookie_by_qr(cfg):
 
 def collect_credentials(cfg):
     print("\n---- 步骤 2/4 游戏凭证 ----")
-    if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 2.2 节·步骤 1）"):
+    if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 2.3.1 节）"):
         cfg["SKLAND_TOKEN"] = ask_nonempty("请输入 SKLAND_TOKEN（多账号用英文逗号分隔）")
     else:
-        print("  跳过：将不签到明日方舟 / 终末地（README 第 2.2 节·步骤 1 有获取教程）")
+        print("  跳过：将不签到明日方舟 / 终末地（README 第 2.3.1 节有获取教程）")
 
     print("\n---- 米游社 Cookie（原神、星铁、绝区零需要）----")
     if ask_yn("是否已有米游社 Cookie？"):
@@ -195,7 +195,7 @@ def collect_credentials(cfg):
     else:
         while True:
             if not ask_yn("是否现在运行扫码工具自动获取？", default_yes=True):
-                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 2.2 节·步骤 2 有扫码教程）")
+                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 2.3.2 节有扫码教程）")
                 break
             if obtain_cookie_by_qr(cfg):
                 break

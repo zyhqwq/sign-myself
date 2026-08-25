@@ -371,7 +371,7 @@ python mihoyo/miyoushe_qr_login.py
 <details>
 <summary><b>可以修改签到时间吗？</b></summary>
 
-可以。本地运行直接修改 crontab 里的执行时间即可；GitHub Actions 则编辑 `.github/workflows/` 下对应工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8，所以 UTC = 北京时间 - 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。推荐使用 [crontab.guru](https://crontab.guru/) 在线生成和验证 cron 表达式。
+可以。本地运行直接修改 crontab 里的执行时间即可；GitHub Actions 则编辑 `.github/workflows/` 下对应工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8，所以 UTC = 北京时间 - 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。推荐使用功能更成熟的 [crontab.guru](https://crontab.guru/) 在线生成和验证 cron 表达式（[https://cron.zyhh.qzz.io/](https://cron.zyhh.qzz.io/) 为自制的cron生成网页也许可能大概也能用）。
 
 GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 

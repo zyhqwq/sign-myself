@@ -181,7 +181,7 @@ def collect_credentials(cfg):
     else:
         while True:
             if not ask_yn("是否现在运行扫码工具自动获取？", default_yes=True):
-                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 4 节有扫码教程）")
+                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 3 节·步骤 2 有扫码教程）")
                 break
             if obtain_cookie_by_qr(cfg):
                 break

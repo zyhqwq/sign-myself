@@ -23,11 +23,12 @@
 - [使用方法](#usage)
   - [1. Fork 本仓库](#step-1-fork)
   - [2. Linux 本地 / 服务器运行（推荐）](#step-2-linux)
-  - [3. 配置森空岛 Token](#step-3-skland)
-  - [4. 配置米游社 Cookie](#step-4-mihoyo)
-  - [5. 配置 Bilibili Cookie（可选）](#step-5-bilibili)
-  - [6. 选择要签到的游戏（可选）](#step-6-games)
-  - [7. 方式二：GitHub Actions（不推荐）](#step-7-actions)
+  - [3. 方式二：GitHub Actions（不推荐）](#step-3-actions)
+    - [步骤 1：配置森空岛 Token](#actions-skland)
+    - [步骤 2：配置米游社 Cookie](#actions-mihoyo)
+    - [步骤 3：配置 Bilibili Cookie（可选）](#actions-bilibili)
+    - [步骤 4：启用并运行](#actions-run)
+  - [4. 选择要签到的游戏（可选）](#step-4-games)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
   - [钉钉机器人创建步骤](#dingtalk-steps)
@@ -83,7 +84,7 @@ python3 setup_sign.py
 向导会自动完成所有事：
 
 - 检查 Python 版本与依赖（缺什么自动安装，无需 root）
-- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证教程见下文第 3、4 节）
+- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证获取见下文第 3 节）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
 - **当场实测**凭证和通知是否能用，失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
@@ -116,8 +117,16 @@ bash run.sh          # 再次运行生效
 
 > 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
-<a id="step-3-skland"></a>
-### 3. 配置森空岛 Token（明日方舟 + 终末地）
+<a id="step-3-actions"></a>
+### 3. 方式二：GitHub Actions（仅供参考，不推荐）
+
+<details>
+<summary><b>点击展开：配置 Secrets 并使用 Actions 每日自动签到</b></summary>
+
+> ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
+
+<a id="actions-skland"></a>
+#### 步骤 1：配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
@@ -135,8 +144,8 @@ bash run.sh          # 再次运行生效
     | :--- | :--- | :--- |
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
-<a id="step-4-mihoyo"></a>
-### 4. 配置米游社 Cookie
+<a id="actions-mihoyo"></a>
+#### 步骤 2：配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
@@ -144,7 +153,7 @@ bash run.sh          # 再次运行生效
 
 Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），推荐网页版：
 
-#### 方式一：网页扫码（推荐）
+##### 网页扫码（推荐）
 
 [![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/)
 
@@ -154,7 +163,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 
 > 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
-#### 方式二：本地脚本
+##### 本地脚本
 
 ```bash
 pip install -r requirements.txt
@@ -169,8 +178,8 @@ python mihoyo/miyoushe_qr_login.py
 
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
-<a id="step-5-bilibili"></a>
-### 5. 配置 Bilibili Cookie（可选）
+<a id="actions-bilibili"></a>
+#### 步骤 3：配置 Bilibili Cookie（可选）
 
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
@@ -194,26 +203,8 @@ python mihoyo/miyoushe_qr_login.py
 
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
-<a id="step-6-games"></a>
-### 6. 选择要签到的游戏（可选）
-
-通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
-
-| 序号 | 游戏 | 所属平台 | 依赖的 Secret |
-| :---: | :--- | :--- | :--- |
-| `1` | 明日方舟 | 森空岛 | `SKLAND_TOKEN` |
-| `2` | 终末地 | 森空岛 | `SKLAND_TOKEN` |
-| `3` | 原神 | 米游社 | `MIYOUSHE_COOKIE` |
-| `4` | 崩坏:星穹铁道 | 米游社 | `MIYOUSHE_COOKIE` |
-| `5` | 绝区零 | 米游社 | `MIYOUSHE_COOKIE` |
-
-例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
-
-<a id="step-7-actions"></a>
-<details>
-<summary><b>方式二：GitHub Actions（仅供参考，不推荐）</b></summary>
-
-> ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
+<a id="actions-run"></a>
+#### 步骤 4：启用并运行
 
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
@@ -228,6 +219,20 @@ python mihoyo/miyoushe_qr_login.py
 
 </details>
 
+<a id="step-4-games"></a>
+### 4. 选择要签到的游戏（可选）
+
+通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
+
+| 序号 | 游戏 | 所属平台 | 依赖的 Secret |
+| :---: | :--- | :--- | :--- |
+| `1` | 明日方舟 | 森空岛 | `SKLAND_TOKEN` |
+| `2` | 终末地 | 森空岛 | `SKLAND_TOKEN` |
+| `3` | 原神 | 米游社 | `MIYOUSHE_COOKIE` |
+| `4` | 崩坏:星穹铁道 | 米游社 | `MIYOUSHE_COOKIE` |
+| `5` | 绝区零 | 米游社 | `MIYOUSHE_COOKIE` |
+
+例如只想签明日方舟和原神：添加 Secret `SIGN_GAMES`，值为 `1,3`。
 
 <a id="notify-config"></a>
 ## 配置通知（可选）

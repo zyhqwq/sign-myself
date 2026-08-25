@@ -23,7 +23,7 @@ cat > api.txt <<'EOF'
 #SKLAND_TOKEN=
 
 # 米游社 Cookie（序号3原神、4星铁、5绝区零需要），由扫码工具获取，多账号用英文逗号 , 分隔
-# 获取方法见 README 第 4 节（运行 mihoyo/miyoushe_qr_login.py 扫码）
+# 获取方法见 README 第 3 节·步骤 2（运行 mihoyo/miyoushe_qr_login.py 扫码）
 #MIYOUSHE_COOKIE=
 
 # ---- 签到选择 ----

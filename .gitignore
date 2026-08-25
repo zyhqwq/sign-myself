@@ -2,3 +2,7 @@ __pycache__/
 api.txt
 api.txt.bak
 .did
+login_url.txt
+login_qr.svg
+login_qr.png
+login_qr.html

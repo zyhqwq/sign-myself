@@ -21,7 +21,7 @@ import requests
 from miyoushe_sign import (
     GAMES, BINDING_URL,
     web_headers, gen_ds, parse_cookie,
-    refresh_cookie_token, set_device,
+    build_web_cookie, set_device,
 )
 
 
@@ -62,21 +62,17 @@ def main():
     for k, v in c.items():
         print(f"  {k} = {mask(v)}")
 
-    # 1. 准备可用的网页 Cookie（account_id + cookie_token）
+    # 1. 准备可用的网页 Cookie
     print("\n== 1. 登录态验证 ==")
-    if c.get("account_id") and c.get("cookie_token"):
+    try:
         set_device(c.get("device_id"))
-        web_cookie = f"account_id={c['account_id']};cookie_token={c['cookie_token']}"
-        print("  网页授权格式，跳过 stoken 检查")
-    elif c.get("stoken"):
-        try:
-            web_cookie = refresh_cookie_token(c)
-            print(f"  ✅ stoken 有效，已换取新 cookie_token: {mask(c.get('cookie_token'))}")
-        except Exception as e:
-            print(f"  ❌ {str(e)[:60]}")
-            sys.exit(1)
-    else:
-        print("  ❌ Cookie 缺少 account_id/cookie_token/stoken，无法使用")
+        web_cookie = build_web_cookie(c)
+        fmt = ("v1(cookie_token)" if c.get("cookie_token")
+               else "v2(cookie_token_v2)" if c.get("cookie_token_v2")
+               else "stoken 换取")
+        print(f"  ✅ 凭证格式: {fmt}")
+    except Exception as e:
+        print(f"  ❌ {str(e)[:60]}")
         sys.exit(1)
 
     # 2. 角色绑定

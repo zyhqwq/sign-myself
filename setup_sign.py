@@ -348,10 +348,10 @@ def run_tests(cfg):
     if cfg.get("MIYOUSHE_COOKIE"):
         print("\n[测试] 米游社 Cookie 连通性...")
         try:
-            from mihoyo.miyoushe_sign import parse_cookie, refresh_cookie_token
+            from mihoyo.miyoushe_sign import parse_cookie, build_web_cookie
             cookie_list = [c.strip() for c in cfg["MIYOUSHE_COOKIE"].split(",") if c.strip()]
             for i, c in enumerate(cookie_list, 1):
-                refresh_cookie_token(parse_cookie(c))
+                build_web_cookie(parse_cookie(c))
                 print(f"  [OK] 账号{i}")
         except SystemExit:
             raise

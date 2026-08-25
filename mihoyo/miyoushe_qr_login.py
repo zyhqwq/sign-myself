@@ -175,17 +175,30 @@ def poll_qr_status(session, ticket, device_id, timeout, target):
     return "timeout"
 
 
+def parse_cookie_str(cookie_str):
+    cookies = {}
+    for item in cookie_str.split(";"):
+        item = item.strip()
+        if "=" in item:
+            k, v = item.split("=", 1)
+            cookies[k.strip()] = v.strip()
+    return cookies
+
+
 def extract_cookies(result, resp):
     """从 Confirmed 响应提取登录 Cookie。
 
     兼容三种下发位置（按优先级合并，互为补充）：
-    1. JSON body 的 data.cookies 列表（网页授权主要方式：[{name, value}, ...]）
+    1. JSON body 的 data.cookies 列表（[{name, value}, ...]）
     2. 原始 Set-Cookie 响应头（可能多条）
     3. requests 已解析的 cookie jar
+
+    字段覆盖 v1 与 v2 两代凭证（新版网页登录仅下发 *_v2 系列）。
     """
-    keep = ["account_id", "cookie_token", "ltoken", "ltid", "mid",
-            "euid", "stuid", "stoken"]
-    order = [k for k in keep]
+    order = ["stoken", "stuid", "ltoken", "ltoken_v2", "ltid", "mid",
+             "ltmid_v2", "account_id", "account_mid_v2",
+             "cookie_token", "cookie_token_v2", "euid", "devicefp"]
+    keep = set(order)
     jar = {}
 
     def put(name, value):
@@ -287,8 +300,20 @@ def main():
 
     cookie = extract_cookies(result, resp)
     if not cookie:
-        print("错误: 未获取到 Cookie，请重试或改用手动抓包方式")
+        # 打印实际下发内容帮助定位（值全部脱敏）
+        body_keys = list((result.get("data") or {}).keys())
+        try:
+            header_names = [h.split("=", 1)[0] for h in
+                            resp.raw.headers.getlist("Set-Cookie")]
+        except Exception:
+            header_names = []
+        print(f"错误: 未获取到可用 Cookie。body keys={body_keys}，"
+              f"Set-Cookie 字段={header_names}")
         sys.exit(1)
+
+    fields = ", ".join(
+        f"{k}({len(v)}位)" for k, v in parse_cookie_str(cookie).items())
+    print(f"已捕获字段: {fields}")
 
     update_api_file(cookie, device_id)
 

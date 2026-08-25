@@ -150,6 +150,30 @@ def refresh_cookie_token(cookies):
     return f"account_id={uid};cookie_token={token}"
 
 
+def build_web_cookie(cookies):
+    """根据 Cookie 字段构造签到可用的网页 Cookie 串，失败抛异常。
+
+    支持三种格式：
+    - v1 网页凭证：account_id + cookie_token
+    - v2 网页凭证：cookie_token_v2 + ltoken_v2 + ltmid_v2 等（新版网页登录下发，
+      需整串携带配对字段，与浏览器行为一致）
+    - stoken：自动换取新 cookie_token
+    """
+    if cookies.get("account_id") and cookies.get("cookie_token"):
+        return f"account_id={cookies['account_id']};cookie_token={cookies['cookie_token']}"
+
+    if cookies.get("account_id") and cookies.get("cookie_token_v2"):
+        keys = ["account_id", "account_mid_v2", "cookie_token_v2",
+                "ltoken_v2", "ltmid_v2", "mid", "devicefp"]
+        parts = [f"{k}={cookies[k]}" for k in keys if cookies.get(k)]
+        return ";".join(parts)
+
+    if cookies.get("stoken"):
+        return refresh_cookie_token(cookies)
+
+    raise Exception("Cookie 缺少有效字段(account_id+cookie_token[_v2] 或 stoken)")
+
+
 def get_roles(cookie_str):
     """获取账号绑定的全部游戏角色"""
     roles = []
@@ -272,19 +296,11 @@ def process_account(idx, cookie_str):
     set_device(cookies.get("device_id") or os.environ.get("DEVICE_ID"))
     account_label = f"账号{idx}"
 
-    if cookies.get("account_id") and cookies.get("cookie_token"):
-        # 网页授权 Cookie：直接使用，无需续期
-        cookie_str = f"account_id={cookies['account_id']};cookie_token={cookies['cookie_token']}"
-    elif cookies.get("stoken"):
-        # 旧格式：用 stoken 刷新 cookie_token
-        try:
-            cookie_str = refresh_cookie_token(cookies)
-        except Exception as e:
-            return [format_sign_entry("米游社", account_label, "-",
-                                      result=f"Cookie 已失效({str(e)[:40]})，请重新扫码获取")], False
-    else:
+    try:
+        cookie_str = build_web_cookie(cookies)
+    except Exception as e:
         return [format_sign_entry("米游社", account_label, "-",
-                                  result="Cookie 缺少有效字段，请重新扫码获取")], False
+                                  result=f"Cookie 已失效({str(e)[:40]})，请重新扫码获取")], False
 
     # 2. 获取角色
     try:

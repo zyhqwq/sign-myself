@@ -15,7 +15,6 @@ import random
 import re
 import shlex
 import string
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -75,14 +74,6 @@ def query_qr_status(session, ticket, device_id):
         return {"retcode": -1, "message": "响应解析失败"}, resp
 
 
-def is_wsl():
-    try:
-        with open("/proc/version", encoding="utf-8") as f:
-            return "microsoft" in f.read().lower()
-    except Exception:
-        return False
-
-
 def render_qr(url):
     """多通道输出二维码：终端 ASCII + SVG/PNG 文件 + 登录链接文件"""
     url_file = ROOT / "login_url.txt"
@@ -124,28 +115,15 @@ def render_qr(url):
     except Exception as e:
         print(f"[提示] 图片生成失败({str(e)[:40]})，可使用下方链接方式")
 
-    if is_wsl():
-        def _open_dir():
-            for p in ("explorer.exe", "/mnt/c/Windows/explorer.exe"):
-                try:
-                    subprocess.run([p, str(ROOT)], capture_output=True, timeout=8)
-                    return
-                except FileNotFoundError:
-                    continue
-                except Exception:
-                    return
-        import threading
-        threading.Thread(target=_open_dir, daemon=True).start()
-
     print()
     print("获取可扫二维码的方式（任选其一）：")
     print("  1. 直接扫描上方终端二维码（若显示正常）")
     if files:
-        print(f"  2. 打开项目目录下的 {' 或 '.join(files)}，用手机扫屏幕")
+        print(f"  2. 打开脚本同目录下的 {' 或 '.join(files)}，用手机扫屏幕")
     print("  3. 把 login_url.txt 里的链接发到手机（微信文件传输助手等），")
     print("     用手机浏览器直接打开它 —— 效果等同于扫码确认")
-    if is_wsl():
-        print("  (WSL 环境：已尝试弹出 Windows 目录，未弹出请手动进入项目目录)")
+    if files:
+        print(f"  （二维码文件保存在：{ROOT}）")
     print()
 
 
@@ -172,7 +150,7 @@ def update_api_file(cookie, device_id):
 def poll_qr_status(session, ticket, device_id, timeout, target):
     """轮询二维码状态直到达到 target 状态 / 过期 / 超时。
 
-    返回 ("reached", resp) | "expired" | "timeout"；查询接口持续异常按超时处理。
+    返回 ("reached", result, resp) | "expired" | "timeout"；查询接口持续异常按超时处理。
     """
     start = time.time()
     while time.time() - start < timeout:
@@ -192,9 +170,56 @@ def poll_qr_status(session, ticket, device_id, timeout, target):
 
         status = (result.get("data") or {}).get("status")
         if status == target:
-            return "reached", resp
+            return "reached", result, resp
         time.sleep(POLL_INTERVAL)
     return "timeout"
+
+
+def extract_cookies(result, resp):
+    """从 Confirmed 响应提取登录 Cookie。
+
+    兼容三种下发位置（按优先级合并，互为补充）：
+    1. JSON body 的 data.cookies 列表（网页授权主要方式：[{name, value}, ...]）
+    2. 原始 Set-Cookie 响应头（可能多条）
+    3. requests 已解析的 cookie jar
+    """
+    keep = ["account_id", "cookie_token", "ltoken", "ltid", "mid",
+            "euid", "stuid", "stoken"]
+    order = [k for k in keep]
+    jar = {}
+
+    def put(name, value):
+        if name in keep and value and not jar.get(name):
+            jar[name] = value
+
+    # 1) JSON body
+    data = result.get("data") or {}
+    body_cookies = data.get("cookies") or []
+    if isinstance(body_cookies, dict):
+        body_cookies = [body_cookies]
+    for item in body_cookies:
+        if isinstance(item, dict):
+            put(item.get("name"), item.get("value"))
+
+    # 2) 原始 Set-Cookie 头
+    try:
+        raw_headers = resp.raw.headers.getlist("Set-Cookie")
+    except Exception:
+        raw_headers = []
+    for raw in raw_headers:
+        first = raw.split(";", 1)[0].strip()
+        if "=" in first:
+            k, v = first.split("=", 1)
+            put(k.strip(), v.strip())
+
+    # 3) requests cookie jar
+    try:
+        for c in resp.cookies:
+            put(c.name, c.value)
+    except Exception:
+        pass
+
+    return ";".join(f"{k}={jar[k]}" for k in order if k in jar)
 
 
 def main():
@@ -255,27 +280,12 @@ def main():
         print("\n[X] 二维码在确认前过期，退出。请重新运行本工具")
         sys.exit(1)
 
-    resp = state[1]
+    _, result, resp = state
     if resp is None:
         print("\n登录流程异常，请重试")
         sys.exit(1)
 
-    # 网页授权：Confirmed 响应直接下发全套 Cookie
-    keep = ["account_id", "cookie_token", "ltoken", "ltid", "mid", "euid", "stuid"]
-    jar = {}
-    for c in resp.cookies:
-        if c.name in keep and c.value:
-            jar[c.name] = c.value
-    if not jar:
-        raw = resp.headers.get("Set-Cookie", "")
-        for part in re.split(r",(?=[^;]+?=)", raw):
-            first = part.split(";")[0].strip()
-            if "=" in first:
-                k, v = first.split("=", 1)
-                if k.strip() in keep:
-                    jar[k.strip()] = v.strip()
-
-    cookie = ";".join(f"{k}={jar[k]}" for k in keep if k in jar)
+    cookie = extract_cookies(result, resp)
     if not cookie:
         print("错误: 未获取到 Cookie，请重试或改用手动抓包方式")
         sys.exit(1)

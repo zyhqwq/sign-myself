@@ -19,11 +19,11 @@ cat > api.txt <<'EOF'
 # ---- 游戏凭证 ----
 
 # 森空岛 Token（序号1明日方舟、2终末地需要），多账号用英文逗号 , 分隔
-# 获取方法见 README 第 2.3.1 节
+# 获取方法见 README 第 2.1 节
 #SKLAND_TOKEN=
 
 # 米游社 Cookie（序号3原神、4星铁、5绝区零需要），由扫码工具获取，多账号用英文逗号 , 分隔
-# 获取方法见 README 第 2.3.2 节（运行 mihoyo/miyoushe_qr_login.py 扫码）
+# 获取方法见 README 第 2.2 节（运行 mihoyo/miyoushe_qr_login.py 扫码）
 #MIYOUSHE_COOKIE=
 
 # ---- 签到选择 ----

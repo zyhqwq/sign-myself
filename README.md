@@ -16,23 +16,22 @@
 
 一个用于自动签到的工具，支持多账号与多种通知渠道。
 
-<a id="main-features"></a>
 ## 目录
 
 - [主要功能](#main-features)
 - [使用方法](#usage)
-  - [1. Fork 本仓库](#step-1-fork)
-  - [2. 运行方式](#step-2-run)
-    - [2.1 Linux 本地 / 服务器运行（推荐）](#step-2-linux)
-    - [2.2 GitHub Actions（仅供参考，极不推荐，懒得修）](#step-2-actions)
-      - [步骤 1：配置森空岛 Token](#actions-skland)
-      - [步骤 2：配置米游社 Cookie](#actions-mihoyo)
-      - [步骤 3：配置 Bilibili Cookie（可选）](#actions-bilibili)
-      - [步骤 4：启用并运行](#actions-run)
-    - [2.3 凭证获取](#cred)
-      - [2.3.1 森空岛凭证获取](#cred-skland)
-      - [2.3.2 米游社凭证获取](#cred-mihoyo)
-      - [2.3.3 Bilibili Cookie 获取](#cred-bilibili)
+  - [1. 运行方式](#step-1-run)
+    - [1.1 Linux 本地 / 服务器运行（推荐）](#step-1-linux)
+    - [1.2 GitHub Actions（仅供参考，极不推荐，懒得修）](#step-1-actions)
+      - [步骤 1：Fork 本仓库](#actions-fork)
+      - [步骤 2：配置森空岛 Token](#actions-skland)
+      - [步骤 3：配置米游社 Cookie](#actions-mihoyo)
+      - [步骤 4：配置 Bilibili Cookie（可选）](#actions-bilibili)
+      - [步骤 5：启用并运行](#actions-run)
+  - [2. 凭证获取](#cred)
+    - [2.1 森空岛凭证获取](#cred-skland)
+    - [2.2 米游社凭证获取](#cred-mihoyo)
+    - [2.3 Bilibili Cookie 获取](#cred-bilibili)
   - [3. 选择要签到的游戏（可选）](#step-3-games)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
@@ -41,6 +40,7 @@
 - [文件说明](#files)
 - [致谢与参考](#credits)
 
+<a id="main-features"></a>
 ## 主要功能
 
 一个用于自动签到的工具，支持多账号与多种通知渠道。按平台分为两组：
@@ -64,15 +64,11 @@
 <a id="usage"></a>
 ## 使用方法
 
-<a id="step-1-fork"></a>
-### 1. Fork 本仓库
-点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
+<a id="step-1-run"></a>
+### 1. 运行方式
 
-<a id="step-2-run"></a>
-### 2. 运行方式
-
-<a id="step-2-linux"></a>
-#### 2.1 Linux 本地 / 服务器运行（推荐）
+<a id="step-1-linux"></a>
+#### 1.1 Linux 本地 / 服务器运行（推荐）
 
 只需一条命令，跟着向导走完即可，不需要懂编程。
 
@@ -92,7 +88,7 @@ python3 setup_sign.py
 向导会自动完成所有事：
 
 - 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；极简系统若连 pip 都没有，补装时需要管理员权限）
-- 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2.3 凭证获取](#cred)）
+- 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2 凭证获取](#cred)）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
 - **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
@@ -125,20 +121,25 @@ bash run.sh          # 再次运行生效
 
 > 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
-<a id="step-2-actions"></a>
-#### 2.2 GitHub Actions（仅供参考，极不推荐，懒得修）
+<a id="step-1-actions"></a>
+#### 1.2 GitHub Actions（仅供参考，极不推荐，懒得修）
 
 <details>
-<summary><b>点击展开：配置 Secrets 并使用 Actions 每日自动签到</b></summary>
+<summary><b>点击展开：Fork 仓库、配置 Secrets 并使用 Actions 每日自动签到</b></summary>
 
 > ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 
+<a id="actions-fork"></a>
+##### 步骤 1：Fork 本仓库
+
+点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
+
 <a id="actions-skland"></a>
-##### 步骤 1：配置森空岛 Token（明日方舟 + 终末地）
+##### 步骤 2：配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
-1.  **获取 Token**：步骤见 [2.3.1 森空岛凭证获取](#cred-skland)。
+1.  **获取 Token**：步骤见 [2.1 森空岛凭证获取](#cred-skland)。
 2.  **添加 Secret**:
     *   进入你 Fork 的仓库，点击 `Settings` -> `Secrets and variables` -> `Actions`。
     *   点击 `New repository secret`，添加以下 Secret：
@@ -148,13 +149,13 @@ bash run.sh          # 再次运行生效
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
 <a id="actions-mihoyo"></a>
-##### 步骤 2：配置米游社 Cookie
+##### 步骤 3：配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
 > 注：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
-Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.3.2 米游社凭证获取](#cred-mihoyo)。
+Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社凭证获取](#cred-mihoyo)。
 
 1.  **添加 Secret**:
     *   扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
@@ -165,11 +166,11 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
     | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
 <a id="actions-bilibili"></a>
-##### 步骤 3：配置 Bilibili Cookie（可选）
+##### 步骤 4：配置 Bilibili Cookie（可选）
 
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
-1.  **获取 Cookie**：步骤见 [2.3.3 Bilibili Cookie 获取](#cred-bilibili)。
+1.  **获取 Cookie**：步骤见 [2.3 Bilibili Cookie 获取](#cred-bilibili)。
 2.  **添加 Secret**:
     *   进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
     *   分别添加以下三个 Secret：
@@ -183,7 +184,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
 <a id="actions-run"></a>
-##### 步骤 4：启用并运行
+##### 步骤 5：启用并运行
 
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
@@ -199,12 +200,12 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 </details>
 
 <a id="cred"></a>
-#### 2.3 凭证获取
+### 2. 凭证获取
 
 各平台凭证的获取方法汇总（与运行方式无关，本地运行用户同样按此获取后填入 `api.txt`）。
 
 <a id="cred-skland"></a>
-##### 2.3.1 森空岛凭证获取
+#### 2.1 森空岛凭证获取
 
 1.  在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
 2.  登录后进入 https://web-api.skland.com/account/info/hg
@@ -212,7 +213,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 4.  找到 `{"content":"****"}`，复制 `****` 中的内容，即为 Token。
 
 <a id="cred-mihoyo"></a>
-##### 2.3.2 米游社凭证获取
+#### 2.2 米游社凭证获取
 
 **网页扫码（推荐）**
 
@@ -235,7 +236,7 @@ python mihoyo/miyoushe_qr_login.py
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
 <a id="cred-bilibili"></a>
-##### 2.3.3 Bilibili Cookie 获取
+#### 2.3 Bilibili Cookie 获取
 
 1.  在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
 2.  按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。

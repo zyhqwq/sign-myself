@@ -65,9 +65,22 @@ exit 1
 fi
 
 # ---------- 2. 导入配置 ----------
-set -a
-. ./api.txt
-set +a
+# 逐行解析而非 source：Cookie 等值可能含分号/引号，
+# 直接 source 会被 shell 当作命令分隔符截断，导致"Cookie 已失效"
+while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%$'\r'}
+    case "$line" in ''|\#*) continue ;; esac
+    case "$line" in *=*) ;; *) continue ;; esac
+    _key=${line%%=*}
+    _val=${line#*=}
+    # 去掉成对的单引号或双引号（兼容手工加引号的写法）
+    case "$_val" in
+        \'*\') _val=${_val#\'}; _val=${_val%\'} ;;
+        \"*\") _val=${_val#\"}; _val=${_val%\"} ;;
+    esac
+    export "$_key=$_val"
+done < ./api.txt
+unset _key _val line
 
 # ---------- 3. 依赖检查（缺依赖自动安装）----------
 if ! python3 -c "import requests, cryptography, qrcode" 2>/dev/null; then

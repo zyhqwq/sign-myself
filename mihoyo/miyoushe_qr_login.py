@@ -3,11 +3,17 @@
 
 使用网页端授权流程：扫码确认后直接下发完整 Cookie
 （account_id / cookie_token / ltoken 等），不依赖 stoken 换取。
+
+等待扫码策略：
+- 单张二维码超过 SCAN_TIMEOUT 秒无人扫描或已过期时自动刷新，最多刷新 MAX_REFRESH 次
+- 已扫描但长时间未在手机上确认：直接退出（避免作废手机端待确认的会话）
+- 任何时刻按 Ctrl+C：干净退出，不写入任何文件
 """
 
 import os
 import random
 import re
+import shlex
 import string
 import subprocess
 import sys
@@ -23,7 +29,9 @@ CREATE_QR_URL = "https://passport-api.mihoyo.com/account/ma-cn-passport/web/crea
 QUERY_QR_URL = "https://passport-api.mihoyo.com/account/ma-cn-passport/web/queryQRLoginStatus"
 
 POLL_INTERVAL = 3
-POLL_TIMEOUT = 300
+SCAN_TIMEOUT = 90       # 单张二维码等待被扫描的超时秒数
+CONFIRM_TIMEOUT = 120   # 已扫描后等待手机确认的超时秒数
+MAX_REFRESH = 3         # 未扫码时自动刷新二维码的次数上限
 
 
 def random_string(n):
@@ -154,62 +162,101 @@ def update_api_file(cookie, device_id):
             continue
         lines.append(line)
 
-    lines.append(f"MIYOUSHE_COOKIE={cookie}")
-    lines.append(f"DEVICE_ID={device_id}")
+    lines.append(f"MIYOUSHE_COOKIE={shlex.quote(cookie)}")
+    lines.append(f"DEVICE_ID={shlex.quote(device_id)}")
     API_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
     os.chmod(API_FILE, 0o600)
     print(f"✓ 已自动更新 {API_FILE}（原内容备份为 {bak.name if bak else '无'}）")
+
+
+def poll_qr_status(session, ticket, device_id, timeout, target):
+    """轮询二维码状态直到达到 target 状态 / 过期 / 超时。
+
+    返回 ("reached", resp) | "expired" | "timeout"；查询接口持续异常按超时处理。
+    """
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            result, resp = query_qr_status(session, ticket, device_id)
+        except Exception as e:
+            print(f"  查询状态异常，重试中: {str(e)[:60]}")
+            time.sleep(POLL_INTERVAL)
+            continue
+
+        retcode = result.get("retcode")
+        if retcode == -3501:
+            return "expired"
+        if retcode != 0:
+            print(f"\n查询失败: {result.get('message')} (retcode={retcode})")
+            sys.exit(1)
+
+        status = (result.get("data") or {}).get("status")
+        if status == target:
+            return "reached", resp
+        time.sleep(POLL_INTERVAL)
+    return "timeout"
 
 
 def main():
     print("=" * 60)
     print("米游社扫码登录工具（本地运行，Cookie 用于 GitHub Actions 签到）")
     print("=" * 60)
+    print("提示：等待扫码时可随时 Ctrl+C 取消，不会修改任何文件")
 
     session = requests.Session()
     device_id = random_string(16)
+    refresh_left = MAX_REFRESH
 
-    try:
-        qr_url, ticket = create_qr_login(session, device_id)
-    except Exception as e:
-        print(f"错误: {e}")
-        sys.exit(1)
-
-    render_qr(qr_url)
-    print("等待扫码确认中...\n")
-
-    scanned = False
-    start = time.time()
-    resp = None
-    while time.time() - start < POLL_TIMEOUT:
+    # ---- 阶段一：生成二维码并等待扫描（超时/过期自动刷新，最多 MAX_REFRESH 次）----
+    while True:
         try:
-            result, resp = query_qr_status(session, ticket, device_id)
+            qr_url, ticket = create_qr_login(session, device_id)
         except Exception as e:
-            print(f"查询状态异常，重试中: {e}")
-            time.sleep(POLL_INTERVAL)
-            continue
-
-        retcode = result.get("retcode")
-        if retcode == -3501:
-            print("\n二维码已过期，请重新运行脚本")
-            sys.exit(1)
-        if retcode != 0:
-            print(f"\n查询失败: {result.get('message')} (retcode={retcode})")
+            print(f"错误: 创建二维码失败 - {e}")
             sys.exit(1)
 
-        status = (result.get("data") or {}).get("status")
-        if status == "Scanned" and not scanned:
-            scanned = True
+        extra = f"（自动刷新剩余 {refresh_left} 次）" if refresh_left != MAX_REFRESH else ""
+        print(f"\n请使用米游社 App 扫描下方二维码{extra}")
+        render_qr(qr_url)
+        print(f"等待扫码中（{SCAN_TIMEOUT} 秒内未扫将自动刷新）...\n")
+
+        try:
+            state = poll_qr_status(session, ticket, device_id, SCAN_TIMEOUT, "Scanned")
+        except KeyboardInterrupt:
+            print("\n\n已取消：未获取到登录凭证，api.txt 未做任何修改")
+            sys.exit(130)
+
+        if isinstance(state, tuple):   # ("reached", resp)：已被扫描
             print("✓ 已扫描，请在手机上点击确认登录...")
-        if status == "Confirmed":
             break
 
-        time.sleep(POLL_INTERVAL)
-    else:
-        print("\n等待超时，请重新运行脚本")
+        reason = "二维码已过期" if state == "expired" else "迟迟未扫码"
+
+        if refresh_left > 0:
+            refresh_left -= 1
+            print(f"[!] {reason}，自动刷新二维码（剩余 {refresh_left} 次刷新机会）")
+            continue
+
+        print(f"[X] {reason}，且刷新次数已用完，退出。需要时请重新运行本工具")
         sys.exit(1)
 
-    if result.get("retcode") != 0 or not resp:
+    # ---- 阶段二：已扫描，等待手机确认（不刷新，避免作废手机端会话）----
+    try:
+        state = poll_qr_status(session, ticket, device_id,
+                               CONFIRM_TIMEOUT, "Confirmed")
+    except KeyboardInterrupt:
+        print("\n\n已取消：未获取到登录凭证，api.txt 未做任何修改")
+        sys.exit(130)
+
+    if state == "timeout":
+        print("\n[X] 已扫码但长时间未在手机上确认，退出。请重新运行本工具")
+        sys.exit(1)
+    if state == "expired":
+        print("\n[X] 二维码在确认前过期，退出。请重新运行本工具")
+        sys.exit(1)
+
+    resp = state[1]
+    if resp is None:
         print("\n登录流程异常，请重试")
         sys.exit(1)
 

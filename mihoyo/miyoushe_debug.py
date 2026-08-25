@@ -2,24 +2,26 @@
 """米游社 Cookie 诊断工具（本地运行，值自动脱敏）
 
 用法：
-    MIYOUSHE_COOKIE='粘贴你的完整Cookie' python3 mihoyo/miyoushe_debug.py [游戏序号]
+    bash run.sh 的环境导入后直接运行：
+        python3 mihoyo/miyoushe_debug.py [游戏序号]
+    或手动传 Cookie：
+        MIYOUSHE_COOKIE='粘贴你的完整Cookie' python3 mihoyo/miyoushe_debug.py
 
-检测项：
+检测项（全部只读，不会实际签到）：
 1. Cookie 字段解析
-2. stoken 有效性（passport-api，独立于任何签名逻辑）
-3. 米游社用户信息接口认证
-4. 游戏角色绑定与每日签到状态（luna 接口，当前使用的正式链路，只读不签到）
+2. stoken 有效性（passport-api，独立于任何签名逻辑；网页版 Cookie 无 stoken 时跳过）
+3. 游戏角色绑定与每日签到状态（luna 正式链路）
 """
 
-import json
 import os
 import sys
 
 import requests
 
 from miyoushe_sign import (
-    GAMES, USER_INFO_URL, BINDING_URL,
-    web_headers as bbs_headers, ds1, ds2, parse_cookie,
+    GAMES, BINDING_URL,
+    web_headers, gen_ds, parse_cookie,
+    refresh_cookie_token, set_device,
 )
 
 
@@ -29,61 +31,61 @@ def mask(v):
     return v[:8] + f"...({len(v)}位)"
 
 
+def load_cookie_from_api_file():
+    """环境变量缺失时，从项目根目录 api.txt 读取（逐行解析，容忍值内分号）"""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api.txt")
+    try:
+        for line in open(path, encoding="utf-8"):
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            if k.strip() == "MIYOUSHE_COOKIE":
+                return v.strip().strip("'\"")
+    except OSError:
+        pass
+    return ""
+
+
 def main():
     raw = os.environ.get("MIYOUSHE_COOKIE", "").strip()
     if not raw:
+        raw = load_cookie_from_api_file()
+    if not raw:
         print("用法: MIYOUSHE_COOKIE='<Cookie>' python3 mihoyo/miyoushe_debug.py [序号]")
+        print("（或先在 api.txt 中配置 MIYOUSHE_COOKIE）")
         sys.exit(1)
     only = sys.argv[1] if len(sys.argv) > 1 else None
 
     c = parse_cookie(raw)
-    uid = c.get("stuid") or c.get("ltuid") or ""
-    mid = c.get("mid", "")
-    stoken = c.get("stoken", "")
     print("== Cookie 字段解析 ==")
     for k, v in c.items():
         print(f"  {k} = {mask(v)}")
 
-    # 1. stoken 独立验证（passport-api）
-    print("\n== 1. stoken 独立验证 ==")
-    r = requests.get(
-        "https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken",
-        params={"stoken": stoken, "uid": uid, "mid": mid},
-        headers={"User-Agent": "HYPContainer/1.3.3.182",
-                 "x-rpc-app_id": "ddxf5dufpuyo", "x-rpc-client_type": "3",
-                 "Cookie": f"stoken={stoken};stuid={uid};mid={mid}"},
-        timeout=15)
-    d = r.json()
-    ok = d.get("retcode") == 0
-    print(f"  retcode={d.get('retcode')} {d.get('message','')}"
-          + ("   ✅ stoken 有效" if ok else "   ❌ Cookie 已失效，请重新扫码"))
-    if not ok:
+    # 1. 准备可用的网页 Cookie（account_id + cookie_token）
+    print("\n== 1. 登录态验证 ==")
+    if c.get("account_id") and c.get("cookie_token"):
+        set_device(c.get("device_id"))
+        web_cookie = f"account_id={c['account_id']};cookie_token={c['cookie_token']}"
+        print("  网页授权格式，跳过 stoken 检查")
+    elif c.get("stoken"):
+        try:
+            web_cookie = refresh_cookie_token(c)
+            print(f"  ✅ stoken 有效，已换取新 cookie_token: {mask(c.get('cookie_token'))}")
+        except Exception as e:
+            print(f"  ❌ {str(e)[:60]}")
+            sys.exit(1)
+    else:
+        print("  ❌ Cookie 缺少 account_id/cookie_token/stoken，无法使用")
         sys.exit(1)
 
-    ct = d["data"].get("cookie_token")
-    print(f"  新 cookie_token: {mask(ct)}")
-    web_cookie = f"account_id={uid};cookie_token={ct}"
-
-    # 2. 米游社用户信息认证
-    print("\n== 2. 米游社用户信息接口 ==")
-    h = bbs_headers(f"stoken={stoken};stuid={uid};mid={mid}")
-    h["DS"] = ds1()
-    r = requests.get(USER_INFO_URL, params={"uid": uid}, headers=h, timeout=15)
-    d = r.json()
-    if d.get("retcode") == 0:
-        nick = d["data"]["user_info"].get("nickname", "")
-        print(f"  retcode=0   ✅ 昵称: {nick}")
-    else:
-        print(f"  retcode={d.get('retcode')} {d.get('message','')}")
-    web_cookie = f"account_id={uid};cookie_token={ct}"
-
-    # 3. 角色绑定
-    print("\n== 3. 游戏角色绑定 ==")
+    # 2. 角色绑定
+    print("\n== 2. 游戏角色绑定 ==")
     roles = []
     for biz in sorted({g["biz"] for g in GAMES}):
         try:
             rr = requests.get(BINDING_URL, params={"game_biz": biz},
-                              headers=bbs_headers(web_cookie), timeout=15)
+                              headers=web_headers(web_cookie), timeout=15)
             dd = rr.json()
             if dd.get("retcode") == 0:
                 lst = dd.get("data", {}).get("list", [])
@@ -102,8 +104,8 @@ def main():
         print("\n未查到任何游戏角色，无法进行游戏签到")
         return
 
-    # 4. 各游戏签到状态（luna 正式链路，只读）
-    print("\n== 4. 游戏签到状态（只读查询，不会实际签到）==")
+    # 3. 各游戏签到状态（luna 正式链路，只读）
+    print("\n== 3. 游戏签到状态（只读查询，不会实际签到）==")
     targets = [g for g in GAMES if not only or g["biz"] == only]
     for g in targets:
         role = next((r_ for r_ in roles if r_.get("game_biz") == g["biz"]), None)
@@ -111,10 +113,10 @@ def main():
             print(f"  {g['name']}: 账号未绑定此游戏，跳过")
             continue
         url = f"{g['base']}/event/luna{g['sub']}/info"
-        h = bbs_headers(web_cookie)
+        h = web_headers(web_cookie)
         if g["signgame"]:
             h["x-rpc-signgame"] = g["signgame"]
-        h["DS"] = ds2()
+        h["DS"] = gen_ds()
         try:
             rr = requests.get(url, params={"lang": "zh-cn", "act_id": g["act_id"],
                                            "uid": str(role["game_uid"]),

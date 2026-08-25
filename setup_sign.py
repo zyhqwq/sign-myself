@@ -13,6 +13,7 @@
 
 import os
 import re
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -98,6 +99,73 @@ def ask_nonempty(prompt):
     return ask(prompt, validator=lambda v: len(v) > 0, errmsg="不能为空")
 
 
+COOKIE_ASK_ERRMSG = (
+    "Cookie 格式不正确：应包含 account_id= / cookie_token= 或 stoken= 等字段，"
+    "多个账号用英文逗号分隔")
+
+
+def cookie_format_ok(v):
+    """轻量校验：至少含一个凭证字段，避免明显粘错内容"""
+    if "=" not in v:
+        return False
+    return any(k in v for k in ("account_id=", "cookie_token=", "stoken=", "ltoken="))
+
+
+def read_api_file_values(keys):
+    """从现有 api.txt 读取指定键（逐行解析，容忍值内分号与引号）"""
+    vals = {}
+    try:
+        with open(API_FILE, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                if k.strip() in keys:
+                    vals[k.strip()] = v.strip().strip("'\"")
+    except OSError:
+        pass
+    return vals
+
+
+def obtain_cookie_by_qr(cfg):
+    """运行扫码工具获取 Cookie，回读 api.txt 确认保存，并用诊断工具验证有效性。
+
+    返回 True 表示 Cookie 已获取并验证通过。
+    """
+    qr_script = os.path.join(ROOT, "mihoyo", "miyoushe_qr_login.py")
+    debug_script = os.path.join(ROOT, "mihoyo", "miyoushe_debug.py")
+
+    print("\n  即将启动扫码工具：用手机米游社 App 扫二维码并确认登录，")
+    print("  成功后会自动把 Cookie 写入 api.txt。扫码过程中可随时 Ctrl+C 取消。")
+    if not ask_yn("是否继续？", default_yes=True):
+        return False
+
+    rc = subprocess.run([sys.executable, qr_script]).returncode
+    if rc != 0:
+        print("  [!] 扫码未完成（已取消 / 超时 / 失败）")
+        return False
+
+    # 回读 api.txt，确认 Cookie 已保存
+    saved = read_api_file_values(("MIYOUSHE_COOKIE", "DEVICE_ID"))
+    if not saved.get("MIYOUSHE_COOKIE"):
+        print("  [!] api.txt 中未找到已保存的 Cookie，视为失败")
+        return False
+    cfg["MIYOUSHE_COOKIE"] = saved["MIYOUSHE_COOKIE"]
+    if saved.get("DEVICE_ID"):
+        cfg["DEVICE_ID"] = saved["DEVICE_ID"]
+    print("  [OK] Cookie 已保存到 api.txt")
+
+    # 用诊断工具验证 Cookie 合法性（只读检测，不会签到）
+    print("\n  正在运行诊断工具验证 Cookie 是否有效...\n")
+    r = subprocess.run([sys.executable, debug_script])
+    if r.returncode == 0:
+        print("\n  [OK] Cookie 验证通过")
+        return True
+    print("\n  [!] 诊断工具报告 Cookie 异常，建议重试扫码或检查网络")
+    return False
+
+
 def collect_credentials(cfg):
     print("\n---- 步骤 2/4 游戏凭证 ----")
     if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 2 节）"):
@@ -105,11 +173,29 @@ def collect_credentials(cfg):
     else:
         print("  跳过：将不签到明日方舟 / 终末地（README 第 2 节有获取教程）")
 
-    if ask_yn("是否已有米游社 Cookie？（原神、星铁、绝区零需要，由扫码工具获取）"):
-        cfg["MIYOUSHE_COOKIE"] = ask_nonempty(
-            "请输入 MIYOUSHE_COOKIE（多账号用英文逗号分隔）")
+    print("\n---- 米游社 Cookie（原神、星铁、绝区零需要）----")
+    if ask_yn("是否已有米游社 Cookie？"):
+        cfg["MIYOUSHE_COOKIE"] = ask(
+            "请输入 MIYOUSHE_COOKIE（多账号用英文逗号分隔）",
+            validator=cookie_format_ok, errmsg=COOKIE_ASK_ERRMSG)
     else:
-        print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 4 节有扫码教程）")
+        while True:
+            if not ask_yn("是否现在运行扫码工具自动获取？", default_yes=True):
+                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 4 节有扫码教程）")
+                break
+            if obtain_cookie_by_qr(cfg):
+                break
+            choice = ask("\n扫码获取失败。1=重试扫码  2=手动输入  3=跳过米游社",
+                         default="1",
+                         validator=lambda v: v in ("1", "2", "3"),
+                         errmsg="请输入 1、2 或 3")
+            if choice == "2":
+                cfg["MIYOUSHE_COOKIE"] = ask(
+                    "请输入 MIYOUSHE_COOKIE（多账号用英文逗号分隔）",
+                    validator=cookie_format_ok, errmsg=COOKIE_ASK_ERRMSG)
+                break
+            if choice == "3":
+                break
 
     games = []
     if cfg.get("SKLAND_TOKEN"):
@@ -195,7 +281,7 @@ def collect_notify(cfg):
 # ================== 写入 api.txt ==================
 
 TEMPLATE_ORDER = [
-    "SKLAND_TOKEN", "MIYOUSHE_COOKIE", "SIGN_GAMES",
+    "SKLAND_TOKEN", "MIYOUSHE_COOKIE", "DEVICE_ID", "SIGN_GAMES",
     "DISCORD_WEBHOOK_URL", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
     "WECHAT_WEBHOOK_URL", "FEISHU_WEBHOOK_URL",
     "DINGTALK_WEBHOOK_URL", "DINGTALK_SECRET",
@@ -215,7 +301,8 @@ def write_api_file(cfg):
     lines = ["# 由 setup_sign.py 自动生成", "# 手动修改后重新运行 sign_all.py 即生效", ""]
     for key in TEMPLATE_ORDER:
         val = cfg.get(key, "")
-        lines.append(f"{key}={val}")
+        # shell 安全引用：Cookie 等值含分号时，直接写入会被 source 截断
+        lines.append(f"{key}={shlex.quote(val)}" if val else f"{key}=")
     with open(API_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     os.chmod(API_FILE, 0o600)   # 含敏感凭证，仅所有者可读写

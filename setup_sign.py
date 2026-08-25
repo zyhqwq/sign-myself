@@ -77,20 +77,34 @@ def check_deps():
         import requests  # noqa: F401
         import cryptography  # noqa: F401
         print("[OK] 依赖已安装")
+        return
     except ImportError:
-        print("[..] 正在安装依赖 requests / cryptography ...")
-        cmds = [
-            [sys.executable, "-m", "pip", "install", "-r",
-             os.path.join(ROOT, "requirements.txt")],
-            [sys.executable, "-m", "pip", "install", "--user", "-r",
-             os.path.join(ROOT, "requirements.txt")],
-        ]
-        for cmd in cmds:
-            if subprocess.run(cmd).returncode == 0:
-                print("[OK] 依赖安装完成")
-                return
-        print("[X] 依赖安装失败，请手动执行: pip install -r requirements.txt")
-        sys.exit(1)
+        print("[..] 缺少依赖，正在尝试自动安装 ...")
+
+    req = os.path.join(ROOT, "requirements.txt")
+    # 与 run.sh 相同的多级回退：覆盖 PEP 668（新版 Debian/Ubuntu）等限制
+    if not subprocess.run([sys.executable, "-m", "pip", "--version"],
+                          capture_output=True).returncode == 0:
+        # pip 缺失：先试 ensurepip（无需 root），失败则需用户手动处理
+        if subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"],
+                          capture_output=True).returncode != 0:
+            print("[X] 当前环境缺少 pip 且自动补齐失败。")
+            print("    请用管理员权限执行: sudo apt-get install python3-pip")
+            sys.exit(1)
+
+    cmds = [
+        [sys.executable, "-m", "pip", "install", "-r", req],
+        [sys.executable, "-m", "pip", "install", "--user", "-r", req],
+        [sys.executable, "-m", "pip", "install", "--break-system-packages",
+         "--user", "-r", req],
+    ]
+    for cmd in cmds:
+        if subprocess.run(cmd).returncode == 0:
+            print("[OK] 依赖安装完成")
+            return
+    print("[X] 依赖安装失败，请手动执行:")
+    print("    pip install --break-system-packages -r requirements.txt")
+    sys.exit(1)
 
 
 # ================== 凭证收集 ==================
@@ -168,10 +182,10 @@ def obtain_cookie_by_qr(cfg):
 
 def collect_credentials(cfg):
     print("\n---- 步骤 2/4 游戏凭证 ----")
-    if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 3 节）"):
+    if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 2.2 节·步骤 1）"):
         cfg["SKLAND_TOKEN"] = ask_nonempty("请输入 SKLAND_TOKEN（多账号用英文逗号分隔）")
     else:
-        print("  跳过：将不签到明日方舟 / 终末地（README 第 3 节有获取教程）")
+        print("  跳过：将不签到明日方舟 / 终末地（README 第 2.2 节·步骤 1 有获取教程）")
 
     print("\n---- 米游社 Cookie（原神、星铁、绝区零需要）----")
     if ask_yn("是否已有米游社 Cookie？"):
@@ -181,7 +195,7 @@ def collect_credentials(cfg):
     else:
         while True:
             if not ask_yn("是否现在运行扫码工具自动获取？", default_yes=True):
-                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 3 节·步骤 2 有扫码教程）")
+                print("  跳过：将不签到原神 / 星铁 / 绝区零（README 第 2.2 节·步骤 2 有扫码教程）")
                 break
             if obtain_cookie_by_qr(cfg):
                 break
@@ -321,6 +335,63 @@ def rollback(bak):
 
 # ================== 测试运行 ==================
 
+# 全部通知相关配置键（重新设置通知渠道时用于清空旧值）
+NOTIFY_CFG_KEYS = [
+    "DISCORD_WEBHOOK_URL", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
+    "WECHAT_WEBHOOK_URL", "FEISHU_WEBHOOK_URL",
+    "DINGTALK_WEBHOOK_URL", "DINGTALK_SECRET",
+    "SERVER_CHAN_KEY", "CUSTOM_WEBHOOK_URL"]
+
+
+def _has_any_notify(cfg):
+    return any(cfg.get(k) for k in NOTIFY_CFG_KEYS)
+
+
+def test_notify_interactive(cfg, results):
+    """发送测试通知并等待用户回复是否收到。
+
+    - 收到 → 通过，继续后续流程
+    - 未收到 → 询问是否重新设置外部通知渠道：
+        * 选 y：清空旧配置重新收集，并再次发送测试（循环直到确认收到）
+        * 选 n：跳过，继续步骤 4/4 测试与定时
+    """
+    import importlib
+    import notify
+    notify.DEBUG_NOTIFY = False
+
+    while True:
+        print("\n[测试] 发送测试通知...")
+        res = notify.send_notification(
+            "签到配置向导", "这是一条配置测试消息，收到即代表通知渠道正常。")
+        results["notify"] = res
+        bad = [name for name, status in (res or []) if status != "OK"]
+        if bad:
+            print(f"  [FAIL] 以下渠道接口返回失败: {', '.join(bad)}")
+        else:
+            print("  [OK] 接口全部返回成功")
+
+        # 等待用户确认是否实际收到（输入不合法会循环提示；Ctrl+C 干净退出）
+        if ask_yn("请查看对应平台，是否收到这条测试通知？"):
+            return True
+
+        if not ask_yn("是否重新设置外部通知渠道？", default_yes=True):
+            print("  保持当前通知配置，继续后续步骤")
+            return True
+
+        # 清空旧通知配置后重新收集
+        for k in NOTIFY_CFG_KEYS:
+            cfg.pop(k, None)
+            os.environ.pop(k, None)
+        collect_notify(cfg)
+        if not _has_any_notify(cfg):
+            print("  未配置任何通知渠道，跳过通知测试")
+            return True
+        # 注入新值并让 notify 重新读取（模块在导入时读取环境变量）
+        for k in NOTIFY_CFG_KEYS:
+            os.environ[k] = cfg.get(k, "")
+        importlib.reload(notify)
+
+
 def run_tests(cfg):
     """返回 dict: {"notify": [(名称,状态)...] 或 None, "cred_ok": bool}"""
     # 把配置注入当前进程环境供 notify 使用
@@ -359,23 +430,9 @@ def run_tests(cfg):
             cred_ok = False
             print(f"  [FAIL] {str(e)[:120]}")
 
-    # 2) 通知渠道发送测试
-    NOTIFY_TEST_KEYS = ["DISCORD_WEBHOOK_URL", "WECHAT_WEBHOOK_URL", "FEISHU_WEBHOOK_URL",
-                        "DINGTALK_WEBHOOK_URL", "SERVER_CHAN_KEY", "CUSTOM_WEBHOOK_URL"]
-    has_notify = any(cfg.get(k) for k in NOTIFY_TEST_KEYS) or (
-        cfg.get("TELEGRAM_BOT_TOKEN") and cfg.get("TELEGRAM_CHAT_ID"))
-    if has_notify:
-        print("\n[测试] 发送测试通知...")
-        import notify
-        notify.DEBUG_NOTIFY = False
-        res = notify.send_notification("签到配置向导", "这是一条配置测试消息，收到即代表通知渠道正常。")
-        results["notify"] = res
-        bad = [name for name, status in res if status != "OK"]
-        if bad:
-            cred_ok = False
-            print(f"  [FAIL] 以下渠道发送失败: {', '.join(bad)}")
-        else:
-            print("  [OK] 全部渠道发送成功")
+    # 2) 通知渠道发送测试（交互确认是否收到，未收到可重设渠道）
+    if _has_any_notify(cfg):
+        test_notify_interactive(cfg, results)
     return results, cred_ok
 
 
@@ -457,7 +514,11 @@ def main():
     print("\n---- 步骤 4/4 测试与定时 ----")
     while True:
         bak = write_api_file(cfg)
-        _, cred_ok = run_tests(cfg)
+        try:
+            _, cred_ok = run_tests(cfg)
+        except Cancelled:
+            print("\n已取消，未做任何更改")
+            sys.exit(130)
         if cred_ok:
             print("\n[OK] 测试通过")
             break

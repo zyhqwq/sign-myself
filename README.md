@@ -22,13 +22,14 @@
 - [主要功能](#main-features)
 - [使用方法](#usage)
   - [1. Fork 本仓库](#step-1-fork)
-  - [2. Linux 本地 / 服务器运行（推荐）](#step-2-linux)
-  - [3. 方式二：GitHub Actions（不推荐）](#step-3-actions)
-    - [步骤 1：配置森空岛 Token](#actions-skland)
-    - [步骤 2：配置米游社 Cookie](#actions-mihoyo)
-    - [步骤 3：配置 Bilibili Cookie（可选）](#actions-bilibili)
-    - [步骤 4：启用并运行](#actions-run)
-  - [4. 选择要签到的游戏（可选）](#step-4-games)
+  - [2. 运行方式](#step-2-run)
+    - [2.1 Linux 本地 / 服务器运行（推荐）](#step-2-linux)
+    - [2.2 GitHub Actions（仅供参考，极不推荐，懒得修）](#step-2-actions)
+      - [步骤 1：配置森空岛 Token](#actions-skland)
+      - [步骤 2：配置米游社 Cookie](#actions-mihoyo)
+      - [步骤 3：配置 Bilibili Cookie（可选）](#actions-bilibili)
+      - [步骤 4：启用并运行](#actions-run)
+  - [3. 选择要签到的游戏（可选）](#step-3-games)
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
   - [钉钉机器人创建步骤](#dingtalk-steps)
@@ -63,8 +64,11 @@
 ### 1. Fork 本仓库
 点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
 
+<a id="step-2-run"></a>
+### 2. 运行方式
+
 <a id="step-2-linux"></a>
-### 2. Linux 本地 / 服务器运行（推荐）
+#### 2.1 Linux 本地 / 服务器运行（推荐）
 
 只需一条命令，跟着向导走完即可，不需要懂编程。
 
@@ -83,10 +87,10 @@ python3 setup_sign.py
 
 向导会自动完成所有事：
 
-- 检查 Python 版本与依赖（缺什么自动安装，无需 root）
-- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证获取见下文第 3 节）
+- 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；极简系统若连 pip 都没有，补装时需要管理员权限）
+- 询问是否有森空岛 Token / 米游社 Cookie，有就填入，也可以当场扫码获取（凭证获取见下文 2.2 节）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
-- **当场实测**凭证和通知是否能用，失败可以马上重填
+- **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
 
 完成后：
@@ -117,8 +121,8 @@ bash run.sh          # 再次运行生效
 
 > 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
-<a id="step-3-actions"></a>
-### 3. 方式二：GitHub Actions（仅供参考，不推荐）
+<a id="step-2-actions"></a>
+#### 2.2 GitHub Actions（仅供参考，极不推荐，懒得修）
 
 <details>
 <summary><b>点击展开：配置 Secrets 并使用 Actions 每日自动签到</b></summary>
@@ -126,7 +130,7 @@ bash run.sh          # 再次运行生效
 > ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 
 <a id="actions-skland"></a>
-#### 步骤 1：配置森空岛 Token（明日方舟 + 终末地）
+##### 步骤 1：配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
@@ -145,7 +149,7 @@ bash run.sh          # 再次运行生效
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
 <a id="actions-mihoyo"></a>
-#### 步骤 2：配置米游社 Cookie
+##### 步骤 2：配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
@@ -179,7 +183,7 @@ python mihoyo/miyoushe_qr_login.py
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
 <a id="actions-bilibili"></a>
-#### 步骤 3：配置 Bilibili Cookie（可选）
+##### 步骤 3：配置 Bilibili Cookie（可选）
 
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
@@ -204,7 +208,7 @@ python mihoyo/miyoushe_qr_login.py
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
 <a id="actions-run"></a>
-#### 步骤 4：启用并运行
+##### 步骤 4：启用并运行
 
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。
@@ -219,8 +223,8 @@ python mihoyo/miyoushe_qr_login.py
 
 </details>
 
-<a id="step-4-games"></a>
-### 4. 选择要签到的游戏（可选）
+<a id="step-3-games"></a>
+### 3. 选择要签到的游戏（可选）
 
 通过 Secret `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
 
@@ -237,18 +241,21 @@ python mihoyo/miyoushe_qr_login.py
 <a id="notify-config"></a>
 ## 配置通知（可选）
 
-如果你希望签到后收到通知，可以按需添加以下 Secret。进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret` 添加。所有脚本共享同一套通知配置。
+如果你希望签到后收到通知，可以按需配置以下通知渠道，所有脚本共享同一套通知配置：
+
+- **GitHub Actions 用户**：进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`，按下方「名称 / 值」对应添加 Secret。
+- **本地运行用户**：把对应的变量名和值写入项目根目录的 `api.txt`（配置向导中也可直接选择配置）。
 
 **国外平台**
 
-| 通知平台 | Name | Secret | 已测试 |
+| 通知平台 | 名称 | 值 | 已测试 |
 | :--- | :--- | :--- | :--- |
 | [**Discord**](https://discord.com/) | `DISCORD_WEBHOOK_URL` | 填写 Discord 频道设置的 Webhook 地址。 | ✓ |
 | [**Telegram**](https://telegram.org/) | `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` | 需要通过 `@BotFather` 创建机器人来获取 Token 和 Chat ID。[详见下方步骤。](#telegram-steps) | ✓ |
 
 **国内平台**
 
-| 通知平台 | Name | Secret | 已测试 |
+| 通知平台 | 名称 | 值 | 已测试 |
 | :--- | :--- | :--- | :--- |
 | [**企业微信**](https://work.weixin.qq.com/) | `WECHAT_WEBHOOK_URL` | 填写企业微信群机器人的 Webhook 地址。 | ✓ |
 | [**飞书**](https://www.feishu.cn/) | `FEISHU_WEBHOOK_URL` | 填写飞书群自定义机器人的 Webhook 地址。 | ✓ |
@@ -259,7 +266,7 @@ python mihoyo/miyoushe_qr_login.py
 
 **通用**
 
-| 通知平台 | Name | Secret |
+| 通知平台 | 名称 | 值 |
 | :--- | :--- | :--- |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 |
 
@@ -316,22 +323,28 @@ python mihoyo/miyoushe_qr_login.py
 <a id="faq"></a>
 ## 常见问题
 
-**Q：Token 会过期吗？需要经常换吗？**
+<details>
+<summary><b>Token 会过期吗？需要经常换吗？</b></summary>
 
-**A：** 通常不会。`SKLAND_TOKEN` 有效期很长，一般只有在你长时间未使用或修改密码后才会失效。如果脚本运行失败并提示 Token 错误，再按上述步骤重新获取一次即可。B 站的 `SESSDATA` 同理，过期后重新从浏览器获取即可。米游社的 `MIYOUSHE_COOKIE` 中的 `stoken` 同样长期有效，失效后（签到通知提示 Cookie 已失效）重新运行扫码工具获取即可。
+通常不会。`SKLAND_TOKEN` 有效期很长，一般只有在你长时间未使用或修改密码后才会失效。如果脚本运行失败并提示 Token 错误，再按上述步骤重新获取一次即可。B 站的 `SESSDATA` 同理，过期后重新从浏览器获取即可。米游社的 `MIYOUSHE_COOKIE` 中的 `stoken` 同样长期有效，失效后（签到通知提示 Cookie 已失效）重新运行扫码工具获取即可。
 
-**Q：签到失败或收不到通知怎么办？**
+</details>
 
-**A：** 请按以下步骤排查：
-1.  去仓库的 `Actions` 标签页，查看最近一次运行的详细日志，通常会有明确的错误信息。
-2.  检查你配置的 Secret（Token 和通知地址）是否填写正确，特别是注意不要有多余的空格。
+<details>
+<summary><b>签到失败或收不到通知怎么办？</b></summary>
+
+请按以下步骤排查：
+1.  查看签到日志或 Actions 运行日志，通常会有明确的错误信息。
+2.  检查你配置的凭证和通知地址是否填写正确，特别是注意不要有多余的空格。
 3.  确认你配置的通知渠道（如 Telegram Bot）本身工作正常。
 
+</details>
+
 <a id="modify-time"></a>
+<details>
+<summary><b>可以修改签到时间吗？</b></summary>
 
-**Q：可以修改签到时间吗？**
-
-**A：** 可以。编辑对应的 `.github/workflows/` 下的工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8，所以 UTC = 北京时间 - 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。推荐使用 [crontab.guru](https://crontab.guru/) 在线生成和验证 cron 表达式。
+可以。本地运行直接修改 crontab 里的执行时间即可；GitHub Actions 则编辑 `.github/workflows/` 下对应工作流文件，找到 `cron` 配置行。cron 使用 UTC 时间，北京时间 = UTC + 8，所以 UTC = 北京时间 - 8。例如北京时间 13:00 = UTC 05:00，写作 `cron: '0 5 * * *'`。推荐使用 [crontab.guru](https://crontab.guru/) 在线生成和验证 cron 表达式。
 
 GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 
@@ -352,9 +365,14 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 
 注意：不支持秒字段、年字段，以及 `L`（最后一天）、`W`（工作日）、`#`（第N个星期X）等扩展语法。日和星期同时指定时取交集（标准 cron 为并集）。
 
-**Q：终末地签到提示"未经授权"怎么办？**
+</details>
 
-**A：** 请确认你已在森空岛 App 或网页端绑定了终末地游戏角色。未绑定角色的账号无法签到。
+<details>
+<summary><b>终末地签到提示"未经授权"怎么办？</b></summary>
+
+请确认你已在森空岛 App 或网页端绑定了终末地游戏角色。未绑定角色的账号无法签到。
+
+</details>
 
 <a id="files"></a>
 ## 文件说明

@@ -74,6 +74,14 @@
 
 只需一条命令，跟着向导走完即可，不需要懂编程。
 
+> 💡 **前置要求**：系统需有 `git` 和 `python3`（绝大多数服务器已内置）。极简系统先装一下再执行下面的命令：
+>
+> ```bash
+> sudo apt update && sudo apt install -y git python3      # Debian / Ubuntu 及其衍生
+> # sudo dnf install -y git python3                      # Fedora / RHEL
+> # sudo apk add git python3                             # Alpine
+> ```
+
 ```bash
 git clone https://github.com/zyhqwq/sign-myself.git; cd sign-myself && python3 setup_sign.py
 ```

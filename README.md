@@ -282,8 +282,8 @@ python mihoyo/miyoushe_qr_login.py
 
 通过 `SIGN_GAMES` 控制每天运行哪些任务（英文逗号分隔序号，不配置则默认全部 `1,2,3,4,5`）：
 
-- **GitHub Actions 用户**：添加 Secret `SIGN_GAMES`
 - **本地运行用户**：编辑 `api.txt` 中的 `SIGN_GAMES=` 行，去掉行首 `#` 并填入序号
+- **GitHub Actions 用户**：添加 Secret `SIGN_GAMES`
 
 | 序号 | 游戏 | 所属平台 | 对应变量 |
 | :---: | :--- | :--- | :--- |
@@ -302,8 +302,8 @@ python mihoyo/miyoushe_qr_login.py
 
 如果你希望签到后收到通知，可以按需配置以下通知渠道，所有脚本共享同一套通知配置：
 
-- **GitHub Actions 用户**：进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`，按下方「名称 / 值」对应添加 Secret。
 - **本地运行用户**：把对应的变量名和值写入项目根目录的 `api.txt`（配置向导中也可直接选择配置）。
+- **GitHub Actions 用户**：进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`，按下方「名称 / 值」对应添加 Secret。
 
 **国外平台**
 

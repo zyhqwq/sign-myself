@@ -1,13 +1,14 @@
 /**
- * 米游社扫码登录 CORS 代理 - Cloudflare Worker（透明转发版）
+ * 米游社 / 森空岛 扫码登录 CORS 代理 - Cloudflare Worker（透明转发版）
  *
  * 更新方法：
  *   Cloudflare Dashboard -> Workers -> 你的 Worker -> Edit Code ->
  *   全选删除，粘贴本文件全部代码 -> Deploy
  *
  * 安全说明：
- *   - 仅转发白名单内的 3 个米哈游 passport 接口，无日志、无存储
+ *   - 仅转发白名单内的米哈游 passport 与鹰角通行证接口，无日志、无存储
  *   - Cookie 只在浏览器内组装；stoken 仅在请求 cookie_token 时经由本代理中转一次
+ *   - 森空岛扫码三接口（/hgas/...）不涉及任何 Cookie，仅中转 JSON
  *   - /_debug 为诊断路径，仅回显收到的请求内容，可随时删除
  */
 
@@ -16,6 +17,8 @@ const UPSTREAMS = [
   { prefix: "/apihub/", host: "https://bbs-api.miyoushe.com" },
   { prefix: "/user/", host: "https://bbs-api.miyoushe.com" },
   { prefix: "/post/", host: "https://bbs-api.miyoushe.com" },
+  // 鹰角通行证：本地前缀 /hgas/ 映射到 as.hypergryph.com（避免与米游社 /user/ 前缀冲突）
+  { prefix: "/hgas/", host: "https://as.hypergryph.com", stripPrefix: true },
 ];
 
 const ALLOWED_PATHS = new Set([
@@ -24,6 +27,9 @@ const ALLOWED_PATHS = new Set([
   "/account/auth/api/getCookieAccountInfoBySToken",
   "/apihub/app/api/signIn",
   "/user/api/getUserFullInfo",
+  "/hgas/general/v1/gen_scan/login",
+  "/hgas/general/v1/scan_status",
+  "/hgas/user/auth/v1/token_by_scan_code",
 ]);
 
 // 不应转发给上游的请求头（cookie 必须保留：bbs-api 靠它认证）
@@ -40,10 +46,15 @@ function corsHeaders(contentType) {
   return headers;
 }
 
-function buildOutgoingHeaders(request) {
+function buildOutgoingHeaders(request, upstreamRoute) {
   // 透明透传浏览器请求头，仅删除逐跳头，并补齐米哈游必需的默认值
   const headers = new Headers(request.headers);
   HOP_HEADERS.forEach((h) => headers.delete(h));
+  if (upstreamRoute && upstreamRoute.stripPrefix) {
+    // 鹰角接口：仅补通用 UA，不带任何米哈游专用头
+    if (!headers.has("User-Agent")) headers.set("User-Agent", "okhttp/4.11.0");
+    return headers;
+  }
   if (!headers.has("User-Agent")) headers.set("User-Agent", "HYPContainer/1.3.3.182");
   if (!headers.has("x-rpc-app_id")) headers.set("x-rpc-app_id", "ddxf5dufpuyo");
   if (!headers.has("x-rpc-client_type")) headers.set("x-rpc-client_type", "3");
@@ -63,7 +74,7 @@ export default {
     // 诊断路径：回显实际收到的请求与将要转发的头
     if (url.pathname === "/_debug") {
       const incomingBody = request.method === "POST" ? await request.text() : "(no body)";
-      const outgoing = buildOutgoingHeaders(request);
+      const outgoing = buildOutgoingHeaders(request, UPSTREAMS.find((r) => url.pathname.startsWith(r.prefix)));
       return new Response(
         JSON.stringify(
           {
@@ -88,12 +99,13 @@ export default {
     }
 
     const hasBody = request.method === "POST";
+    const upstreamPath = route.stripPrefix ? url.pathname.slice(route.prefix.length - 1) : url.pathname;
 
     let upstream;
     try {
-      upstream = await fetch(route.host + url.pathname + url.search, {
+      upstream = await fetch(route.host + upstreamPath + url.search, {
         method: request.method,
-        headers: buildOutgoingHeaders(request),
+        headers: buildOutgoingHeaders(request, route),
         body: hasBody ? request.body : undefined,
       });
     } catch (err) {

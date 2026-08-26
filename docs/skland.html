@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>森空岛 Token 一键获取 · 书签栏工具</title>
+<title>森空岛 Token 获取 · 扫码 / 书签栏</title>
 <style>
   :root { --bg:#f6f7f9; --card:#fff; --text:#24292f; --muted:#656d76; --brand:#00c3cc; --brand-dark:#00a3aa; --ok:#1a7f37; --err:#cf222e; --border:#d0d7de; }
   @media (prefers-color-scheme: dark) {
@@ -36,14 +36,55 @@
   #bmBtn:active { cursor:grabbing; }
   .dropzone { text-align:center; padding:18px 0 6px; }
   .arrowhint { font-size:13px; color:var(--muted); margin-top:10px; }
+  #qrbox { display:flex; flex-direction:column; align-items:center; gap:12px; min-height:220px; justify-content:center; }
+  #qrimg { width:200px; height:200px; image-rendering:pixelated; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  h2 { font-size:15px; margin-bottom:12px; }
+  .badge { display:inline-block; font-size:11px; font-weight:700; color:#fff; background:var(--brand); border-radius:999px; padding:2px 10px; margin-left:6px; vertical-align:2px; }
+  .hidden { display:none; }
+  .row { display:flex; gap:8px; align-items:center; }
+  input[type=text] { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:13px; min-width:0; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>森空岛 Token 一键获取</h1>
-  <div class="sub">把按钮拖到书签栏，在已登录的森空岛页面点一下，Token 自动复制。全程在你的浏览器内完成</div>
+  <h1>森空岛 Token 获取</h1>
+  <div class="sub">两种方式任选：App 扫码，或书签栏一键读取。全程在你的浏览器内完成</div>
 
   <div class="card">
+    <h2>方式一：森空岛 App 扫码<span class="badge">推荐</span></h2>
+    <ol style="margin-bottom:12px">
+      <li>打开<strong>森空岛 App</strong>，点右上角「扫一扫」</li>
+      <li>扫描下方二维码，在手机上点击「确认登录」</li>
+      <li>Token 会自动生成在页面底部，复制即可</li>
+    </ol>
+    <div id="qrbox">
+      <div class="status" id="status">正在初始化…</div>
+      <img id="qrimg" class="hidden" alt="二维码">
+      <button id="refreshBtn" class="secondary hidden">重新生成二维码</button>
+    </div>
+    <details>
+      <summary>代理设置（首次使用需配置一次）</summary>
+      <p class="tip">扫码需要一个小型 CORS 代理转发鹰角接口（官方接口仅允许自家域名跨域）。请按 README 部署你自己的 Cloudflare Worker（<code>docs/proxy.js</code>），然后把地址填到这里。Token 只在你的浏览器内组装，代理无日志无存储。与米游社扫码页共用同一代理地址。</p>
+      <div class="row" style="margin-top:8px">
+        <input type="text" id="proxyInput" placeholder="https://your-worker.your-name.workers.dev">
+        <button id="saveProxyBtn" class="secondary">保存</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <strong style="font-size:14px">你的 Token（已累计 <span id="count">0</span> 个账号）</strong>
+    <textarea id="output" readonly placeholder="扫码确认后，Token 会出现在这里"></textarea>
+    <div class="tip">多账号 Token 已自动用英文逗号连接，整段复制填入 Secret / api.txt 的 <code>SKLAND_TOKEN</code> 即可。</div>
+    <div class="row" style="margin-top:12px">
+      <button id="copyBtn">复制全部</button>
+      <button id="addBtn" class="secondary">继续添加账号</button>
+      <button id="resetBtn" class="secondary">清空重来</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>方式二：书签栏一键获取<span class="badge">无需扫码</span></h2>
     <ol>
       <li>登录<strong>森空岛网页版</strong>（<a href="https://www.skland.com/" target="_blank" rel="noopener">www.skland.com</a>）或<a href="https://user.hypergryph.com/login" target="_blank" rel="noopener">鹰角网络通行证</a></li>
       <li>把下方按钮<strong>按住拖到浏览器书签栏</strong>松开<br><span style="font-size:12px">（书签栏没显示？按 <strong>Ctrl+Shift+B</strong> / Mac <strong>⌘+Shift+B</strong> 打开）</span></li>
@@ -74,11 +115,150 @@
   <div class="card" style="margin-top:16px">
     <div class="status">常见问题</div>
     <p class="tip warn">⚠️ Token 等同账号密码，仅填入 GitHub Secrets 或 api.txt，切勿告知他人或公开发布。</p>
-    <p class="tip">· 点击书签后提示「请求失败 / 未获取到」：说明该标签页未登录，请先登录森空岛网页版。<br>
-      · 多账号：用浏览器<strong>无痕窗口</strong>分别登录不同账号各取一次，多账号 Token 用英文逗号 <code>,</code> 连接填入。<br>
-      · 获取后请不要在网页上点击「退出登录」（会使 Token 失效）；直接关掉标签页即可。</p>
+    <p class="tip">· 扫码提示「代理请求失败 / 未配置代理」：按上方「代理设置」说明部署并填入你的 Worker 地址。<br>
+      · 点击书签后提示「请求失败 / 未获取到」：说明该标签页未登录，请先登录森空岛网页版。<br>
+      · 多账号：扫码可连续添加；书签方式用浏览器<strong>无痕窗口</strong>分别登录各取一次。多账号 Token 用英文逗号 <code>,</code> 连接填入。<br>
+      · 获取后请不要在网页或 App 上点击「退出登录」（会使 Token 失效）。</p>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function () {
+  var DEFAULT_PROXY = "https://proxy.zyhh.qzz.io"; // 公共代理；如需完全自托管，替换为你自己的 Worker 地址
+  var GEN_URL = "/hgas/general/v1/gen_scan/login";
+  var STATUS_URL = "/hgas/general/v1/scan_status";
+  var TOKEN_URL = "/hgas/user/auth/v1/token_by_scan_code";
+  var APP_CODE = "4ca99fa6b56cc2ba";
+  var POLL_MS = 2500, QR_TTL = 120000;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tokens = [], polling = null, deadline = 0;
+
+  function getProxy() {
+    return (
+      new URLSearchParams(location.search).get("proxy") ||
+      localStorage.getItem("mys_proxy") ||
+      DEFAULT_PROXY
+    ).replace(/\/+$/, "");
+  }
+
+  function setStatus(text, cls) {
+    $("status").textContent = text;
+    $("status").className = "status" + (cls ? " " + cls : "");
+  }
+
+  function callApi(path, opts) {
+    var proxy = getProxy();
+    if (!proxy) return Promise.reject(new Error("未配置代理地址"));
+    return fetch(proxy + path, opts).then(function (r) {
+      if (!r.ok) throw new Error("代理请求失败 HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function renderQR(text) {
+    if (typeof qrcode === "undefined") {
+      setStatus("二维码库加载失败，请改用下方「书签栏」方式获取", "err");
+      return false;
+    }
+    try {
+      var qr = qrcode(0, "L");
+      qr.addData(text);
+      qr.make();
+      $("qrimg").src = qr.createDataURL(8, 4);
+      $("qrimg").classList.remove("hidden");
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function stopPolling() { if (polling) { clearTimeout(polling); polling = null; } }
+
+  function startScan() {
+    stopPolling();
+    $("qrimg").classList.add("hidden");
+    $("refreshBtn").classList.add("hidden");
+    $("resultCard").classList.add("hidden");
+    setStatus("正在生成二维码…");
+
+    callApi(GEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appCode: APP_CODE }),
+    }).then(function (res) {
+      if (res.status !== 0 || !res.data || !res.data.scanUrl) throw new Error(res.msg || "生成二维码失败");
+      if (!renderQR(res.data.scanUrl)) return;
+      setStatus("请使用森空岛 App 扫一扫");
+      deadline = Date.now() + QR_TTL;
+      pollStatus(res.data.scanId);
+    }).catch(function (e) {
+      setStatus(e.message + "（若为代理问题，请在下方「代理设置」检查）", "err");
+      $("refreshBtn").classList.remove("hidden");
+    });
+  }
+
+  function pollStatus(scanId) {
+    if (Date.now() > deadline) {
+      stopPolling();
+      setStatus("二维码已过期（约两分钟有效），请重新生成", "err");
+      $("refreshBtn").classList.remove("hidden");
+      return;
+    }
+    polling = setTimeout(function () {
+      callApi(STATUS_URL + "?scanId=" + encodeURIComponent(scanId)).then(function (res) {
+        if (res.status === 0 && res.data && res.data.scanCode) return onScanned(res.data.scanCode);
+        setStatus((res.msg || "等待扫码…") + "（二维码约两分钟有效）");
+        pollStatus(scanId);
+      }).catch(function (e) {
+        setStatus(e.message + "（请检查代理设置）", "err");
+        $("refreshBtn").classList.remove("hidden");
+      });
+    }, POLL_MS);
+  }
+
+  function onScanned(scanCode) {
+    stopPolling();
+    setStatus("已确认 ✓ 正在换取 Token…", "ok");
+    callApi(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scanCode: scanCode }),
+    }).then(function (res) {
+      var t = res.data && res.data.token;
+      if (res.status !== 0 || !t) throw new Error(res.msg || "换取 Token 失败");
+      tokens.push(t);
+      $("output").value = tokens.join(",");
+      $("count").textContent = tokens.length;
+      $("resultCard").classList.remove("hidden");
+      setStatus("第 " + tokens.length + " 个账号已添加 ✓ 可继续扫下一个", "ok");
+    }).catch(function (e) { setStatus(e.message, "err"); });
+  }
+
+  $("refreshBtn").addEventListener("click", startScan);
+  $("addBtn").addEventListener("click", startScan);
+  $("resetBtn").addEventListener("click", function () {
+    tokens = []; $("output").value = ""; $("count").textContent = "0";
+    startScan();
+  });
+  $("copyBtn").addEventListener("click", function () {
+    var t = $("output");
+    t.select();
+    (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject())
+      .catch(function () { document.execCommand("copy"); });
+    $("copyBtn").textContent = "已复制 ✓";
+    setTimeout(function () { $("copyBtn").textContent = "复制全部"; }, 1500);
+  });
+  $("saveProxyBtn").addEventListener("click", function () {
+    localStorage.setItem("mys_proxy", $("proxyInput").value.trim());
+    $("saveProxyBtn").textContent = "已保存 ✓";
+    setTimeout(function () { $("saveProxyBtn").textContent = "保存"; }, 1500);
+    startScan();
+  });
+  $("proxyInput").value = getProxy();
+
+  startScan();
+})();
+</script>
 
 <script>
 (function () {

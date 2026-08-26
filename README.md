@@ -208,15 +208,23 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 <a id="cred-skland"></a>
 #### 2.1 森空岛凭证获取
 
-**网页书签一键获取（推荐）**
+**网页扫码（推荐）**
 
-[![一键获取 Token](https://img.shields.io/badge/拖动书签-获取Token-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/skland.html)
+[![一键获取 Token](https://img.shields.io/badge/点击扫码-获取Token-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/skland.html)
 
-1.  **添加书签**：点击上方按钮打开网页，把页面里的「📋 获取森空岛Token」按钮按住拖到浏览器书签栏（书签栏没显示可按 `Ctrl+Shift+B`）。
-2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制，填入 Secret 或 `api.txt` 即可。多账号用无痕窗口分别获取后用英文逗号连接。
+1.  **扫码**：点击上方按钮打开网页，用**森空岛 App** 扫描页面上的二维码，在手机上确认登录。
+2.  **复制 Token**：页面会生成可复制的 Token，多账号可连续扫码添加（自动用英文逗号连接），填入 Secret 或 `api.txt` 即可。
 
 > [!NOTE]
-> 全程在你的浏览器内完成：书签只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板，不经过任何第三方服务器。
+> 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Token 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面「代理设置」中替换地址。
+
+**书签栏一键获取（无需扫码）**
+
+1.  **添加书签**：打开[同一页面](https://zyhqwq.github.io/sign-myself/skland.html)，把「方式二」中的「📋 获取森空岛Token」按钮按住拖到浏览器书签栏（书签栏没显示可按 `Ctrl+Shift+B`）。
+2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制。多账号用无痕窗口分别获取后用英文逗号连接。
+
+> [!NOTE]
+> 书签方式全程在你的浏览器内完成、不经过任何服务器：它只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板。
 
 **手动获取**
 
@@ -236,7 +244,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
 
 > [!NOTE]
-> 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
+> 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
 **本地脚本**
 

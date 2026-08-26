@@ -121,7 +121,7 @@ bash run.sh          # 再次运行生效
 
 </details>
 
-> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。GitHub 克隆缓慢时，可在仓库地址前加加速前缀，如 `git clone https://gh-proxy.com/https://github.com/zyhqwq/sign-myself.git`（第三方加速站时效性无法保证，也可手动下载仓库 ZIP 解压后使用）。
+> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。GitHub 克隆缓慢时，可在仓库地址前加加速前缀，如 `git clone https://gh-proxy.com/https://github.com/zyhqwq/sign-myself.git`（第三方加速站时效性无法保证；备用：`git clone https://gh.zyhh.qzz.io/github.com/zyhqwq/sign-myself.git`，注意该站拼接时无需 `https://` 前缀；也可手动下载仓库 ZIP 解压后使用）。
 
 <a id="step-1-termux"></a>
 #### 1.2 Android 手机（Termux）一键运行
@@ -143,7 +143,7 @@ bash run.sh          # 再次运行生效
 > - pip 依赖安装失败时会自动回退清华 PyPI 镜像，一般无需手动处理
 > - GitHub 克隆缓慢：可在仓库地址前加加速前缀，如
 >   `git clone https://gh-proxy.com/https://github.com/zyhqwq/sign-myself.git`
->   （第三方加速站时效性无法保证，也可手动下载仓库 ZIP 解压后使用）
+>   （备用：`git clone https://gh.zyhh.qzz.io/github.com/zyhqwq/sign-myself.git`；第三方加速站时效性无法保证，也可手动下载仓库 ZIP 解压后使用）
 
 > 💡 Termux 在后台可能被系统杀掉导致定时失效：请在系统设置中允许 Termux「自启动 / 无电池优化」，或执行 `termux-wake-lock` 保持唤醒。扫码工具如需生成二维码图片，可选装 `pkg install python-pillow`。
 

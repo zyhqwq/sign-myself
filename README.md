@@ -74,18 +74,24 @@
 
 只需一条命令，跟着向导走完即可，不需要懂编程。
 
-1. **下载项目**
+```bash
+git clone https://github.com/zyhqwq/sign-myself.git; cd sign-myself && python3 setup_sign.py
+```
 
-   ```bash
-   git clone https://github.com/zyhqwq/sign-myself.git
-   cd sign-myself
-   ```
+> 💡 命令可放心重复执行：中途 Ctrl+C 或网络中断后，重新运行同一条命令即可继续。克隆失败时 git 会自动清理残留目录；若目录已存在（上次已成功克隆）则自动跳过下载、直接进入向导。
 
-2. **运行配置向导**
+<details>
+<summary><b>一条命令失败了怎么办？（Ctrl+C / 断网等）</b></summary>
 
-   ```bash
-   python3 setup_sign.py
-   ```
+| 现象 | 处理方式 |
+| :-- | :-- |
+| 克隆时断网 / Ctrl+C | git 会自动清理残留目录，重新执行同一条命令即可 |
+| 提示目录已存在 | 说明代码早已下载好：`cd sign-myself && python3 setup_sign.py` 直接继续 |
+| 向导中按 Ctrl+C | 不会保存任何更改，重跑同一条命令从头再来；此前扫码得到的 Cookie / Token 已写入 `api.txt`，不会丢失 |
+| pip 安装依赖失败 | 向导会自动切换清华镜像源重试；仍失败时按屏幕提示手动安装后重新运行 |
+| GitHub 克隆慢 / 被重置 | 见下方加速说明（加加速前缀或手动下载 ZIP） |
+
+</details>
 
 向导会自动完成所有事：
 

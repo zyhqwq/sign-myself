@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilibili 扫码登录 · 获取签到 Cookie</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#24292f; --muted:#656d76; --brand:#fb7299; --ok:#1a7f37; --err:#cf222e; --border:#d0d7de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --card:#161b22; --text:#e6edf3; --muted:#8b949e; --border:#30363d; }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; justify-content:center; padding:32px 16px; }
+  .wrap { width:100%; max-width:520px; }
+  h1 { font-size:20px; text-align:center; margin-bottom:6px; }
+  .sub { color:var(--muted); font-size:13px; text-align:center; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+  #qrbox { display:flex; flex-direction:column; align-items:center; gap:12px; min-height:220px; justify-content:center; }
+  #qrimg { width:200px; height:200px; image-rendering:pixelated; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  .status { font-size:14px; color:var(--muted); text-align:center; }
+  .status.ok { color:var(--ok); }
+  .status.err { color:var(--err); }
+  button { appearance:none; border:none; border-radius:8px; padding:10px 18px; font-size:14px; cursor:pointer; background:var(--brand); color:#fff; font-weight:600; }
+  button.secondary { background:transparent; color:var(--brand); border:1px solid var(--brand); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  textarea { width:100%; height:64px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; resize:vertical; word-break:break-all; }
+  ol { padding-left:20px; font-size:13px; color:var(--muted); line-height:2; }
+  details { margin-top:16px; font-size:13px; color:var(--muted); }
+  summary { cursor:pointer; }
+  .row { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  input[type=text] { flex:1; min-width:180px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:13px; }
+  .hidden { display:none; }
+  .tip { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.8; }
+  .fieldlabel { font-size:12px; font-weight:700; margin-top:12px; display:block; }
+  .fieldwrap { flex:1; min-width:220px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bilibili 扫码登录</h1>
+  <div class="sub">扫码确认后生成签到用 Cookie（SESSDATA / DedeUserID / bili_jct），全程在你的浏览器内组装</div>
+
+  <div class="card">
+    <div id="qrbox">
+      <div class="status" id="status">正在初始化…</div>
+      <img id="qrimg" class="hidden" alt="二维码">
+      <button id="refreshBtn" class="secondary hidden">重新生成二维码</button>
+    </div>
+    <ol style="margin-top:16px">
+      <li>打开<strong>哔哩哔哩 App</strong>，点右上角「扫一扫」</li>
+      <li>扫描上方二维码</li>
+      <li>在手机上点击「确认登录」</li>
+    </ol>
+  </div>
+
+  <details>
+    <summary>代理设置（首次使用需配置一次）</summary>
+    <p class="tip">本页需要一个小型 CORS 代理访问 B 站接口（官方接口仅允许自家域名跨域）。请按 README 部署你自己的 Cloudflare Worker（<code>docs/proxy.js</code>），然后把地址填到这里。Cookie 只在你的浏览器内解析，代理无日志无存储。与米游社/森空岛扫码页共用同一代理地址。</p>
+    <div class="row">
+      <input type="text" id="proxyInput" placeholder="https://your-worker.your-name.workers.dev">
+      <button id="saveProxyBtn" class="secondary">保存</button>
+    </div>
+  </details>
+
+  <div class="card hidden" id="resultCard" style="margin-top:16px">
+    <strong style="font-size:14px">你的 Cookie（已累计 <span id="count">0</span> 个账号）</strong>
+
+    <span class="fieldlabel">Secret：<code>BILI_SESSDATA</code>（必需）</span>
+    <textarea id="outSessdata" readonly placeholder="扫码成功后自动填充"></textarea>
+
+    <span class="fieldlabel">Secret：<code>BILI_DEDEUSERID</code>（必需）</span>
+    <textarea id="outDede" readonly></textarea>
+
+    <span class="fieldlabel">Secret：<code>BILI_JCT</code>（可选，建议填写）</span>
+    <textarea id="outJct" readonly></textarea>
+
+    <div class="tip">多账号各字段已自动用英文逗号连接，按位置一一对应；逐个复制填入同名 Secret 即可。</div>
+    <div class="row">
+      <button id="addBtn" class="secondary">继续添加账号</button>
+      <button id="resetBtn" class="secondary">清空重来</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="tip warn" style="margin-top:0">⚠️ Cookie 等同账号密码，仅填入 GitHub Secrets 或 api.txt，切勿告知他人或公开发布。</p>
+    <p class="tip">· 提示代理相关错误时，请在上方「代理设置」检查 Worker 地址。<br>· 二维码约三分钟有效，过期后点「重新生成二维码」。<br>· `SESSDATA` 过期后（通知提示 Cookie 已失效）重新扫码即可。</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function () {
+  var DEFAULT_PROXY = "https://proxy.zyhh.qzz.io"; // 公共代理；如需完全自托管，替换为你自己的 Worker 地址
+  var GEN_URL = "/bili/x/passport-login/web/qrcode/generate";
+  var POLL_URL = "/bili/x/passport-login/web/qrcode/poll";
+  var POLL_MS = 2500, QR_TTL = 180000;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var accounts = [];   // [{sessdata, dede, jct}]
+  var polling = null, deadline = 0;
+
+  function getProxy() {
+    return (
+      new URLSearchParams(location.search).get("proxy") ||
+      localStorage.getItem("mys_proxy") ||
+      DEFAULT_PROXY
+    ).replace(/\/+$/, "");
+  }
+
+  function setStatus(text, cls) {
+    $("status").textContent = text;
+    $("status").className = "status" + (cls ? " " + cls : "");
+  }
+
+  function callApi(path, opts) {
+    var proxy = getProxy();
+    if (!proxy) return Promise.reject(new Error("未配置代理地址"));
+    return fetch(proxy + path, opts).then(function (r) {
+      if (!r.ok) throw new Error("代理请求失败 HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function renderQR(text) {
+    if (typeof qrcode === "undefined") {
+      setStatus("二维码库加载失败，请刷新页面重试", "err");
+      return false;
+    }
+    try {
+      var qr = qrcode(0, "L");
+      qr.addData(text);
+      qr.make();
+      $("qrimg").src = qr.createDataURL(8, 4);
+      $("qrimg").classList.remove("hidden");
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function stopPolling() { if (polling) { clearTimeout(polling); polling = null; } }
+
+  function startLogin() {
+    stopPolling();
+    $("qrimg").classList.add("hidden");
+    $("refreshBtn").classList.add("hidden");
+    setStatus("正在生成二维码…");
+
+    callApi(GEN_URL).then(function (res) {
+      if (res.code !== 0 || !res.data || !res.data.url || !res.data.qrcode_key)
+        throw new Error(res.message || "生成二维码失败");
+      if (!renderQR(res.data.url)) return;
+      setStatus("请使用哔哩哔哩 App 扫一扫");
+      deadline = Date.now() + QR_TTL;
+      pollStatus(res.data.qrcode_key);
+    }).catch(function (e) {
+      setStatus(e.message + "（若为代理问题，请在「代理设置」检查）", "err");
+      $("refreshBtn").classList.remove("hidden");
+    });
+  }
+
+  function pollStatus(key) {
+    if (Date.now() > deadline) {
+      stopPolling();
+      setStatus("二维码已过期（约三分钟有效），请重新生成", "err");
+      $("refreshBtn").classList.remove("hidden");
+      return;
+    }
+    polling = setTimeout(function () {
+      callApi(POLL_URL + "?qrcode_key=" + encodeURIComponent(key)).then(function (res) {
+        if (res.code !== 0 || !res.data) throw new Error(res.message || "查询状态失败");
+        var s = res.data.code;
+        if (s === 0 && res._set_cookies) return onConfirmed(res._set_cookies);
+        if (s === 86090) setStatus("已扫描 ✓ 请在手机上点击确认登录", "ok");
+        else if (s === 86038) throw new Error("二维码已失效，请重新生成");
+        else setStatus("等待扫码…（二维码约三分钟有效）");
+        pollStatus(key);
+      }).catch(function (e) {
+        stopPolling();
+        setStatus(e.message + "（若为代理问题，请在「代理设置」检查）", "err");
+        $("refreshBtn").classList.remove("hidden");
+      });
+    }, POLL_MS);
+  }
+
+  function parseCookies(list) {
+    var want = { SESSDATA: "", DedeUserID: "", bili_jct: "" };
+    (list || []).forEach(function (c) {
+      var i = c.indexOf("=");
+      if (i < 1) return;
+      var k = c.slice(0, i).trim(), v = c.slice(i + 1).split(";")[0].trim();
+      if (k in want && !want[k]) want[k] = v;
+    });
+    return want;
+  }
+
+  function onConfirmed(setCookies) {
+    stopPolling();
+    setStatus("登录成功 ✓ 正在解析 Cookie…", "ok");
+    var c = parseCookies(setCookies);
+    if (!(c.SESSDATA && c.DedeUserID)) {
+      setStatus("返回数据缺少 SESSDATA/DedeUserID，获取失败", "err");
+      $("refreshBtn").classList.remove("hidden");
+      return;
+    }
+    accounts.push({ sessdata: c.SESSDATA, dede: c.DedeUserID, jct: c.bili_jct });
+    var sd = [], dd = [], jc = [];
+    accounts.forEach(function (a) { sd.push(a.sessdata); dd.push(a.dede); jc.push(a.jct); });
+    $("outSessdata").value = sd.join(",");
+    $("outDede").value = dd.join(",");
+    $("outJct").value = jc.filter(function (x) { return x; }).join(",");
+    $("count").textContent = accounts.length;
+    $("resultCard").classList.remove("hidden");
+    setStatus("第 " + accounts.length + " 个账号已添加 ✓ 可继续扫下一个", "ok");
+  }
+
+  $("refreshBtn").addEventListener("click", startLogin);
+  $("addBtn").addEventListener("click", startLogin);
+  $("resetBtn").addEventListener("click", function () {
+    accounts = [];
+    ["outSessdata", "outDede", "outJct"].forEach(function (id) { $(id).value = ""; });
+    $("count").textContent = "0";
+    $("resultCard").classList.add("hidden");
+    startLogin();
+  });
+  $("saveProxyBtn").addEventListener("click", function () {
+    localStorage.setItem("mys_proxy", $("proxyInput").value.trim());
+    $("saveProxyBtn").textContent = "已保存 ✓";
+    setTimeout(function () { $("saveProxyBtn").textContent = "保存"; }, 1500);
+    startLogin();
+  });
+  $("proxyInput").value = getProxy();
+
+  startLogin();
+})();
+</script>
+</body>
+</html>

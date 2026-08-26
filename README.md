@@ -91,7 +91,7 @@
 
 - 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；极简系统若连 pip 都没有，补装时需要管理员权限）
 - 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2 凭证获取](#cred)）
-- 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook
+- 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook / 邮件(SMTP)
 - **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
 
@@ -270,12 +270,29 @@ python mihoyo/miyoushe_qr_login.py
 <a id="cred-bilibili"></a>
 #### 2.3 Bilibili Cookie 获取
 
+**网页扫码（推荐）**
+
+[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-fb7299?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/bilibili.html)
+
+1.  **扫码**：点击上方按钮打开网页，用**哔哩哔哩 App** 扫描页面上的二维码，在手机上确认登录。
+2.  **复制 Cookie**：页面会分别生成 `SESSDATA`、`DedeUserID`、`bili_jct` 三个值，逐个复制填入对应 Secret；多账号可连续扫码添加（各字段自动用英文逗号连接、按位置一一对应）。
+
+> [!NOTE]
+> 与米游社/森空岛页共用同一代理（默认 `proxy.zyhh.qzz.io`），自托管方法相同。Cookie 只在你的浏览器内解析，代理无日志无存储。
+
+**手动获取**
+
+<details>
+<summary><b>不用网页？从浏览器手动获取</b></summary>
+
 1.  在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
 2.  按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
 3.  找到以下三个值并复制：
     *   `SESSDATA`（必需）
     *   `DedeUserID`（必需）
     *   `bili_jct`（可选）
+
+</details>
 
 <a id="step-3-games"></a>
 ### 3. 选择要签到的游戏（可选）
@@ -327,6 +344,7 @@ python mihoyo/miyoushe_qr_login.py
 
 | 通知平台 | 名称 | 值 |
 | :--- | :--- | :--- |
+| **邮件 (SMTP)** | `SMTP_HOST`<br>`SMTP_PORT`<br>`SMTP_USER`<br>`SMTP_PASS`<br>`SMTP_TO` | `SMTP_HOST`/`SMTP_PORT` 为邮箱服务商的 SMTP 地址与端口（`465` 为 SSL，`587` 为 STARTTLS）。`SMTP_USER` 为发件邮箱，`SMTP_PASS` 填授权码（QQ、163 等需先在邮箱设置中开启 SMTP 并生成授权码），`SMTP_TO` 为收件邮箱，多个用英文逗号分隔。 |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 |
 
 <a id="telegram-steps"></a>
@@ -463,7 +481,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 │   └── miyoushe_debug.py         # Cookie 诊断工具
 ├── docs/
 │   ├── index.html                # 网页版扫码获取米游社 Cookie 页面（GitHub Pages）
-│   ├── skland.html               # 书签栏一键获取森空岛 Token 页面（GitHub Pages）
+│   ├── skland.html               # 扫码 / 书签栏获取森空岛 Token 页面（GitHub Pages）
+│   ├── bilibili.html             # 网页版扫码获取 Bilibili Cookie 页面（GitHub Pages）
 │   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）
 └── .github/workflows/
     ├── daily-sign.yml            # 每日签到工作流（森空岛 + 米游社，按序号选择）

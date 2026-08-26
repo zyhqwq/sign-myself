@@ -40,6 +40,11 @@ jobs:
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         SERVER_CHAN_KEY: ${{ secrets.SERVER_CHAN_KEY }}
         CUSTOM_WEBHOOK_URL: ${{ secrets.CUSTOM_WEBHOOK_URL }}
+        SMTP_HOST: ${{ secrets.SMTP_HOST }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASS: ${{ secrets.SMTP_PASS }}
+        SMTP_TO: ${{ secrets.SMTP_TO }}
         DEBUG_NOTIFY: ${{ secrets.DEBUG_NOTIFY }}
       run: |
         python test_notify.py

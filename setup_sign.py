@@ -234,6 +234,7 @@ NOTIFY_MENU = """
   5. 钉钉         （支持加签）
   6. Server酱     （推送到个人微信）
   7. 自定义 Webhook
+  8. 邮件         （SMTP，推送到邮箱）
 多选示例: 输入 2,5 表示同时配置 Telegram 和钉钉；直接回车 = 不使用外部通知
 """
 
@@ -251,8 +252,8 @@ def collect_notify(cfg):
         return
 
     sel = ask(NOTIFY_MENU + "请选择要配置的渠道序号", default="",
-              validator=lambda v: all(c.strip() in "1234567" and c.strip() for c in v.replace(" ", "").split(",") if c.strip()) or v == "",
-              errmsg="只能输入 1-7 的数字，多个用英文逗号分隔")
+              validator=lambda v: all(c.strip() in "12345678" and c.strip() for c in v.replace(" ", "").split(",") if c.strip()) or v == "",
+              errmsg="只能输入 1-8 的数字，多个用英文逗号分隔")
     picks = {c.strip() for c in sel.replace(" ", "").split(",") if c.strip()}
     if not picks:
         print("  跳过：不配置外部通知")
@@ -290,6 +291,16 @@ def collect_notify(cfg):
                 "自定义 Webhook 地址",
                 validator=lambda v: v.startswith(("http://", "https://")),
                 errmsg="必须以 http:// 或 https:// 开头")
+        elif p == "8":
+            cfg["SMTP_HOST"] = ask_nonempty("SMTP 服务器地址（如 smtp.qq.com）")
+            cfg["SMTP_PORT"] = ask(
+                "SMTP 端口（465=SSL，587=STARTTLS，直接回车=465）",
+                default="465",
+                validator=lambda v: v.isdigit() and 0 < int(v) < 65536,
+                errmsg="端口应为数字")
+            cfg["SMTP_USER"] = ask_nonempty("发件邮箱地址")
+            cfg["SMTP_PASS"] = ask_nonempty("SMTP 授权码/密码（QQ、163 等需在邮箱设置中开启 SMTP 后生成授权码）")
+            cfg["SMTP_TO"] = ask_nonempty("收件邮箱地址（多个用英文逗号分隔）")
 
 
 # ================== 写入 api.txt ==================
@@ -300,6 +311,7 @@ TEMPLATE_ORDER = [
     "WECHAT_WEBHOOK_URL", "FEISHU_WEBHOOK_URL",
     "DINGTALK_WEBHOOK_URL", "DINGTALK_SECRET",
     "SERVER_CHAN_KEY", "CUSTOM_WEBHOOK_URL",
+    "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_TO",
 ]
 
 
@@ -340,7 +352,8 @@ NOTIFY_CFG_KEYS = [
     "DISCORD_WEBHOOK_URL", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
     "WECHAT_WEBHOOK_URL", "FEISHU_WEBHOOK_URL",
     "DINGTALK_WEBHOOK_URL", "DINGTALK_SECRET",
-    "SERVER_CHAN_KEY", "CUSTOM_WEBHOOK_URL"]
+    "SERVER_CHAN_KEY", "CUSTOM_WEBHOOK_URL",
+    "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_TO"]
 
 
 def _has_any_notify(cfg):

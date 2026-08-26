@@ -52,6 +52,13 @@ cat > api.txt <<'EOF'
 
 # Server酱 SendKey（推送到个人微信）
 #SERVER_CHAN_KEY=
+
+# 邮件通知（SMTP，465 为 SSL，587 为 STARTTLS；PASS 填授权码不是登录密码）
+#SMTP_HOST=
+#SMTP_PORT=465
+#SMTP_USER=
+#SMTP_PASS=
+#SMTP_TO=
 EOF
 
 echo ""

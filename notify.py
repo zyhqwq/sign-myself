@@ -7,10 +7,13 @@ import json
 import hmac
 import hashlib
 import base64
+import smtplib
 import traceback
 import urllib.parse
 import requests
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.header import Header
 
 WECHAT_WEBHOOK_URL = os.environ.get('WECHAT_WEBHOOK_URL', '')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
@@ -23,6 +26,17 @@ BARK_URL = os.environ.get('BARK_URL', '')
 PUSHPLUS_TOKEN = os.environ.get('PUSHPLUS_TOKEN', '')
 SERVER_CHAN_KEY = os.environ.get('SERVER_CHAN_KEY', '')
 CUSTOM_WEBHOOK_URL = os.environ.get('CUSTOM_WEBHOOK_URL', '')
+
+# ---- 邮件（SMTP）----
+SMTP_HOST = os.environ.get('SMTP_HOST', '')
+try:
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', '465') or '465')
+except ValueError:
+    SMTP_PORT = 465
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASS = os.environ.get('SMTP_PASS', '')
+SMTP_TO = os.environ.get('SMTP_TO', '')
+
 DEBUG_NOTIFY = os.environ.get('DEBUG_NOTIFY', '').lower() in ('true', '1', 'yes')
 
 
@@ -229,6 +243,40 @@ def _send_serverchan(title, message, verbose=False):
         return str(e)
 
 
+def _send_email(title, message, verbose=False):
+    """通过 SMTP 发送邮件：465 端口走 SSL，其余端口尝试 STARTTLS"""
+    try:
+        raw = SMTP_TO.replace('，', ',').replace('；', ';').replace(';', ',')
+        recipients = [x.strip() for x in raw.split(',') if x.strip()] or [SMTP_USER]
+
+        msg = MIMEText(message, 'plain', 'utf-8')
+        msg['Subject'] = Header(title, 'utf-8')
+        msg['From'] = SMTP_USER
+        msg['To'] = ', '.join(recipients)
+
+        _debug(verbose, "smtp", host=SMTP_HOST, port=SMTP_PORT, to=recipients)
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+            try:
+                server.starttls()
+            except Exception as e:
+                _debug(verbose, "smtp", starttls=f"skipped: {e}")
+        try:
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_USER, recipients, msg.as_string())
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
+        return "OK"
+    except Exception as e:
+        _debug(verbose, "smtp", exception=traceback.format_exc())
+        return str(e)
+
+
 from datetime import timezone, timedelta
 
 BEIJING_TZ = timezone(timedelta(hours=8))
@@ -290,6 +338,8 @@ def send_notification(title: str, message: str, extra_data=None, verbose=False):
         results.append(("PushPlus", _send_pushplus(title, message, verbose)))
     if SERVER_CHAN_KEY:
         results.append(("Server酱", _send_serverchan(title, message, verbose)))
+    if SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_TO:
+        results.append(("邮件", _send_email(title, message, verbose)))
 
     return results
 
@@ -326,6 +376,7 @@ def get_webhook_status():
         (BARK_URL, "Bark"),
         (PUSHPLUS_TOKEN, "PushPlus"),
         (SERVER_CHAN_KEY, "Server酱"),
+        (SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_TO, "邮件(SMTP)"),
     ]
     for configured, name in checks:
         status.append(f" {name} 已配置" if configured else f" {name} 未配置")

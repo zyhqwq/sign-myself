@@ -130,16 +130,15 @@ bash run.sh          # 再次运行生效
 <details>
 <summary><b>点击展开：Fork 仓库、配置 Secrets 并使用 Actions 每日自动签到</b></summary>
 
-> [!WARNING]
-> 仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
+> ⚠️ **再次提示**：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 
 <a id="actions-fork"></a>
-##### 步骤 1：Fork 本仓库
+#### 步骤 1：Fork 本仓库
 
 点击本页右上角的 `Fork` 按钮，将这个项目复制到你自己的 GitHub 账号下。
 
 <a id="actions-skland"></a>
-##### 步骤 2：配置森空岛 Token（明日方舟 + 终末地）
+#### 步骤 2：配置森空岛 Token（明日方舟 + 终末地）
 
 你需要获取并配置你的 `SKLAND_TOKEN`，明日方舟和终末地签到共用此 Token。
 
@@ -153,12 +152,11 @@ bash run.sh          # 再次运行生效
     | `SKLAND_TOKEN` | 森空岛 Token | 明日方舟和终末地签到共用，多账号用英文逗号 `,` 分隔 |
 
 <a id="actions-mihoyo"></a>
-##### 步骤 3：配置米游社 Cookie
+#### 步骤 3：配置米游社 Cookie
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
-> [!NOTE]
-> 米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
+> 📝 **注意**：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
 Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社Cookie获取](#cred-mihoyo)。
 
@@ -171,10 +169,9 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
     | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
 <a id="actions-bilibili"></a>
-##### 步骤 4：配置 Bilibili Cookie（可选）
+#### 步骤 4：配置 Bilibili Cookie（可选）
 
-> [!NOTE]
-> 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
+> 💡 **此步骤可选**：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
 1.  **获取 Cookie**：步骤见 [2.3 Bilibili Cookie 获取](#cred-bilibili)。
 2.  **添加 Secret**:
@@ -190,7 +187,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
     支持多账号：多个账号的值用英文逗号 `,` 分隔填入同一个 Secret，按位置一一对应。
 
 <a id="actions-run"></a>
-##### 步骤 5：启用并运行
+#### 步骤 5：启用并运行
 
 *   进入你仓库的 `Actions` 标签页。
 *   点击 `I understand my workflows, go ahead and enable them`。

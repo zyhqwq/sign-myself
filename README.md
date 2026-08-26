@@ -208,6 +208,18 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 <a id="cred-skland"></a>
 #### 2.1 森空岛凭证获取
 
+**网页书签一键获取（推荐）**
+
+[![一键获取 Token](https://img.shields.io/badge/拖动书签-获取Token-00c3cc?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/skland.html)
+
+1.  **添加书签**：点击上方按钮打开网页，把页面里的「📋 获取森空岛Token」按钮按住拖到浏览器书签栏（书签栏没显示可按 `Ctrl+Shift+B`）。
+2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制，填入 Secret 或 `api.txt` 即可。多账号用无痕窗口分别获取后用英文逗号连接。
+
+> [!NOTE]
+> 全程在你的浏览器内完成：书签只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板，不经过任何第三方服务器。
+
+**手动获取**
+
 1.  在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
 2.  登录后进入 https://web-api.skland.com/account/info/hg
 3.  返回内容格式如下：`{"code":0,"data":{"content":"****"},"msg":"..."}`
@@ -423,7 +435,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 │   ├── miyoushe_qr_login.py      # 扫码登录工具（本地运行获取 Cookie）
 │   └── miyoushe_debug.py         # Cookie 诊断工具
 ├── docs/
-│   ├── index.html                # 网页版扫码获取 Cookie 页面（GitHub Pages）
+│   ├── index.html                # 网页版扫码获取米游社 Cookie 页面（GitHub Pages）
+│   ├── skland.html               # 书签栏一键获取森空岛 Token 页面（GitHub Pages）
 │   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）
 └── .github/workflows/
     ├── daily-sign.yml            # 每日签到工作流（森空岛 + 米游社，按序号选择）

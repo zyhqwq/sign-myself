@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>森空岛 Token 一键获取 · 书签栏工具</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#24292f; --muted:#656d76; --brand:#00c3cc; --brand-dark:#00a3aa; --ok:#1a7f37; --err:#cf222e; --border:#d0d7de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --card:#161b22; --text:#e6edf3; --muted:#8b949e; --border:#30363d; }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; justify-content:center; padding:32px 16px; }
+  .wrap { width:100%; max-width:520px; }
+  h1 { font-size:20px; text-align:center; margin-bottom:6px; }
+  .sub { color:var(--muted); font-size:13px; text-align:center; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+  .status { font-size:14px; color:var(--muted); }
+  button { appearance:none; border:none; border-radius:8px; padding:10px 18px; font-size:14px; cursor:pointer; background:var(--brand); color:#fff; font-weight:600; }
+  button.secondary { background:transparent; color:var(--brand); border:1px solid var(--brand); }
+  textarea { width:100%; height:90px; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; resize:vertical; word-break:break-all; }
+  ol { padding-left:20px; font-size:13px; color:var(--muted); line-height:2.1; }
+  details { margin-top:16px; font-size:13px; color:var(--muted); }
+  summary { cursor:pointer; }
+  .tip { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.8; }
+  .tip.warn { color:var(--err); }
+  a { color:var(--brand); text-decoration:none; }
+  #bmBtn {
+    display:inline-block; user-select:none; -webkit-user-select:none;
+    background:linear-gradient(135deg,#00c3cc,#4facfe);
+    color:#fff; font-size:15px; font-weight:700;
+    padding:12px 26px; border-radius:999px; cursor:grab;
+    border:2px dashed rgba(255,255,255,.6);
+    box-shadow:0 4px 14px rgba(0,195,204,.35);
+  }
+  #bmBtn:active { cursor:grabbing; }
+  .dropzone { text-align:center; padding:18px 0 6px; }
+  .arrowhint { font-size:13px; color:var(--muted); margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>森空岛 Token 一键获取</h1>
+  <div class="sub">把按钮拖到书签栏，在已登录的森空岛页面点一下，Token 自动复制。全程在你的浏览器内完成</div>
+
+  <div class="card">
+    <ol>
+      <li>登录<strong>森空岛网页版</strong>（<a href="https://www.skland.com/" target="_blank" rel="noopener">www.skland.com</a>）或<a href="https://user.hypergryph.com/login" target="_blank" rel="noopener">鹰角网络通行证</a></li>
+      <li>把下方按钮<strong>按住拖到浏览器书签栏</strong>松开<br><span style="font-size:12px">（书签栏没显示？按 <strong>Ctrl+Shift+B</strong> / Mac <strong>⌘+Shift+B</strong> 打开）</span></li>
+      <li>回到森空岛标签页，点击书签栏里的「📋 获取森空岛Token」，Token 会自动弹出并复制</li>
+    </ol>
+    <div class="dropzone">
+      <a id="bmBtn" href="javascript:(function()%7Bvar%20h%3Dlocation.hostname%2Cg%3D%2Fhypergryph%5C.com%24%2F.test(h)%2Cu%3Dg%3F'https%3A%2F%2Fweb-api.hypergryph.com%2Faccount%2Finfo%2Fhg'%3A'https%3A%2F%2Fweb-api.skland.com%2Faccount%2Finfo%2Fhg'%3Bif(!g%26%26!%2Fskland%5C.com%24%2F.test(h))%7Balert('%E8%AF%B7%E5%85%88%E6%89%93%E5%BC%80%E6%A3%AE%E7%A9%BA%E5%B2%9B%E7%BD%91%E9%A1%B5%E7%89%88%20www.skland.com%20%E5%B9%B6%E7%99%BB%E5%BD%95%EF%BC%8C%E5%86%8D%E7%82%B9%E5%87%BB%E6%AD%A4%E4%B9%A6%E7%AD%BE')%3Breturn%3B%7Dfetch(u%2C%7Bcredentials%3A'include'%7D).then(function(r)%7Breturn%20r.json()%7D).then(function(d)%7Bvar%20t%3Dd%26%26d.data%26%26d.data.content%3Bif(!t)%7Balert('%E6%9C%AA%E8%8E%B7%E5%8F%96%E5%88%B0%20Token%EF%BC%8C%E5%8F%AF%E8%83%BD%E5%B0%9A%E6%9C%AA%E7%99%BB%E5%BD%95%E3%80%82%E8%AF%B7%E5%9C%A8%E6%9C%AC%E9%A1%B5%E9%9D%A2%E7%99%BB%E5%BD%95%E5%90%8E%E9%87%8D%E8%AF%95%E3%80%82%5Cn%E8%BF%94%E5%9B%9E%EF%BC%9A'%2BJSON.stringify(d).slice(0%2C120))%3Breturn%3B%7Dif(navigator.clipboard%26%26navigator.clipboard.writeText)%7Bnavigator.clipboard.writeText(t).then(function()%7Balert('Token%20%E5%B7%B2%E5%A4%8D%E5%88%B6%E5%88%B0%E5%89%AA%E8%B4%B4%E6%9D%BF%EF%BC%8C%E8%AF%B7%E7%B2%98%E8%B4%B4%E5%88%B0%20SKLAND_TOKEN%EF%BC%88%E5%88%87%E5%8B%BF%E6%B3%84%E9%9C%B2%EF%BC%89%EF%BC%9A%5Cn%5Cn'%2Bt)%7D%2Cfunction()%7Bwindow.prompt('%E8%AF%B7%E6%89%8B%E5%8A%A8%E5%A4%8D%E5%88%B6%20Token%EF%BC%9A'%2Ct)%7D)%7Delse%7Bwindow.prompt('%E8%AF%B7%E6%89%8B%E5%8A%A8%E5%A4%8D%E5%88%B6%20Token%EF%BC%9A'%2Ct)%7D%7D).catch(function(e)%7Balert('%E8%AF%B7%E6%B1%82%E5%A4%B1%E8%B4%A5%EF%BC%8C%E8%AF%B7%E7%A1%AE%E8%AE%A4%E5%B7%B2%E5%9C%A8%E6%9C%AC%E7%AB%99%E7%99%BB%E5%BD%95%E5%90%8E%E9%87%8D%E8%AF%95%E3%80%82%5Cn'%2Be)%7D)%7D)()%3B" onclick="return false;" draggable="true">📋 获取森空岛Token（拖我）</a>
+      <div class="arrowhint">↑ 按住拖到书签栏 ↑</div>
+    </div>
+  </div>
+
+  <details>
+    <summary>拖不动？手动添加书签</summary>
+    <p class="tip">在书签栏右键 →「添加网页」/「新建书签」，名称随意（如 <code>获取Token</code>），地址粘贴下面这段；或在下面点「复制链接」，再粘到书签地址里。</p>
+    <textarea id="bmText" readonly></textarea>
+    <div style="margin-top:8px"><button id="copyBmBtn" class="secondary">复制链接</button></div>
+  </details>
+
+  <details>
+    <summary>不用书签？传统手动方法</summary>
+    <p class="tip">
+      1. 在电脑浏览器登录 <a href="https://www.skland.com/" target="_blank" rel="noopener">森空岛</a>；<br>
+      2. 打开 <a href="https://web-api.skland.com/account/info/hg" target="_blank" rel="noopener">web-api.skland.com/account/info/hg</a>；<br>
+      3. 复制返回 JSON 中 <code>{"content":"****"}</code> 里 <code>****</code> 的内容即为 Token。
+    </p>
+  </details>
+
+  <div class="card" style="margin-top:16px">
+    <div class="status">常见问题</div>
+    <p class="tip warn">⚠️ Token 等同账号密码，仅填入 GitHub Secrets 或 api.txt，切勿告知他人或公开发布。</p>
+    <p class="tip">· 点击书签后提示「请求失败 / 未获取到」：说明该标签页未登录，请先登录森空岛网页版。<br>
+      · 多账号：用浏览器<strong>无痕窗口</strong>分别登录不同账号各取一次，多账号 Token 用英文逗号 <code>,</code> 连接填入。<br>
+      · 获取后请不要在网页上点击「退出登录」（会使 Token 失效）；直接关掉标签页即可。</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var link = document.getElementById("bmBtn");
+  var box = document.getElementById("bmText");
+  box.value = link.getAttribute("href");
+  document.getElementById("copyBmBtn").addEventListener("click", function () {
+    var t = box;
+    t.select();
+    (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject())
+      .catch(function () { document.execCommand("copy"); });
+    document.getElementById("copyBmBtn").textContent = "已复制 ✓";
+    setTimeout(function () { document.getElementById("copyBmBtn").textContent = "复制链接"; }, 1500);
+  });
+})();
+</script>
+</body>
+</html>

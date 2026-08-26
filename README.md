@@ -162,9 +162,9 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 
 **添加 Secret**：扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`，添加以下 Secret：
 
-    | Name | Secret | 说明 |
-    | :--- | :--- | :--- |
-    | `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
+| Name | Secret | 说明 |
+| :--- | :--- | :--- |
+| `MIYOUSHE_COOKIE` | 扫码得到的完整 Cookie | 含 `stoken` 等字段，多账号自动以英文逗号分隔 |
 
 <a id="actions-bilibili"></a>
 #### 步骤 4：配置 Bilibili Cookie（可选）

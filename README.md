@@ -218,7 +218,8 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 > [!NOTE]
 > 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Token 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面「代理设置」中替换地址。
 
-**书签栏一键获取（无需扫码）**
+<details>
+<summary><b>书签栏一键获取（无需扫码）</b></summary>
 
 1.  **添加书签**：打开[同一页面](https://zyhqwq.github.io/sign-myself/skland.html)，把「方式二」中的「📋 获取森空岛Token」按钮按住拖到浏览器书签栏（书签栏没显示可按 `Ctrl+Shift+B`）。
 2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制。多账号用无痕窗口分别获取后用英文逗号连接。
@@ -226,12 +227,17 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 > [!NOTE]
 > 书签方式全程在你的浏览器内完成、不经过任何服务器：它只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板。
 
-**手动获取**
+</details>
+
+<details>
+<summary><b>手动获取</b></summary>
 
 1.  在电脑浏览器中登录 [森空岛](https://www.skland.com/)。
 2.  登录后进入 https://web-api.skland.com/account/info/hg
 3.  返回内容格式如下：`{"code":0,"data":{"content":"****"},"msg":"..."}`
 4.  找到 `{"content":"****"}`，复制 `****` 中的内容，即为 Token。
+
+</details>
 
 <a id="cred-mihoyo"></a>
 #### 2.2 米游社Cookie获取
@@ -246,7 +252,8 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 > [!NOTE]
 > 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
-**本地脚本**
+<details>
+<summary><b>本地脚本</b></summary>
 
 ```bash
 pip install -r requirements.txt
@@ -254,6 +261,8 @@ python mihoyo/miyoushe_qr_login.py
 ```
 
 终端会打印二维码，米游社 App 扫码确认后输出 Cookie。
+
+</details>
 
 > [!NOTE]
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
@@ -323,6 +332,9 @@ python mihoyo/miyoushe_qr_login.py
 <a id="telegram-steps"></a>
 ### Telegram 机器人创建步骤
 
+<details>
+<summary><b>点击展开详细步骤</b></summary>
+
 1.  **创建机器人，获取 Token**
     - 在 Telegram 搜索 `@BotFather`，打开对话
     - 发送 `/newbot`
@@ -341,8 +353,13 @@ python mihoyo/miyoushe_qr_login.py
     - `TELEGRAM_BOT_TOKEN` → 第 1 步的 Token
     - `TELEGRAM_CHAT_ID` → 第 2 步的 Chat ID（数字）
 
+</details>
+
 <a id="dingtalk-steps"></a>
 ### 钉钉机器人创建步骤
+
+<details>
+<summary><b>点击展开详细步骤</b></summary>
 
 1.  **创建机器人**
     - 登录钉钉客户端，进入想接收通知的**群聊**
@@ -367,6 +384,8 @@ python mihoyo/miyoushe_qr_login.py
     - 如果安全设置选择了"加签"，还需额外添加：
       - Name: `DINGTALK_SECRET`
       - Value: 粘贴 `SEC` 开头的密钥
+
+</details>
 
 > [!NOTE]
 > 代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。

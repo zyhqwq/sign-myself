@@ -581,6 +581,7 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 - 米游社扫码登录流程参考了 [TRSS-Plugin](https://github.com/TimeRainStarSky/TRSS-Plugin)
 - 米游社游戏签到接口、请求头与 act_id 参考了 [MihoyoBBSTools](https://github.com/Womsxd/MihoyoBBSTools)、[astrbot_plugin_miyoqian](https://github.com/QzKevin/astrbot_plugin_miyoqian)、[sign-task](https://github.com/starudream/sign-task)
 - 米哈游 API 盐值与签名算法参考了 [mihoyo-api-collect](https://github.com/UIGF-org/mihoyo-api-collect)
+- 安卓端一键运行与图形化编辑配置依赖开源应用 [Termux](https://github.com/termux/termux-app)、[质感文件 MaterialFiles](https://github.com/zhanghai/MaterialFiles)
 
 感谢以上项目的作者们的无私付出。
 

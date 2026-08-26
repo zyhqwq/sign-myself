@@ -270,20 +270,20 @@ python mihoyo/miyoushe_qr_login.py
 <a id="cred-bilibili"></a>
 #### 2.3 Bilibili Cookie 获取
 
-**网页扫码（推荐）**
-
-[![扫码获取 Cookie](https://img.shields.io/badge/点击扫码-获取Cookie-fb7299?style=for-the-badge)](https://zyhqwq.github.io/sign-myself/bilibili.html)
-
-1.  **扫码**：点击上方按钮打开网页，用**哔哩哔哩 App** 扫描页面上的二维码，在手机上确认登录。
-2.  **复制 Cookie**：页面会分别生成 `SESSDATA`、`DedeUserID`、`bili_jct` 三个值，逐个复制填入对应 Secret；多账号可连续扫码添加（各字段自动用英文逗号连接、按位置一一对应）。
-
 > [!NOTE]
-> 与米游社/森空岛页共用同一代理（默认 `proxy.zyhh.qzz.io`），自托管方法相同。Cookie 只在你的浏览器内解析，代理无日志无存储。
+> B 站的 `SESSDATA` 为 HttpOnly（网页无法读取）且官方接口对第三方网页有风控，暂无纯网页获取方式，推荐使用下面的本地脚本。
 
-**手动获取**
+**本地脚本（推荐）**
+
+```bash
+pip install -r requirements.txt
+python bilibili/bilibili_qr_login.py
+```
+
+终端会显示二维码，**哔哩哔哩 App** 扫码确认后自动输出三个值，分别复制填入 Secret `BILI_SESSDATA`、`BILI_DEDEUSERID`、`BILI_JCT`。可连续扫码添加多个账号（各字段自动用英文逗号连接、按位置一一对应）。
 
 <details>
-<summary><b>不用网页？从浏览器手动获取</b></summary>
+<summary><b>手动获取</b></summary>
 
 1.  在电脑浏览器中登录 [Bilibili](https://www.bilibili.com/)。
 2.  按 `F12` 打开开发者工具，进入 `Application` -> `Cookies` -> `https://www.bilibili.com`。
@@ -479,10 +479,11 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 │   ├── miyoushe_sign.py          # 游戏签到脚本（原神/星铁/绝区零）
 │   ├── miyoushe_qr_login.py      # 扫码登录工具（本地运行获取 Cookie）
 │   └── miyoushe_debug.py         # Cookie 诊断工具
+├── bilibili/                       # Bilibili 平台
+│   └── bilibili_qr_login.py        # 扫码登录工具（本地运行获取 Cookie）
 ├── docs/
 │   ├── index.html                # 网页版扫码获取米游社 Cookie 页面（GitHub Pages）
 │   ├── skland.html               # 扫码 / 书签栏获取森空岛 Token 页面（GitHub Pages）
-│   ├── bilibili.html             # 网页版扫码获取 Bilibili Cookie 页面（GitHub Pages）
 │   └── proxy.js                  # Cloudflare Worker CORS 代理（配合网页使用）
 └── .github/workflows/
     ├── daily-sign.yml            # 每日签到工作流（森空岛 + 米游社，按序号选择）

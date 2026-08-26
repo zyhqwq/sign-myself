@@ -98,6 +98,9 @@ def check_deps():
         [sys.executable, "-m", "pip", "install", "--break-system-packages",
          "--user", "-r", req],
     ]
+    # 默认源全部失败时，自动换清华 PyPI 镜像重试一遍（国内外网络环境差异大）
+    print("[..] 尝试国内镜像源 ...")
+    cmds += [cmd + ["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"] for cmd in list(cmds)]
     for cmd in cmds:
         if subprocess.run(cmd).returncode == 0:
             print("[OK] 依赖安装完成")

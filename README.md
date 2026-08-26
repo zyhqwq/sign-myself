@@ -89,7 +89,7 @@
 
 向导会自动完成所有事：
 
-- 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；极简系统若连 pip 都没有，补装时需要管理员权限）
+- 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；默认源失败会自动切换清华 PyPI 镜像；极简系统若连 pip 都没有，补装时需要管理员权限）
 - 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2 凭证获取](#cred)）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook / 邮件(SMTP)
 - **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
@@ -121,7 +121,7 @@ bash run.sh          # 再次运行生效
 
 </details>
 
-> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。GitHub 克隆缓慢时，可在仓库地址前加加速前缀，如 `git clone https://gh-proxy.com/https://github.com/zyhqwq/sign-myself.git`（第三方加速站时效性无法保证，也可手动下载仓库 ZIP 解压后使用）。
 
 <a id="step-1-termux"></a>
 #### 1.2 Android 手机（Termux）一键运行
@@ -137,6 +137,13 @@ bash run.sh          # 再次运行生效
     命令会自动安装环境并启动配置向导，跟着向导走完即可（凭证获取、通知、定时与 Linux 流程一致）。其中 `python-cryptography` 是 Termux 仓库的预编译包，可避免 pip 现场编译失败；其余依赖由向导自动补装。
 
 3.  **定时任务（可选）**：先执行 `pkg install cronie && crond` 启动定时服务，再运行向导即可自动写入 crontab；不装也没关系，向导会给出手动方案。
+
+> 💡 国内网络优化（可选）：
+> - Termux 软件包下载慢：先执行自带换源向导 `termux-change-repo`，选 `Mirror` → 清华大学 / 中科大等镜像，再重试上面的命令
+> - pip 依赖安装失败时会自动回退清华 PyPI 镜像，一般无需手动处理
+> - GitHub 克隆缓慢：可在仓库地址前加加速前缀，如
+>   `git clone https://gh-proxy.com/https://github.com/zyhqwq/sign-myself.git`
+>   （第三方加速站时效性无法保证，也可手动下载仓库 ZIP 解压后使用）
 
 > 💡 Termux 在后台可能被系统杀掉导致定时失效：请在系统设置中允许 Termux「自启动 / 无电池优化」，或执行 `termux-wake-lock` 保持唤醒。扫码工具如需生成二维码图片，可选装 `pkg install python-pillow`。
 

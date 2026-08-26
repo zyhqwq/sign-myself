@@ -409,7 +409,7 @@ python3 bilibili/bilibili_qr_login.py
 1.  **开启 SMTP 服务，获取授权码**
     - 浏览器登录 [QQ邮箱](https://mail.qq.com/)
     - 进入 **设置** → **账号与安全**
-    - 找到「POP3/IMAP/SMTP 服务」，开启 **IMAP/SMTP 服务**，按提示完成手机短信验证
+    - 找到「POP3/IMAP/SMTP/Exchange/CardDAV 服务」并选择开启，变成「已开启」后按提示完成手机短信验证
     - 验证成功后会生成一个 **16 位字母授权码**（只显示一次），复制保存
 
 2.  **填写以下五个变量**

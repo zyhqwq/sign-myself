@@ -1,7 +1,6 @@
 # sign-myself
 
-> [!CAUTION]
-> **免责声明（请务必阅读）**
+> ⚠️ **免责声明（请务必阅读）**
 >
 > 本项目仅供个人学习与交流使用，代码由 AI 生成，请自行审查后再使用。作者不承诺任何稳定性保证，接口变更导致功能失效也请理解；Issue 与 PR 欢迎提交，但可能无法及时响应。
 >
@@ -13,8 +12,7 @@
 > - 🚫 请不要发布到 B 站，谢谢
 > - 🚫 请不要滥用本项目
 >
-> [!WARNING]
-> **关于 GitHub Actions**：仓库内的工作流文件仅作参考示例。作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行——Fork 仓库的 Actions 用量会归属到上游存储库，滥用可能导致上游仓库被停用。与 Actions 运行相关的 Issue 恕不处理。
+> ⚠️ **关于 GitHub Actions**：仓库内的工作流文件仅作参考示例。作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行——Fork 仓库的 Actions 用量会归属到上游存储库，滥用可能导致上游仓库被停用。与 Actions 运行相关的 Issue 恕不处理。
 
 一个用于自动签到的工具，支持多账号与多种通知渠道。
 
@@ -121,8 +119,7 @@ bash run.sh          # 再次运行生效
 
 </details>
 
-> [!TIP]
-> 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
 <a id="step-1-actions"></a>
 #### 1.2 GitHub Actions（仅供参考，极不推荐，懒得修）
@@ -215,8 +212,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 1.  **扫码**：点击上方按钮打开网页，用**森空岛 App** 扫描页面上的二维码，在手机上确认登录。
 2.  **复制 Token**：页面会生成可复制的 Token，多账号可连续扫码添加（自动用英文逗号连接），填入 Secret 或 `api.txt` 即可。
 
-> [!NOTE]
-> 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Token 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面「代理设置」中替换地址。
+> 📝 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Token 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面「代理设置」中替换地址。
 
 <details>
 <summary><b>书签栏一键获取（无需扫码）</b></summary>
@@ -224,8 +220,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 1.  **添加书签**：打开[同一页面](https://zyhqwq.github.io/sign-myself/skland.html)，把「方式二」中的「📋 获取森空岛Token」按钮按住拖到浏览器书签栏（书签栏没显示可按 `Ctrl+Shift+B`）。
 2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制。多账号用无痕窗口分别获取后用英文逗号连接。
 
-> [!NOTE]
-> 书签方式全程在你的浏览器内完成、不经过任何服务器：它只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板。
+> 📝 书签方式全程在你的浏览器内完成、不经过任何服务器：它只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板。
 
 </details>
 
@@ -249,8 +244,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 1.  **扫码**：点击上方按钮打开网页，用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
 2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
 
-> [!NOTE]
-> 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
+> 📝 页面默认使用仓库提供的公共代理 `proxy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
 <details>
 <summary><b>本地脚本</b></summary>
@@ -264,14 +258,12 @@ python3 mihoyo/miyoushe_qr_login.py
 
 </details>
 
-> [!NOTE]
-> Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
+> 📝 Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
 <a id="cred-bilibili"></a>
 #### 2.3 Bilibili Cookie 获取
 
-> [!NOTE]
-> B 站的 `SESSDATA` 为 HttpOnly（网页无法读取）且官方接口对第三方网页有风控，暂无纯网页获取方式，推荐使用下面的本地脚本。
+> 📝 B 站的 `SESSDATA` 为 HttpOnly（网页无法读取）且官方接口对第三方网页有风控，暂无纯网页获取方式，推荐使用下面的本地脚本。
 
 **本地脚本（推荐）**
 
@@ -405,8 +397,7 @@ python3 bilibili/bilibili_qr_login.py
 
 </details>
 
-> [!NOTE]
-> 代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
+> 📝 代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
 
 <a id="faq"></a>
 ## 常见问题

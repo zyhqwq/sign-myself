@@ -294,8 +294,8 @@ python mihoyo/miyoushe_qr_login.py
 | `5` | 绝区零 | 米游社 | `MIYOUSHE_COOKIE` |
 
 例如只想签明日方舟和原神：
-- GitHub Actions：添加 Secret `SIGN_GAMES`，值为 `1,3`
 - 本地运行：把 `api.txt` 中该行改为 `SIGN_GAMES=1,3`
+- GitHub Actions：添加 Secret `SIGN_GAMES`，值为 `1,3`
 
 <a id="notify-config"></a>
 ## 配置通知（可选）

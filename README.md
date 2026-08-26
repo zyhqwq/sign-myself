@@ -90,7 +90,7 @@
 向导会自动完成所有事：
 
 - 检查 Python 版本与依赖，缺失时自动尝试多种方式安装（优先用户目录，多数环境无需 root；默认源失败会自动切换清华 PyPI 镜像；极简系统若连 pip 都没有，补装时需要管理员权限）
-- 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，也可以当场扫码获取（获取方法统一见下文 [2 凭证获取](#cred)）
+- 询问是否有森空岛 [Token](#cred-skland) / 米游社 [Cookie](#cred-mihoyo)，有就填入，两者都支持当场扫码获取（获取方法统一见下文 [2 凭证获取](#cred)）
 - 选择通知渠道：Discord / Telegram / 企业微信 / 飞书 / 钉钉(支持加签) / Server酱 / 自定义 Webhook / 邮件(SMTP)
 - **当场实测**凭证和通知是否能用：通知发送后会询问是否收到，未收到可当场重新设置渠道；失败可以马上重填
 - 设置每天的自动签到时间（全部回车 = 每天 03:25，北京时间），并写入系统定时任务
@@ -247,6 +247,18 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 2.  **一键获取**：在已登录 [森空岛网页版](https://www.skland.com/) 的标签页里点击该书签，Token 会自动弹出并复制。多账号用无痕窗口分别获取后用英文逗号连接。
 
 > 📝 书签方式全程在你的浏览器内完成、不经过任何服务器：它只会在你已登录的森空岛/鹰角通行证页面里读取 Token 并复制到剪贴板。
+
+</details>
+
+<details>
+<summary><b>本地脚本</b></summary>
+
+```bash
+pip install -r requirements.txt
+python3 skland/skland_qr_login.py
+```
+
+终端会显示二维码，**森空岛 App** 扫码确认后自动校验并把 Token 写入 `api.txt`；多账号可连续扫码添加（自动用英文逗号连接）。
 
 </details>
 
@@ -525,7 +537,8 @@ GitHub Actions 使用标准 5 字段 POSIX cron 格式：
 ├── skland/                       # 森空岛平台
 │   ├── arknight_github.py        # 明日方舟签到脚本
 │   ├── endfield_github.py        # 终末地签到脚本
-│   └── skland_common.py          # 公共模块（加密、签名、登录）
+│   ├── skland_common.py          # 公共模块（加密、签名、登录）
+│   └── skland_qr_login.py        # 扫码登录工具（本地运行获取 Token）
 ├── mihoyo/                       # 米游社平台
 │   ├── miyoushe_sign.py          # 游戏签到脚本（原神/星铁/绝区零）
 │   ├── miyoushe_qr_login.py      # 扫码登录工具（本地运行获取 Cookie）

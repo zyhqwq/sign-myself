@@ -98,12 +98,15 @@ def check_deps():
         [sys.executable, "-m", "pip", "install", "--break-system-packages",
          "--user", "-r", req],
     ]
-    # 默认源全部失败时，自动换清华 PyPI 镜像重试一遍（国内外网络环境差异大）
-    print("[..] 尝试国内镜像源 ...")
-    cmds += [cmd + ["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"] for cmd in list(cmds)]
     for cmd in cmds:
         if subprocess.run(cmd).returncode == 0:
             print("[OK] 依赖安装完成")
+            return
+    # 默认源全部失败时，自动换清华 PyPI 镜像重试一遍（国内外网络环境差异大）
+    print("[..] 默认源失败，尝试国内镜像源 ...")
+    for cmd in cmds:
+        if subprocess.run(cmd + ["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"]).returncode == 0:
+            print("[OK] 依赖安装完成（镜像源）")
             return
     print("[X] 依赖安装失败，请手动执行:")
     print("    pip install --break-system-packages -r requirements.txt")
@@ -183,12 +186,53 @@ def obtain_cookie_by_qr(cfg):
     return False
 
 
+def obtain_token_by_qr(cfg):
+    """运行森空岛扫码工具获取 Token，回读 api.txt 确认保存。
+
+    返回 True 表示 Token 已获取并写入 api.txt。
+    """
+    qr_script = os.path.join(ROOT, "skland", "skland_qr_login.py")
+
+    print("\n  即将启动扫码工具：用手机森空岛 App 扫二维码并确认登录，")
+    print("  成功后会自动把 Token 写入 api.txt。扫码过程中可随时 Ctrl+C 取消。")
+    if not ask_yn("是否继续？", default_yes=True):
+        return False
+
+    rc = subprocess.run([sys.executable, qr_script]).returncode
+    if rc != 0:
+        print("  [!] 扫码未完成（已取消 / 超时 / 失败）")
+        return False
+
+    # 回读 api.txt，确认 Token 已保存
+    saved = read_api_file_values(("SKLAND_TOKEN",))
+    if not saved.get("SKLAND_TOKEN"):
+        print("  [!] api.txt 中未找到已保存的 Token，视为失败")
+        return False
+    cfg["SKLAND_TOKEN"] = saved["SKLAND_TOKEN"]
+    print("  [OK] Token 已保存到 api.txt")
+    return True
+
+
 def collect_credentials(cfg):
     print("\n---- 步骤 2/4 游戏凭证 ----")
     if ask_yn("是否已有森空岛 Token？（明日方舟、终末地需要，获取方法见 README 第 2.1 节）"):
         cfg["SKLAND_TOKEN"] = ask_nonempty("请输入 SKLAND_TOKEN（多账号用英文逗号分隔）")
     else:
-        print("  跳过：将不签到明日方舟 / 终末地（README 第 2.1 节有获取教程）")
+        while True:
+            if not ask_yn("是否现在扫码登录自动获取？", default_yes=True):
+                print("  跳过：将不签到明日方舟 / 终末地（README 第 2.1 节有获取教程）")
+                break
+            if obtain_token_by_qr(cfg):
+                break
+            choice = ask("\n扫码获取失败。1=重试扫码  2=手动输入  3=跳过森空岛",
+                         default="1",
+                         validator=lambda v: v in ("1", "2", "3"),
+                         errmsg="请输入 1、2 或 3")
+            if choice == "2":
+                cfg["SKLAND_TOKEN"] = ask_nonempty("请输入 SKLAND_TOKEN（多账号用英文逗号分隔）")
+                break
+            if choice == "3":
+                break
 
     print("\n---- 米游社 Cookie（原神、星铁、绝区零需要）----")
     if ask_yn("是否已有米游社 Cookie？"):

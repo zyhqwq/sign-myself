@@ -160,9 +160,7 @@ bash run.sh          # 再次运行生效
 
 Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社Cookie获取](#cred-mihoyo)。
 
-1.  **添加 Secret**:
-    *   扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`。
-    *   添加以下 Secret：
+**添加 Secret**：扫码成功后复制整段 Cookie，进入仓库 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret`，添加以下 Secret：
 
     | Name | Secret | 说明 |
     | :--- | :--- | :--- |

@@ -22,7 +22,8 @@
 - [使用方法](#usage)
   - [1. 运行方式](#step-1-run)
     - [1.1 Linux 本地 / 服务器运行（推荐）](#step-1-linux)
-    - [1.2 GitHub Actions（仅供参考，极不推荐，懒得修）](#step-1-actions)
+    - [1.2 Android 手机（Termux）一键运行](#step-1-termux)
+    - [1.3 GitHub Actions（仅供参考，极不推荐，懒得修）](#step-1-actions)
       - [步骤 1：Fork 本仓库](#actions-fork)
       - [步骤 2：配置森空岛 Token](#actions-skland)
       - [步骤 3：配置米游社 Cookie](#actions-mihoyo)
@@ -122,8 +123,25 @@ bash run.sh          # 再次运行生效
 
 > 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
+<a id="step-1-termux"></a>
+#### 1.2 Android 手机（Termux）一键运行
+
+1.  **安装 [Termux](https://f-droid.org/en/packages/com.termux/)**：建议从 F-Droid 或 [GitHub Releases](https://github.com/termux/termux-app/releases) 下载（应用商店版本已停更，勿用）。
+
+2.  **打开 Termux，粘贴运行这一条命令**：
+
+    ```bash
+    pkg update -y && pkg install -y git python python-cryptography && git clone https://github.com/zyhqwq/sign-myself.git && cd sign-myself && python3 setup_sign.py
+    ```
+
+    命令会自动安装环境并启动配置向导，跟着向导走完即可（凭证获取、通知、定时与 Linux 流程一致）。其中 `python-cryptography` 是 Termux 仓库的预编译包，可避免 pip 现场编译失败；其余依赖由向导自动补装。
+
+3.  **定时任务（可选）**：先执行 `pkg install cronie && crond` 启动定时服务，再运行向导即可自动写入 crontab；不装也没关系，向导会给出手动方案。
+
+> 💡 Termux 在后台可能被系统杀掉导致定时失效：请在系统设置中允许 Termux「自启动 / 无电池优化」，或执行 `termux-wake-lock` 保持唤醒。扫码工具如需生成二维码图片，可选装 `pkg install python-pillow`。
+
 <a id="step-1-actions"></a>
-#### 1.2 GitHub Actions（仅供参考，极不推荐，懒得修）
+#### 1.3 GitHub Actions（仅供参考，极不推荐，懒得修）
 
 <details>
 <summary><b>点击展开：Fork 仓库、配置 Secrets 并使用 Actions 每日自动签到</b></summary>

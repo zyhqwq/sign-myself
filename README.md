@@ -36,6 +36,7 @@
 - [配置通知（可选）](#notify-config)
   - [Telegram 机器人创建步骤](#telegram-steps)
   - [钉钉机器人创建步骤](#dingtalk-steps)
+  - [QQ邮箱通知设置教程](#qq-notify)
 - [常见问题](#faq)
 - [文件说明](#files)
 - [致谢与参考](#credits)
@@ -336,7 +337,7 @@ python3 bilibili/bilibili_qr_login.py
 
 | 通知平台 | 名称 | 值 |
 | :--- | :--- | :--- |
-| **邮件 (SMTP)** | `SMTP_HOST`<br>`SMTP_PORT`<br>`SMTP_USER`<br>`SMTP_PASS`<br>`SMTP_TO` | `SMTP_HOST`/`SMTP_PORT` 为邮箱服务商的 SMTP 地址与端口（`465` 为 SSL，`587` 为 STARTTLS）。`SMTP_USER` 为发件邮箱，`SMTP_PASS` 填授权码（QQ、163 等需先在邮箱设置中开启 SMTP 并生成授权码），`SMTP_TO` 为收件邮箱，多个用英文逗号分隔。 |
+| **邮件 (SMTP)** | `SMTP_HOST`<br>`SMTP_PORT`<br>`SMTP_USER`<br>`SMTP_PASS`<br>`SMTP_TO` | `SMTP_HOST`/`SMTP_PORT` 为邮箱服务商的 SMTP 地址与端口（`465` 为 SSL，`587` 为 STARTTLS）。`SMTP_USER` 为发件邮箱，`SMTP_PASS` 填授权码（QQ、163 等需先在邮箱设置中开启 SMTP 并生成授权码），`SMTP_TO` 为收件邮箱，多个用英文逗号分隔。注意收信者与发信者都可以填同一个邮箱，[QQ邮箱设置点我](#qq-notify)。 |
 | **自定义 Webhook** | `CUSTOM_WEBHOOK_URL` | 填写任意支持 POST JSON 的 Webhook 地址，如 `https://example.com/webhook`。脚本会发送包含 `title`、`message`、`timestamp` 等字段的 JSON 请求体。 |
 
 <a id="telegram-steps"></a>
@@ -398,6 +399,40 @@ python3 bilibili/bilibili_qr_login.py
 </details>
 
 > 📝 代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
+
+<a id="qq-notify"></a>
+### QQ邮箱通知设置教程
+
+<details>
+<summary><b>点击展开：以 QQ 邮箱为例配置邮件通知</b></summary>
+
+1.  **开启 SMTP 服务，获取授权码**
+    - 浏览器登录 [QQ邮箱](https://mail.qq.com/)
+    - 进入 **设置** → **账号**（新版为「账户与安全」）
+    - 找到「POP3/IMAP/SMTP 服务」，开启 **IMAP/SMTP 服务**，按提示完成手机短信验证
+    - 验证成功后会生成一个 **16 位字母授权码**（只显示一次），复制保存
+
+2.  **填写以下五个变量**
+
+    | 名称 | 值 |
+    | :-- | :-- |
+    | `SMTP_HOST` | `smtp.qq.com` |
+    | `SMTP_PORT` | `465` |
+    | `SMTP_USER` | `你的QQ号@qq.com`（发件邮箱） |
+    | `SMTP_PASS` | 上一步生成的 16 位授权码（**不是 QQ 密码**） |
+    | `SMTP_TO` | 收件邮箱，多个用英文逗号分隔 |
+
+3.  **添加配置**
+    - GitHub Actions 用户：仓库 `Settings` → `Secrets and variables` → `Actions` → 分别新建上述 5 个 Secret
+    - 本地运行用户：填入项目根目录 `api.txt` 对应行（去掉行首 `#`）
+
+4.  **测试**
+    - Actions 页手动运行 `Test Webhook Notifications` 工作流，或本地运行 `python3 test_notify.py`
+    - 日志末尾显示「邮件： 成功」即表示收到测试邮件；失败会提示原因（如授权码错误、连接超时）
+
+</details>
+
+> 📝 收件人与发件人可以填同一个邮箱。其他邮箱服务商只需更换 `SMTP_HOST`（如 163 邮箱 `smtp.163.com`、Gmail `smtp.gmail.com` 需使用应用专用密码）。
 
 <a id="faq"></a>
 ## 常见问题

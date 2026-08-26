@@ -144,6 +144,8 @@ bash run.sh          # 再次运行生效
 
 3.  **定时任务（可选）**：先执行 `pkg install cronie && crond` 启动定时服务，再运行向导即可自动写入 crontab；不装也没关系，向导会给出手动方案。
 
+4.  **图形界面修改配置（可选）**：安装开源文件管理器 [质感文件](https://github.com/zhanghai/MaterialFiles)，左侧菜单「添加存储」→ 在系统选择器中选中 **Termux**，即可浏览 Termux 主目录，用内置编辑器直接修改 `sign-myself/api.txt`，比命令行下的 nano 更顺手（原理：Termux 会通过系统文档接口暴露自身目录，无需 root）。
+
 > 💡 国内网络优化（可选）：
 > - Termux 软件包下载慢：先执行自带换源向导 `termux-change-repo`，选 `Mirror` → 清华大学 / 中科大等镜像，再重试上面的命令
 > - pip 依赖安装失败时会自动回退清华 PyPI 镜像，一般无需手动处理

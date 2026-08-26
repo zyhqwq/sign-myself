@@ -1,6 +1,7 @@
 # sign-myself
 
-> **⚠️ 免责声明（请务必阅读）**
+> [!CAUTION]
+> **免责声明（请务必阅读）**
 >
 > 本项目仅供个人学习与交流使用，代码由 AI 生成，请自行审查后再使用。作者不承诺任何稳定性保证，接口变更导致功能失效也请理解；Issue 与 PR 欢迎提交，但可能无法及时响应。
 >
@@ -12,6 +13,7 @@
 > - 🚫 请不要发布到 B 站，谢谢
 > - 🚫 请不要滥用本项目
 >
+> [!WARNING]
 > **关于 GitHub Actions**：仓库内的工作流文件仅作参考示例。作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行——Fork 仓库的 Actions 用量会归属到上游存储库，滥用可能导致上游仓库被停用。与 Actions 运行相关的 Issue 恕不处理。
 
 一个用于自动签到的工具，支持多账号与多种通知渠道。
@@ -72,18 +74,18 @@
 
 只需一条命令，跟着向导走完即可，不需要懂编程。
 
-**第 1 步：下载项目**
+1. **下载项目**
 
-```bash
-git clone https://github.com/zyhqwq/sign-myself.git
-cd sign-myself
-```
+   ```bash
+   git clone https://github.com/zyhqwq/sign-myself.git
+   cd sign-myself
+   ```
 
-**第 2 步：运行配置向导**
+2. **运行配置向导**
 
-```bash
-python3 setup_sign.py
-```
+   ```bash
+   python3 setup_sign.py
+   ```
 
 向导会自动完成所有事：
 
@@ -119,7 +121,8 @@ bash run.sh          # 再次运行生效
 
 </details>
 
-> 💡 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
+> [!TIP]
+> 全程无需 root 权限；建议把定时时间的分钟数改成随机值，避免固定整点请求。
 
 <a id="step-1-actions"></a>
 #### 1.2 GitHub Actions（仅供参考，极不推荐，懒得修）
@@ -127,7 +130,8 @@ bash run.sh          # 再次运行生效
 <details>
 <summary><b>点击展开：Fork 仓库、配置 Secrets 并使用 Actions 每日自动签到</b></summary>
 
-> ⚠️ 再次提示：仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
+> [!WARNING]
+> 仓库内的工作流文件**仅作参考示例**，作者**不支持也不推荐**使用 GitHub Actions 来每日自动执行，相关风险请自行评估（详见顶部免责声明）。
 
 <a id="actions-fork"></a>
 ##### 步骤 1：Fork 本仓库
@@ -153,7 +157,8 @@ bash run.sh          # 再次运行生效
 
 米游社签到需要 `MIYOUSHE_COOKIE`，用于自动完成原神、崩坏:星穹铁道、绝区零的每日签到（领原石、燃料、丁尼等）。脚本会自动检测账号绑定的角色，只签有角色的游戏。
 
-> 注：米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
+> [!NOTE]
+> 米游社社区板块签到（米游币）已被官方限制第三方调用，故本项目只做游戏签到。
 
 Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登录），获取方式见 [2.2 米游社Cookie获取](#cred-mihoyo)。
 
@@ -168,6 +173,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 <a id="actions-bilibili"></a>
 ##### 步骤 4：配置 Bilibili Cookie（可选）
 
+> [!NOTE]
 > 此步骤可选：不需要 B 站登录功能可直接跳过，不影响其他游戏签到。
 
 1.  **获取 Cookie**：步骤见 [2.3 Bilibili Cookie 获取](#cred-bilibili)。
@@ -222,6 +228,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 1.  **扫码**：点击上方按钮打开网页，用**米游社 App** 扫描页面上的二维码，在手机上确认登录。
 2.  **复制 Cookie**：页面会生成可复制的 Cookie，多账号可连续扫码添加（自动用英文逗号连接）。
 
+> [!NOTE]
 > 页面默认使用仓库提供的公共代理 `mhy.zyhh.qzz.io` 转发接口请求。Cookie 只在你的浏览器内组装，代理无日志无存储；如需完全自托管，可按 [`docs/proxy.js`](docs/proxy.js) 顶部说明部署自己的 Cloudflare Worker，并在页面底部「代理设置」中替换地址。
 
 **本地脚本**
@@ -233,6 +240,7 @@ python mihoyo/miyoushe_qr_login.py
 
 终端会打印二维码，米游社 App 扫码确认后输出 Cookie。
 
+> [!NOTE]
 > Cookie 中的 `stoken` 长期有效，只有在修改密码、退出登录等情况下才会失效。失效后重新运行扫码工具获取即可。
 
 <a id="cred-bilibili"></a>
@@ -345,7 +353,8 @@ python mihoyo/miyoushe_qr_login.py
       - Name: `DINGTALK_SECRET`
       - Value: 粘贴 `SEC` 开头的密钥
 
-> **说明**：代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
+> [!NOTE]
+> 代码会自动检测是否配置了 `DINGTALK_SECRET`，如果配置了则使用加签模式，否则使用普通模式（配合自定义关键词）。所有钉钉通知消息格式为 `【通知】标题 + 正文`，因此设置关键词 `通知` 即可匹配所有消息。详细文档参考 [钉钉自定义机器人接入](https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages)。
 
 <a id="faq"></a>
 ## 常见问题

@@ -257,7 +257,7 @@ Cookie 通过扫码工具获取（无需手动抓包，Actions 里不执行登�
 
 ```bash
 pip install -r requirements.txt
-python mihoyo/miyoushe_qr_login.py
+python3 mihoyo/miyoushe_qr_login.py
 ```
 
 终端会打印二维码，米游社 App 扫码确认后输出 Cookie。
@@ -277,7 +277,7 @@ python mihoyo/miyoushe_qr_login.py
 
 ```bash
 pip install -r requirements.txt
-python bilibili/bilibili_qr_login.py
+python3 bilibili/bilibili_qr_login.py
 ```
 
 终端会显示二维码，**哔哩哔哩 App** 扫码确认后自动输出三个值，分别复制填入 Secret `BILI_SESSDATA`、`BILI_DEDEUSERID`、`BILI_JCT`。可连续扫码添加多个账号（各字段自动用英文逗号连接、按位置一一对应）。
